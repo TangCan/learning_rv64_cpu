@@ -1,6 +1,6 @@
 # RVA23 必选项覆盖图谱
 
-> 本文件是项目学习映射的规范目录，不是认证或符合性结论。创建时尚未调查两侧实现；每条要求行的 Kunminghu 与 Heliodor 映射状态均初始化为 `not-studied`。
+> 本文件是项目学习映射的规范目录，不是认证或符合性结论。Story 4.2 已填写基础整数与标量范围行；其余领域仍保持 `not-studied`。每项状态只概括对应学习单元中所列的静态证据和边界。
 
 ## 规范基线
 
@@ -23,40 +23,40 @@
 
 | 稳定键（profile/v1.0/section/ID） | 要求及适用条件 | Kunminghu：状态；位置/范围；理由；子案例；证据 ID | Heliodor：状态；位置/范围；理由；子案例；证据 ID |
 |---|---|---|---|
-| `RVA23U64/v1.0/§3.1.1.1/RV64I` | 必选基础 ISA 为 RV64I，采用小端序；ECALL 触发向执行环境请求的陷阱。 | 状态：`not-studied`；位置/范围：待填；理由：待填；子案例：待填；证据 ID：待填。 | 状态：`not-studied`；位置/范围：待填；理由：待填；子案例：待填；证据 ID：待填。 |
-| `RVA23U64/v1.0/§3.1.1.2/M` | 整数乘法与除法。 | 状态：`not-studied`；位置/范围：待填；理由：待填；子案例：待填；证据 ID：待填。 | 状态：`not-studied`；位置/范围：待填；理由：待填；子案例：待填；证据 ID：待填。 |
+| `RVA23U64/v1.0/§3.1.1.1/RV64I` | 必选基础 ISA 为 RV64I，采用小端序；ECALL 触发向执行环境请求的陷阱。 | 状态：`partially-studied`；位置/范围：见标量学习单元；理由：部分基础译码/ALU 路径；完整 RV64I 与端序、异常语义未逐项核验；子案例：见证据 E1/E2；证据 ID：[E1/E2](units/rva23u64-scalar-v1.md#evidence-table)。 | 状态：`partially-studied`；位置/范围：见标量学习单元；理由：解码与 ALU 路径及架构指令测试材料已定位；全指令子案例未穷尽；子案例：见证据 E4/E5；证据 ID：[E4/E5](units/rva23u64-scalar-v1.md#evidence-table)。 |
+| `RVA23U64/v1.0/§3.1.1.2/M` | 整数乘法与除法。 | 状态：`studied-unverified`；位置/范围：见标量学习单元；理由：MulUnit/DivUnit 与 decode 路径；边界行为未运行；子案例：见证据 E1/E3；证据 ID：[E1/E3](units/rva23u64-scalar-v1.md#evidence-table)。 | 状态：`studied-unverified`；位置/范围：见标量学习单元；理由：ALU/多周期 int_divider 与 RV64UM 定向测试材料已检查，未运行；子案例：见证据 E4/E5；证据 ID：[E4/E5](units/rva23u64-scalar-v1.md#evidence-table)。 |
 | `RVA23U64/v1.0/§3.1.1.2/A` | 原子指令。 | 状态：`not-studied`；位置/范围：待填；理由：待填；子案例：待填；证据 ID：待填。 | 状态：`not-studied`；位置/范围：待填；理由：待填；子案例：待填；证据 ID：待填。 |
 | `RVA23U64/v1.0/§3.1.1.2/F` | 单精度浮点指令。 | 状态：`not-studied`；位置/范围：待填；理由：待填；子案例：待填；证据 ID：待填。 | 状态：`not-studied`；位置/范围：待填；理由：待填；子案例：待填；证据 ID：待填。 |
 | `RVA23U64/v1.0/§3.1.1.2/D` | 双精度浮点指令。 | 状态：`not-studied`；位置/范围：待填；理由：待填；子案例：待填；证据 ID：待填。 | 状态：`not-studied`；位置/范围：待填；理由：待填；子案例：待填；证据 ID：待填。 |
-| `RVA23U64/v1.0/§3.1.1.2/C` | 压缩指令。 | 状态：`not-studied`；位置/范围：待填；理由：待填；子案例：待填；证据 ID：待填。 | 状态：`not-studied`；位置/范围：待填；理由：待填；子案例：待填；证据 ID：待填。 |
-| `RVA23U64/v1.0/§3.1.1.2/B` | 位操作指令。 | 状态：`not-studied`；位置/范围：待填；理由：待填；子案例：待填；证据 ID：待填。 | 状态：`not-studied`；位置/范围：待填；理由：待填；子案例：待填；证据 ID：待填。 |
-| `RVA23U64/v1.0/§3.1.1.2/Zicsr` | CSR 指令；因包含 F 而隐含要求。 | 状态：`not-studied`；位置/范围：待填；理由：待填；子案例：待填；证据 ID：待填。 | 状态：`not-studied`；位置/范围：待填；理由：待填；子案例：待填；证据 ID：待填。 |
-| `RVA23U64/v1.0/§3.1.1.2/Zicntr` | 基础计数器与计时器。 | 状态：`not-studied`；位置/范围：待填；理由：待填；子案例：待填；证据 ID：待填。 | 状态：`not-studied`；位置/范围：待填；理由：待填；子案例：待填；证据 ID：待填。 |
-| `RVA23U64/v1.0/§3.1.1.2/Zihpm` | 硬件性能计数器。 | 状态：`not-studied`；位置/范围：待填；理由：待填；子案例：待填；证据 ID：待填。 | 状态：`not-studied`；位置/范围：待填；理由：待填；子案例：待填；证据 ID：待填。 |
+| `RVA23U64/v1.0/§3.1.1.2/C` | 压缩指令。 | 状态：`partially-studied`；位置/范围：见标量学习单元；理由：定位到 RVCExpander/RVCDecoder 包装及 PreDecode 压缩长度路径；未审阅完整展开映射；子案例：仅确认压缩指令识别/长度路径，具体 C 指令集合未穷举；证据：E1；证据 ID：[E1](units/rva23u64-scalar-v1.md#evidence-table)。 | 状态：`partially-studied`；位置/范围：见标量学习单元；理由：c_expander 检查到部分 C ALU 展开及 Zcb 子集，测试材料未运行；子案例：仅含已定位的 ALU/Zcb 展开，完整 C 编码集合未穷举；证据：E4/E5；证据 ID：[E4/E5](units/rva23u64-scalar-v1.md#evidence-table)。 |
+| `RVA23U64/v1.0/§3.1.1.2/B` | 位操作指令。 | 状态：`partially-studied`；位置/范围：见标量学习单元；理由：DecodeUnit 覆盖部分 B 子扩展；不等于完整 B；子案例：见证据 E1；证据 ID：[E1](units/rva23u64-scalar-v1.md#evidence-table)。 | 状态：`partially-studied`；位置/范围：见标量学习单元；理由：decoder/ALU 显式含部分 Zba/Zbb/Zbs 案例；完整 B 范围未核验；子案例：见证据 E4；证据 ID：[E4](units/rva23u64-scalar-v1.md#evidence-table)。 |
+| `RVA23U64/v1.0/§3.1.1.2/Zicsr` | CSR 指令；因包含 F 而隐含要求。 | 状态：`studied-unverified`；位置/范围：见标量学习单元；理由：DecodeUnit CSR 指令分发与 NewCSR CSRPermit/寄存器路径；访问语义未运行；子案例：见证据 E1/E2；证据 ID：[E1/E2](units/rva23u64-scalar-v1.md#evidence-table)。 | 状态：`studied-unverified`；位置/范围：见标量学习单元；理由：decoder CSR 类别和 csr 读写路径已检查，未运行；子案例：见证据 E4/E6；证据 ID：[E4/E6](units/rva23u64-scalar-v1.md#evidence-table)。 |
+| `RVA23U64/v1.0/§3.1.1.2/Zicntr` | 基础计数器与计时器。 | 状态：`partially-studied`；位置/范围：见标量学习单元；理由：NewCSR 有 mcycle/minstret 与用户别名；TIME 实现及计数器可见性/TODO 边界未证明完整；子案例：见证据 E2；证据 ID：[E2](units/rva23u64-scalar-v1.md#evidence-table)。 | 状态：`studied-unverified`；位置/范围：见标量学习单元；理由：csr 有 mcycle/minstret、time 读口与用户别名；未运行；子案例：见证据 E4/E6；证据 ID：[E4/E6](units/rva23u64-scalar-v1.md#evidence-table)。 |
+| `RVA23U64/v1.0/§3.1.1.2/Zihpm` | 硬件性能计数器。 | 状态：`studied-unverified`；位置/范围：见标量学习单元；理由：MachineLevel 定义 mhpmcounter3..31 与事件计数路径；配置/全部事件行为未运行；子案例：见证据 E2；证据 ID：[E2](units/rva23u64-scalar-v1.md#evidence-table)。 | 状态：`studied-unverified`；位置/范围：见标量学习单元；理由：csr event bus、mhpmcounter 路径及 HPM 定向测试材料已检查，未运行；子案例：见证据 E4/E6；证据 ID：[E4/E6](units/rva23u64-scalar-v1.md#evidence-table)。 |
 | `RVA23U64/v1.0/§3.1.1.2/Ziccif` | 在同时具有可缓存性与一致性 PMA 的主存区域中，必须支持取指；自然对齐且大小为 2 的幂、最大为 min(ILEN, XLEN)（RVA23 中为 32 位）的取指操作必须是原子的。 | 状态：`not-studied`；位置/范围：待填；理由：待填；子案例：待填；证据 ID：待填。 | 状态：`not-studied`；位置/范围：待填；理由：待填；子案例：待填；证据 ID：待填。 |
 | `RVA23U64/v1.0/§3.1.1.2/Ziccrse` | 在同时具有可缓存性与一致性 PMA 的主存区域中，必须支持 RsrvEventual。 | 状态：`not-studied`；位置/范围：待填；理由：待填；子案例：待填；证据 ID：待填。 | 状态：`not-studied`；位置/范围：待填；理由：待填；子案例：待填；证据 ID：待填。 |
 | `RVA23U64/v1.0/§3.1.1.2/Ziccamoa` | 在同时具有可缓存性与一致性 PMA 的主存区域中，必须支持 A 扩展的全部原子操作。 | 状态：`not-studied`；位置/范围：待填；理由：待填；子案例：待填；证据 ID：待填。 | 状态：`not-studied`；位置/范围：待填；理由：待填；子案例：待填；证据 ID：待填。 |
 | `RVA23U64/v1.0/§3.1.1.2/Zicclsm` | 在同时具有可缓存性与一致性 PMA 的主存区域中，必须支持非对齐 load 与 store。 | 状态：`not-studied`；位置/范围：待填；理由：待填；子案例：待填；证据 ID：待填。 | 状态：`not-studied`；位置/范围：待填；理由：待填；子案例：待填；证据 ID：待填。 |
 | `RVA23U64/v1.0/§3.1.1.2/Za64rs` | 保留集必须连续、自然对齐，且最大为 64 字节。 | 状态：`not-studied`；位置/范围：待填；理由：待填；子案例：待填；证据 ID：待填。 | 状态：`not-studied`；位置/范围：待填；理由：待填；子案例：待填；证据 ID：待填。 |
-| `RVA23U64/v1.0/§3.1.1.2/Zihintpause` | 暂停提示指令。 | 状态：`not-studied`；位置/范围：待填；理由：待填；子案例：待填；证据 ID：待填。 | 状态：`not-studied`；位置/范围：待填；理由：待填；子案例：待填；证据 ID：待填。 |
+| `RVA23U64/v1.0/§3.1.1.2/Zihintpause` | 暂停提示指令。 | 状态：`studied-unverified`；位置/范围：见标量学习单元；理由：PAUSE 解码为 fence 提示路径；微架构停顿效果未证明；子案例：见证据 E1；证据 ID：[E1](units/rva23u64-scalar-v1.md#evidence-table)。 | 状态：`studied-unverified`；位置/范围：见标量学习单元；理由：decoder 将 PAUSE 作为 NOP 处理；提示 bundle 测试材料已检查，未运行；子案例：见证据 E4/E5；证据 ID：[E4/E5](units/rva23u64-scalar-v1.md#evidence-table)。 |
 | `RVA23U64/v1.0/§3.1.1.2/Zic64b` | 缓存块大小为 64 字节，且在地址空间中自然对齐。 | 状态：`not-studied`；位置/范围：待填；理由：待填；子案例：待填；证据 ID：待填。 | 状态：`not-studied`；位置/范围：待填；理由：待填；子案例：待填；证据 ID：待填。 |
 | `RVA23U64/v1.0/§3.1.1.2/Zicbom` | 缓存块管理指令。 | 状态：`not-studied`；位置/范围：待填；理由：待填；子案例：待填；证据 ID：待填。 | 状态：`not-studied`；位置/范围：待填；理由：待填；子案例：待填；证据 ID：待填。 |
 | `RVA23U64/v1.0/§3.1.1.2/Zicbop` | 缓存块预取指令。 | 状态：`not-studied`；位置/范围：待填；理由：待填；子案例：待填；证据 ID：待填。 | 状态：`not-studied`；位置/范围：待填；理由：待填；子案例：待填；证据 ID：待填。 |
 | `RVA23U64/v1.0/§3.1.1.2/Zicboz` | 缓存块清零指令。 | 状态：`not-studied`；位置/范围：待填；理由：待填；子案例：待填；证据 ID：待填。 | 状态：`not-studied`；位置/范围：待填；理由：待填；子案例：待填；证据 ID：待填。 |
 | `RVA23U64/v1.0/§3.1.1.2/Zfhmin` | 半精度浮点。 | 状态：`not-studied`；位置/范围：待填；理由：待填；子案例：待填；证据 ID：待填。 | 状态：`not-studied`；位置/范围：待填；理由：待填；子案例：待填；证据 ID：待填。 |
-| `RVA23U64/v1.0/§3.1.1.2/Zkt` | 与数据无关的执行时延。 | 状态：`not-studied`；位置/范围：待填；理由：待填；子案例：待填；证据 ID：待填。 | 状态：`not-studied`；位置/范围：待填；理由：待填；子案例：待填；证据 ID：待填。 |
+| `RVA23U64/v1.0/§3.1.1.2/Zkt` | 与数据无关的执行时延。 | 状态：`partially-studied`；位置/范围：见标量学习单元；理由：译码/执行源代码不能证明数据无关时延属性；未提供本次侧信道/时序证据；子案例：见证据 E1；证据 ID：[E1](units/rva23u64-scalar-v1.md#evidence-table)。 | 状态：`partially-studied`；位置/范围：见标量学习单元；理由：已有标量功能 RTL/测试材料不能证明数据无关时延；未见本次时序证据；子案例：见证据 E4/E5；证据 ID：[E4/E5](units/rva23u64-scalar-v1.md#evidence-table)。 |
 | `RVA23U64/v1.0/§3.1.1.2/V` | 向量扩展。 | 状态：`not-studied`；位置/范围：待填；理由：待填；子案例：待填；证据 ID：待填。 | 状态：`not-studied`；位置/范围：待填；理由：待填；子案例：待填；证据 ID：待填。 |
 | `RVA23U64/v1.0/§3.1.1.2/Zvfhmin` | 向量最小半精度浮点。 | 状态：`not-studied`；位置/范围：待填；理由：待填；子案例：待填；证据 ID：待填。 | 状态：`not-studied`；位置/范围：待填；理由：待填；子案例：待填；证据 ID：待填。 |
 | `RVA23U64/v1.0/§3.1.1.2/Zvbb` | 向量基础位操作指令。 | 状态：`not-studied`；位置/范围：待填；理由：待填；子案例：待填；证据 ID：待填。 | 状态：`not-studied`；位置/范围：待填；理由：待填；子案例：待填；证据 ID：待填。 |
 | `RVA23U64/v1.0/§3.1.1.2/Zvkt` | 向量操作的与数据无关执行时延。 | 状态：`not-studied`；位置/范围：待填；理由：待填；子案例：待填；证据 ID：待填。 | 状态：`not-studied`；位置/范围：待填；理由：待填；子案例：待填；证据 ID：待填。 |
-| `RVA23U64/v1.0/§3.1.1.2/Zihintntl` | 非时间局部性提示。 | 状态：`not-studied`；位置/范围：待填；理由：待填；子案例：待填；证据 ID：待填。 | 状态：`not-studied`；位置/范围：待填；理由：待填；子案例：待填；证据 ID：待填。 |
-| `RVA23U64/v1.0/§3.1.1.2/Zicond` | 整数条件操作。 | 状态：`not-studied`；位置/范围：待填；理由：待填；子案例：待填；证据 ID：待填。 | 状态：`not-studied`；位置/范围：待填；理由：待填；子案例：待填；证据 ID：待填。 |
-| `RVA23U64/v1.0/§3.1.1.2/Zimop` | RVA23U64 必选扩展；may-be 描述指令可由后续扩展重新定义的行为。按 ratified [Zimop ISA 定义](https://docs.riscv.org/reference/isa/v20260120/unpriv/zimop.html)，未被重新定义时 MOP 指令将零写入 `rd`。 | 状态：`not-studied`；位置/范围：待填；理由：待填；子案例：待填；证据 ID：待填。 | 状态：`not-studied`；位置/范围：待填；理由：待填；子案例：待填；证据 ID：待填。 |
-| `RVA23U64/v1.0/§3.1.1.2/Zcmop` | RVA23U64 必选扩展；may-be 描述指令可由后续扩展重新定义的行为。按 ratified [Zcmop ISA 定义](https://docs.riscv.org/reference/isa/v20260120/unpriv/zimop.html)，未被重新定义时 C.MOP 指令不写任何寄存器。 | 状态：`not-studied`；位置/范围：待填；理由：待填；子案例：待填；证据 ID：待填。 | 状态：`not-studied`；位置/范围：待填；理由：待填；子案例：待填；证据 ID：待填。 |
-| `RVA23U64/v1.0/§3.1.1.2/Zcb` | 附加压缩指令。 | 状态：`not-studied`；位置/范围：待填；理由：待填；子案例：待填；证据 ID：待填。 | 状态：`not-studied`；位置/范围：待填；理由：待填；子案例：待填；证据 ID：待填。 |
+| `RVA23U64/v1.0/§3.1.1.2/Zihintntl` | 非时间局部性提示。 | 状态：`partially-studied`；位置/范围：见标量学习单元；理由：在指定译码/测试搜索范围未定位到可确认的 NTL 处理；不能据此判断缺失；子案例：见证据 E1/E3；证据 ID：[E1/E3](units/rva23u64-scalar-v1.md#evidence-table)。 | 状态：`partially-studied`；位置/范围：见标量学习单元；理由：test_arch_hint 覆盖 bundle 注释提及 NTL，但未定位到独立刺激/断言及 decoder 路径；子案例：见证据 E4/E5；证据 ID：[E4/E5](units/rva23u64-scalar-v1.md#evidence-table)。 |
+| `RVA23U64/v1.0/§3.1.1.2/Zicond` | 整数条件操作。 | 状态：`studied-unverified`；位置/范围：见标量学习单元；理由：DecodeUnit 有 czero.eqz/nez 两条映射；ALU 路径尚无本故事运行结果；子案例：见证据 E1；证据 ID：[E1](units/rva23u64-scalar-v1.md#evidence-table)。 | 状态：`studied-unverified`；位置/范围：见标量学习单元；理由：decoder/ALU 有 czero.eqz/nez；Zicond 专用 hex/harness 已检查，未运行；子案例：见证据 E4/E5；证据 ID：[E4/E5](units/rva23u64-scalar-v1.md#evidence-table)。 |
+| `RVA23U64/v1.0/§3.1.1.2/Zimop` | RVA23U64 必选扩展；may-be 描述指令可由后续扩展重新定义的行为。按 ratified [Zimop ISA 定义](https://docs.riscv.org/reference/isa/v20260120/unpriv/zimop.html)，未被重新定义时 MOP 指令将零写入 `rd`。 | 状态：`partially-studied`；位置/范围：见标量学习单元；理由：DecodeUnit 有 MOP.R/RR pattern 和 isZimop 后处理线索；所有索引编码及最终默认结果需进一步核对；子案例：见证据 E1/E3；证据 ID：[E1/E3](units/rva23u64-scalar-v1.md#evidence-table)。 | 状态：`studied-unverified`；位置/范围：见标量学习单元；理由：decoder 显式识别 MOP.R/RR 并令 rd=0；hint bundle 测试材料已检查，未运行；子案例：见证据 E4/E5；证据 ID：[E4/E5](units/rva23u64-scalar-v1.md#evidence-table)。 |
+| `RVA23U64/v1.0/§3.1.1.2/Zcmop` | RVA23U64 必选扩展；may-be 描述指令可由后续扩展重新定义的行为。按 ratified [Zcmop ISA 定义](https://docs.riscv.org/reference/isa/v20260120/unpriv/zimop.html)，未被重新定义时 C.MOP 指令不写任何寄存器。 | 状态：`partially-studied`；位置/范围：见标量学习单元；理由：未在已定位的香山压缩展开路径中确认 C.MOP 全部合法编码；不能据搜索缺失判不存在；子案例：见证据 E1/E3；证据 ID：[E1/E3](units/rva23u64-scalar-v1.md#evidence-table)。 | 状态：`studied-unverified`；位置/范围：见标量学习单元；理由：c_expander 将所检查的 C.MOP 保留编码扩为 NOP；hint 测试材料已检查，未运行；子案例：见证据 E4/E5；证据 ID：[E4/E5](units/rva23u64-scalar-v1.md#evidence-table)。 |
+| `RVA23U64/v1.0/§3.1.1.2/Zcb` | 附加压缩指令。 | 状态：`partially-studied`；位置/范围：见标量学习单元；理由：指定 PreDecode 路径未能逐项确认 Zcb 扩展解码；不能据搜索缺失判不存在；子案例：见证据 E1；证据 ID：[E1](units/rva23u64-scalar-v1.md#evidence-table)。 | 状态：`studied-unverified`；位置/范围：见标量学习单元；理由：c_expander 明确包含 c.mul 与 zext/sext 子集；专用 Zcb harness 已检查，未运行；子案例：见证据 E4/E5；证据 ID：[E4/E5](units/rva23u64-scalar-v1.md#evidence-table)。 |
 | `RVA23U64/v1.0/§3.1.1.2/Zfa` | 附加浮点指令。 | 状态：`not-studied`；位置/范围：待填；理由：待填；子案例：待填；证据 ID：待填。 | 状态：`not-studied`；位置/范围：待填；理由：待填；子案例：待填；证据 ID：待填。 |
 | `RVA23U64/v1.0/§3.1.1.2/Zawrs` | 等待保留集指令。 | 状态：`not-studied`；位置/范围：待填；理由：待填；子案例：待填；证据 ID：待填。 | 状态：`not-studied`；位置/范围：待填；理由：待填；子案例：待填；证据 ID：待填。 |
-| `RVA23U64/v1.0/§3.1.1.2/Supm` | 指针屏蔽；执行环境至少须提供选择 PMLEN=0 与 PMLEN=7 的方式。 | 状态：`not-studied`；位置/范围：待填；理由：待填；子案例：待填；证据 ID：待填。 | 状态：`not-studied`；位置/范围：待填；理由：待填；子案例：待填；证据 ID：待填。 |
+| `RVA23U64/v1.0/§3.1.1.2/Supm` | 指针屏蔽；执行环境至少须提供选择 PMLEN=0 与 PMLEN=7 的方式。 | 状态：`partially-studied`；位置/范围：见标量学习单元；理由：EnvPMM 枚举含 Disable 与 PMLEN7，但须核验配置寄存器/执行环境暴露选择及变址路径；子案例：见证据 E2；证据 ID：[E2](units/rva23u64-scalar-v1.md#evidence-table)。 | 状态：`studied-unverified`；位置/范围：见标量学习单元；理由：csr/alu_wrap 有 PMLEN=0/7 地址屏蔽路径线索；对所有访问类与模式的行为未运行；子案例：见证据 E4；证据 ID：[E4](units/rva23u64-scalar-v1.md#evidence-table)。 |
 
 ### RVA23S64 §3.1.2 — 必选基础、继承项与特权扩展
 
@@ -200,7 +200,7 @@ Story 4.1 未收集或采用 Kunminghu、Heliodor 的符合性自述。以后若
 - RVA23S64 必选 profile 行：**58**（1 条基础 + 33 个继承扩展 + 24 个 S64 特有条目：1 个 Zifencei + 15 个其他必选特权扩展 + 8 个 Sha 组成项）。
 - Profile 行总数：**92**。
 - 去重规范要求数：**59**（34 个 U64 要求 + 1 个 S64 基础 + 24 个 S64 特有条目；33 个继承项不重复计数。Sha 是 8 个组成项的组合名称，不另设一条要求行）。
-- 目录建立阶段没有调查实现：两边每个必选 profile 行均为 `not-studied`；此状态不表达实现缺失或已支持。
+- Story 4.2 已填写 RV64I 与本故事标量范围的两侧状态；A 与 Zawrs 明确留给 Story 4.6，其他非本故事领域保持 `not-studied`。单元状态反映静态调查范围，不表达动态通过或完整支持。
 
 ## 来源与证据边界
 
