@@ -1,0 +1,23 @@
+version: 1
+purpose: "只读上游源码基线；学习单元引用 snapshot_id。"
+snapshots:
+  - snapshot_id: xiangshan-kunminghu-v2-20261012
+    project: Kunminghu V2
+    repository: https://github.com/OpenXiangShan/XiangShan.git
+    branch: kunminghu-v2
+    commit: c098f996bf4d301b88693b20315486d31e93bc9d
+    captured_on: 2026-10-12
+    checkout: sources/xiangshan
+    checkout_mode: shallow-detached
+  - snapshot_id: heliodor-master-20261012
+    project: Heliodor
+    repository: https://github.com/dalance/heliodor.git
+    branch: master
+    commit: 94e9c5821c24a8941c3ddc3b76daddc7124a855a
+    captured_on: 2026-10-12
+    checkout: sources/heliodor
+    checkout_mode: shallow-detached
+snapshot_events:
+  - date: 2026-10-12
+    action: initial-baseline
+    details: "首次建立 Story 1.1 基线；固定调查阶段确认的完整 SHA。"
