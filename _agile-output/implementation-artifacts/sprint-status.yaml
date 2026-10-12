@@ -29,7 +29,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 # - Retrospective appends its action items to action_items; the status view surfaces open ones
 generated: 10-12-2026 14:04
-last_updated: 10-12-2026 18:31
+last_updated: 10-12-2026 18:32
 project: learning_rv64_cpu
 project_key: NOKEY
 tracking_system: file-system
@@ -52,7 +52,7 @@ development_status:
   3-3-追踪异常或地址转换路径: done
   epic-3-retrospective: optional
 
-  epic-4: in-progress
+  epic-4: done
   4-1-建立官方必选项清单: done
   4-2-映射-rva23u64-基础整数与标量要求: done
   4-3-映射-rva23u64-浮点要求: done
