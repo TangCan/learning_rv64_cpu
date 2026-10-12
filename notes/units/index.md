@@ -6,3 +6,4 @@
 | --- | --- | --- | --- | --- |
 | `add` | 阶段 1 | RV64I `ADD` 双核对照 | [`notes/units/add-v1.md`](add-v1.md) | 试点完成 |
 | `dependency` | 阶段 2 | RV64I `ADDI` RAW 依赖双核对照 | [`notes/units/dependency-v1.md`](dependency-v1.md) | 单元记录完成；未运行验证 |
+| `branch-recovery` | 阶段 2 | 条件分支错预测冲刷与恢复双核对照 | [`notes/units/branch-recovery-v1.md`](branch-recovery-v1.md) | 单元记录完成；未运行验证 |
