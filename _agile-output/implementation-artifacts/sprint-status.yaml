@@ -1,0 +1,66 @@
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status:
+#   - backlog: Epic not yet started
+#   - in-progress: Epic actively being worked on
+#   - done: All stories in epic completed
+
+# Story Status:
+#   - backlog: Story only exists in epic file
+#   - ready-for-dev: Story file created, ready for development
+#   - in-progress: Developer actively working on implementation
+#   - review: Implementation complete, ready for review
+#   - done: Story completed
+
+# Retrospective Status:
+#   - optional: Can be completed but not required
+#   - done: Retrospective has been completed
+
+# Action Item Status:
+#   - open: Committed during a retrospective, not yet addressed
+#   - in-progress: Actively being worked on
+#   - done: Completed
+
+# WORKFLOW NOTES:
+# ===============
+# - Epic transitions to 'in-progress' automatically when its first story starts (via build's sprint sync)
+# - Stories can be worked in parallel if team capacity allows
+# - Developer typically creates the next story after the previous one is 'done' to incorporate learnings
+# - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
+# - Retrospective appends its action items to action_items; the status view surfaces open ones
+generated: 10-12-2026 14:04
+last_updated: 10-12-2026 14:04
+project: learning_rv64_cpu
+project_key: NOKEY
+tracking_system: file-system
+story_location: _agile-output/implementation-artifacts
+development_status:
+  epic-1: backlog
+  1-1-建立源码与环境基线: backlog
+  1-2-建立统一的学习记录模板: backlog
+  1-3-完成-add-双核对照试点: backlog
+  epic-1-retrospective: optional
+
+  epic-2: backlog
+  2-1-追踪依赖指令的乱序执行与提交: backlog
+  2-2-追踪分支冲刷与恢复: backlog
+  epic-2-retrospective: optional
+
+  epic-3: backlog
+  3-1-追踪普通访存路径: backlog
+  3-2-对照原子内存操作: backlog
+  3-3-追踪异常或地址转换路径: backlog
+  epic-3-retrospective: optional
+
+  epic-4: backlog
+  4-1-建立官方必选项清单: backlog
+  4-2-映射-rva23u64-基础整数与标量要求: backlog
+  4-3-映射-rva23u64-浮点要求: backlog
+  4-4-映射-rva23u64-的基础向量要求: backlog
+  4-5-映射-rva23u64-的其他向量必选项: backlog
+  4-6-映射-rva23u64-的内存与缓存要求: backlog
+  4-7-映射-rva23s64-的监督模式与陷阱要求: backlog
+  4-8-映射-rva23s64-的地址转换与页表要求: backlog
+  4-9-映射-rva23s64-的-hypervisor-必选要求: backlog
+  4-10-核对-rva23-必选项映射完整性: backlog
+  epic-4-retrospective: optional
