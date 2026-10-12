@@ -8,3 +8,4 @@
 | `dependency` | 阶段 2 | RV64I `ADDI` RAW 依赖双核对照 | [`notes/units/dependency-v1.md`](dependency-v1.md) | 单元记录完成；未运行验证 |
 | `branch-recovery` | 阶段 2 | 条件分支错预测冲刷与恢复双核对照 | [`notes/units/branch-recovery-v1.md`](branch-recovery-v1.md) | 单元记录完成；未运行验证 |
 | `load` | 阶段 3 | RV64I `LD` 普通访存路径双核对照 | [`notes/units/load-v1.md`](load-v1.md) | 单元记录完成；未运行验证 |
+| `amoadd-d` | 阶段 3 | RV64A `AMOADD.D` 原子读改写双核对照 | [`notes/units/amoadd-d-v1.md`](amoadd-d-v1.md) | 单元记录完成；测试被工具链阻止，动态行为未验证 |
