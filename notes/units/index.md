@@ -15,5 +15,6 @@
 | `rva23u64-vector` | Epic 4 / Story 4.4 | RVA23U64 基础向量 V 要求双核映射 | [`rva23u64-vector-v1.md`](rva23u64-vector-v1.md) | 单元记录完成；静态源码/测试材料检查，未运行测试；完整指令、参数组合、异常/重启及 mask/tail 边界未验证 |
 | `rva23u64-vector-security-and-half` | Epic 4 / Story 4.5 | RVA23U64 Zvfhmin、Zvbb、Zvkt 向量要求双核映射 | [`rva23u64-vector-security-and-half.md`](rva23u64-vector-security-and-half.md) | 单元记录已建立；静态源码、配置和测试材料已检查，未运行；Zvfhmin 转换与 Zvbb 集合未完整验证；两侧 Zvkt DIEL 均无本轮时序/形式证明 |
 | `rva23u64-memory-cache` | Epic 4 / Story 4.6 | RVA23U64 内存与缓存必选要求双核映射 | [`rva23u64-memory-cache-v1.md`](rva23u64-memory-cache-v1.md) | 单元记录已建立；两侧 RTL/配置/测试材料已静态检查，未运行；PMA 区域、取指原子性、完整原子操作与进展边界未验证 |
+| `rva23s64-supervisor-traps` | Epic 4 / Story 4.7 | RVA23S64 监督模式与陷阱要求双核映射 | [`rva23s64-supervisor-traps-v1.md`](rva23s64-supervisor-traps-v1.md) | 单元记录已建立；两侧 RTL 与 Heliodor S-mode 测试源码已检查；Veryl CLI 不在 PATH；显式调用本机 latest/nightly 0.22.0 均在 testbench check 阶段失败，本轮测试未启动；ECALL 路由、任意 stvec BASE 与 Sstvala 子案例未验证 |
 
 RVA23 必选项覆盖目录（Epic 4）：[`notes/rva23-coverage.md`](../rva23-coverage.md)。Story 4.2 已填基础整数与标量映射；Story 4.3 已填 F、D、Zfhmin、Zfa；Story 4.4 已填基础 V 的双核静态映射（定向测试材料未运行）；Story 4.5 已填 Zvfhmin、Zvbb、Zvkt 的有限双核静态映射（Zvkt 未验证）；Story 4.6 已填 A 与内存/缓存要求的有限双核静态映射（本轮未运行；PMA 与平台级保证未验证）；其他领域由后续故事调查。
