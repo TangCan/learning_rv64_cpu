@@ -29,7 +29,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 # - Retrospective appends its action items to action_items; the status view surfaces open ones
 generated: 10-12-2026 14:04
-last_updated: 10-12-2026 16:56
+last_updated: 10-12-2026 17:07
 project: learning_rv64_cpu
 project_key: NOKEY
 tracking_system: file-system
@@ -56,7 +56,7 @@ development_status:
   4-1-建立官方必选项清单: review
   4-2-映射-rva23u64-基础整数与标量要求: review
   4-3-映射-rva23u64-浮点要求: review
-  4-4-映射-rva23u64-的基础向量要求: backlog
+  4-4-映射-rva23u64-的基础向量要求: review
   4-5-映射-rva23u64-的其他向量必选项: backlog
   4-6-映射-rva23u64-的内存与缓存要求: backlog
   4-7-映射-rva23s64-的监督模式与陷阱要求: backlog

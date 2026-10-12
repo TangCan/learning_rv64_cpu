@@ -12,5 +12,6 @@
 | `sv39-load-fault` | 阶段 3 | Sv39 非规范 `LD` page fault 与 M-mode trap 双核对照 | [`notes/units/sv39-load-fault-v1.md`](sv39-load-fault-v1.md) | 单元记录完成；源码已检查，动态行为未验证 |
 | `rva23u64-scalar` | Epic 4 / Story 4.2 | RVA23U64 基础整数与标量要求双核映射 | [`rva23u64-scalar-v1.md`](rva23u64-scalar-v1.md) | 单元记录完成；本次仅静态源码/测试材料检查，未运行测试 |
 | `rva23u64-floating-point` | Epic 4 / Story 4.3 | RVA23U64 F、D、Zfhmin、Zfa 标量浮点要求双核映射 | [`rva23u64-floating-point-v1.md`](rva23u64-floating-point-v1.md) | 单元记录完成；静态源码/测试材料检查，未运行测试；舍入、NaN-box、异常 flags 与 FS 边界未验证 |
+| `rva23u64-vector` | Epic 4 / Story 4.4 | RVA23U64 基础向量 V 要求双核映射 | [`rva23u64-vector-v1.md`](rva23u64-vector-v1.md) | 单元记录完成；静态源码/测试材料检查，未运行测试；完整指令、参数组合、异常/重启及 mask/tail 边界未验证 |
 
-RVA23 必选项覆盖目录（Epic 4）：[`notes/rva23-coverage.md`](../rva23-coverage.md)。Story 4.2 已填基础整数与标量映射；Story 4.3 已填 F、D、Zfhmin、Zfa；其他领域由后续故事调查。
+RVA23 必选项覆盖目录（Epic 4）：[`notes/rva23-coverage.md`](../rva23-coverage.md)。Story 4.2 已填基础整数与标量映射；Story 4.3 已填 F、D、Zfhmin、Zfa；Story 4.4 已填基础 V 的双核静态映射（定向测试材料未运行）；其他领域由后续故事调查。
