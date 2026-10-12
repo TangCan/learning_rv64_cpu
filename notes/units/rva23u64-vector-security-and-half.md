@@ -17,7 +17,7 @@ spec_refs:
     profile_category: "not-profile-specific"
   - name: "RISC-V Cryptography Extensions: Vector Instructions"
     edition: "v1.0, ratified"
-    section: "§§32.1.2.1, 32.1.2.15 / Zvbb, Zvkt"
+    section: "§§31.2.1, 31.2.15 / Zvbb, Zvkt"
     profile_category: "not-profile-specific"
 source_snapshots:
   - project: "Kunminghu"
@@ -43,15 +43,15 @@ source_snapshots:
 
 ## 架构行为与子案例
 
-RVA23U64 v1.0 §3.1.1.2 将 Zvfhmin、Zvbb、Zvkt 列为新增必选扩展。V v1.0 §30.18.4 的 Zvfhmin 定义只在 `SEW=16` 时启用 `vfwcvt.f.f.v`（binary16 转 binary32）及 `vfncvt.f.f.w`（binary32 转 binary16），并依赖 Zve32f；更完整的 `Zvfh` 才使多类浮点运算、归约和搬移可在 SEW=16 使用。Vector Crypto v1.0 §32.1.2.1 定义 Zvbb 的完整十类助记符/形式；§32.1.2.15 定义 Zvkt 的 DIEL 列表、操作数豁免和不受 Zvkt 影响的操作。EEW 条件按 §32.1.2 总览：Zve32x 对应 8/16/32 位，Zve64x 还包括 64 位。官方来源：[RVA23 Profile v1.0 §3.1](https://docs.riscv.org/reference/rva23/v1.0/rva23-profiles.html)、[V v1.0 §30.18.4](https://docs.riscv.org/reference/isa/unpriv/v-st-ext)、[Vector Crypto v1.0 §§32.1.2.1、32.1.2.15](https://docs.riscv.org/reference/isa/unpriv/vector-crypto.html)。
+RVA23U64 v1.0 §3.1.1.2 将 Zvfhmin、Zvbb、Zvkt 列为新增必选扩展。V v1.0 §30.18.4 的 Zvfhmin 定义只在 `SEW=16` 时启用 `vfwcvt.f.f.v`（binary16 转 binary32）及 `vfncvt.f.f.w`（binary32 转 binary16），并依赖 Zve32f；更完整的 `Zvfh` 才使多类浮点运算、归约和搬移可在 SEW=16 使用。Vector Crypto v1.0 §31.2.1 列出 Zvbb 的十类助记符/形式；§31.2.15.1 将所有 Zvbb 指令纳入 Zvkt 的 DIEL 要求。§31.1.4 说明向量密码指令 EEW=SEW；§31.2 总览规定 Zvbb 在 Zve32x 下支持 EEW 8/16/32，在 Zve64x 下另支持 EEW=64。Zvkt 也涵盖 §31.2.15.2–.14 所列的 Zvbc、整数加减与进位、比较、复制、扩展、逻辑、乘法/乘加、merge、permute、移位和 slide 指令。控制用途的 vrgather 索引及 vslide 位移豁免 DIEL；`vl`、`vtype`、mask、编码常量不属于数据操作数。存储、浮点、饱和加减、clip、compress、除法、average、mask 操作（含 `vcpop.m`）、min/max、multiply-saturate、reduce、shift-round、vset 明确不受 Zvkt 约束。本单元列明规范范围，不据此推断实现时延。官方来源：[RVA23 Profile v1.0 §3.1](https://docs.riscv.org/reference/rva23/v1.0/rva23-profiles.html)、[V v1.0 §30.18.4](https://docs.riscv.org/reference/isa/unpriv/v-st-ext)、[Vector Crypto v1.0 §§31.1.4、31.2、31.2.1、31.2.15](https://docs.riscv.org/reference/isa/v20250508/unpriv/vector-crypto.html)。
 
 | 子案例 | 覆盖状态 | 说明 / 排除原因 |
 | --- | --- | --- |
 | Zvfhmin 转换集合 | unconfirmed | 需要 `SEW=16` 的 binary16↔binary32 两个转换；当前只见 Kunminghu 路由线索，Heliodor 的 FP 定向材料主要是 SEW=32/64，未验证目标 binary16 向量行为（E2、E5–E6）。 |
 | Zvfh H 运算与 Zvfhmin 边界 | excluded | `Zvfh` 扩展额外包含 H 算术/归约/搬移；`scripts/xiangshan.py` 中 `rv64uzvfh-*` 镜像不作为 Zvfhmin 必需转换的测试结论（E3）。标量 Zfhmin 文件也不属于向量证据（E4）。 |
 | Zvbb 指令集合 | unconfirmed | 规范列出 vandn、vbrev、vbrev8、vrev8、vclz、vctz、vcpop、vrol、vror、vwsll 及其形式；源码出现部分 BitPat/ALU 分支和 ACT unsupported 配置不能证明集合完整或语义正确（E1、E2、E4）。 |
-| Zvbb EEW / SEW | unconfirmed | EEW 8/16/32 对应 Zve32x，EEW64 对应 Zve64x；本轮未逐项检查两侧每条操作合法宽度与所有向量配置（E1、E2、E7）。 |
-| Zvkt DIEL 适用指令 | unconfirmed | 对已实现的列举指令要求 DIEL；部分控制值/指令字段、`vl`、`vtype`、掩码等按规范豁免，且某些操作（如所有存储与浮点、`vcpop.m`）明确不受其约束。逐指令范围需依 §32.1.2.15，不可将扩展名/译码/功能结果视为证明（E1、E7）。 |
+| Zvbb EEW / SEW | unconfirmed | Vector Crypto §31.1.4 对所述向量密码指令规定 EEW=SEW；§31.2 的 Zvbb 概述允许 Zve32x 使用 EEW 8/16/32，Zve64x 另支持 EEW=64。两侧尚未逐项核验每条指令的译码、SEW/EEW 和全部配置（E1、E2、E7）。 |
+| Zvkt DIEL 适用指令 | unconfirmed | 对已实现的列举指令要求 DIEL；部分控制值/指令字段、`vl`、`vtype`、掩码等按规范豁免，且某些操作（如所有存储与浮点、`vcpop.m`）明确不受其约束。Zvbb DIEL 集合为 vandn.v[vx]、vclz.v、vcpop.v、vctz.v、vbrev.v、vbrev8.v、vrev8.v、vrol.v[vx]、vror.v[vxi]、vwsll.[vv,vx,vi]；此外还包括规范列出的基础 V 整数操作。`vl`、`vtype`、mask 与指令编码常量不属于数据操作数，vrgather 的索引和 vslide 的位移还按条款豁免；存储、浮点、`vcpop.m` 等不受 Zvkt 约束。完整范围见 §31.2.15；译码/功能结果不证明时延属性（E1、E7）。 |
 | DIEL 证据 | unconfirmed | 未检查到能建立输入数据与执行延迟无关性的本轮形式化或时序证据；ACT 配置及普通功能断言仅支持其配置/功能测试声明（E4、E7）。 |
 | 本轮测试运行 | excluded | 本轮只静态检查源码、配置和测试文件；所有上游定向测试均未运行，无 `run-pass`/`run-fail` 证据（E3–E6）。 |
 
@@ -79,14 +79,14 @@ RVA23U64 v1.0 §3.1.1.2 将 Zvfhmin、Zvbb、Zvkt 列为新增必选扩展。V v
 
 | ID | 支持的 claim / 自检 | Kind | Status | 项目 / snapshot | 证据位置 / 测试文件 | Command | Configuration | Input / case | Expected | Observed | 产物路径 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| E1 | C2 | source | inspected | Kunminghu / `xiangshan-kunminghu-v2-20261012` | `src/main/scala/xiangshan/backend/decode/Instructions.scala` 的 `Zvbb` BitPat；`VecDecoder.scala` Zvbb 注释及 OPIVV/OPIVX/OPIVI/OPMVV 表；`Parameters.scala` ISA 名称声明 | not-run | 固定 sources.lock 快照 | 部分 vandn、vbrev、vclz/vctz/vcpop、vrol/vror/vwsll pattern/分派 | 源码能确认具体 pattern/route | 已检查静态源码；未验证完整集合及执行语义 | none |
+| E1 | C2 | source | inspected | Kunminghu / `xiangshan-kunminghu-v2-20261012` | `src/main/scala/xiangshan/backend/decode/Instructions.scala` 的 `Zvbb` BitPat；`VecDecoder.scala` Zvbb 注释及 OPIVV/OPIVX/OPIVI/OPMVV 表；`Parameters.scala` ISA 名称声明 | not-run | 固定 sources.lock 快照 | BitPat 定义包含 vandn.vv/vx、vbrev.v、vbrev8.v、vrev8.v、vclz.v、vctz.v、vcpop.v、vrol.vv/vx、vror.vi/vv/vx、vwsll.vi/vv/vx；VecDecoder 可见部分 vv/vx/vi 路由（不据此称完整端到端实现） | 源码能确认具体 pattern/route | 已检查静态源码；未验证完整集合及执行语义 | none |
 | E2 | C1、自检 | source | inspected | Kunminghu / `xiangshan-kunminghu-v2-20261012` | `VecDecoder.scala` 的 `VFWCVT_F_F_V`/`VFNCVT_F_F_W` 向量转换 decoder routes；`FPDecoder.scala` FP16、SEW e16 控制及 `FCVT_H_S`/`FCVT_S_H` 等标量路由；`Parameters.scala` 扩展名 | not-run | 固定 sources.lock 快照 | half-FP 转换 decoder 线索及向量/标量路径边界 | 区分路由线索与 Zvfhmin 架构所需两个向量转换 | 只观察到路由/控制线索；没有本轮行为结果或 DIEL 证据 | none |
-| E3 | C1、自检 | test-inspected | unverified | Kunminghu / `xiangshan-kunminghu-v2-20261012` | `scripts/xiangshan.py` lines 442–510 的镜像条目（如 `rv64uzvfh-p-vfncvtff.bin`、`rv64uzvfh-p-vfwcvtff.bin`）；`src/test/scala/xiangshan/backend/fu/vector/ByteMaskTailGenTest.scala` 与 `VsetModuleMain.scala` 文件名/材料 | not-run | 上游镜像条目 | 镜像名称含 `zvfh`，并含广泛 vector FP 案例 | 只按清单识别测试域，不将 Zvfh 镜像等同 Zvfhmin 案例 | 清单/测试材料已检查；无本轮运行结果，亦未定位专门 Zvfhmin/Zvbb 测试入口 | none |
+| E3 | C1、自检 | test-inspected | unverified | Kunminghu / `xiangshan-kunminghu-v2-20261012` | `scripts/xiangshan.py` lines 442–510 的 `rv64uzvfh-p-vfncvtff.bin`、`rv64uzvfh-p-vfwcvtff.bin` 镜像名称（不等同 Zvfhmin）；`ByteMaskTailGenTest` 与 `VsetModuleMain` 只作为基础向量 mask/tail 与 vtype 行为的测试材料，不是 Zvbb/Zvfhmin 专项测试 | not-run | 上游镜像条目 | 镜像名称含 `zvfh`，并含广泛 vector FP 案例 | 只按清单识别测试域，不将 Zvfh 镜像等同 Zvfhmin 案例 | 清单/测试材料已检查；无本轮运行结果，亦未定位专门 Zvfhmin/Zvbb 测试入口 | none |
 | E4 | C1–C3 | source | inspected | Heliodor / `heliodor-master-20261012` | `src/core/vector_unit.veryl` 的 FP、SEW/ALU 路径（含 `h_is_vcpop`/`vcpop.m` mask reduction） | not-run | 固定 sources.lock 快照 | 一般向量 FP、有限位操作；区分 `vcpop.m` 与 `vcpop.v` | 只记录可见源码子集 | 静态检查源码路径；没有逐指令完整范围或时延证明 | none |
-| E5 | C1–C3 | source | inspected | Heliodor / `heliodor-master-20261012` | `test/act/config/heliodor/sail.json` 的 `Zvfhmin`、`Zvbb`、`Zvkt` 配置项 | not-run | ACT Sail config | 三项各 `supported: false` | 作为 ACT 元数据记录 | 已检查配置字段；不据此单独推断 RTL 缺失/不合规 | none |
+| E5 | C1–C3 | source | inspected | Heliodor / `heliodor-master-20261012` | `test/act/config/heliodor/sail.json:647-679` 的 `Zvfhmin`、`Zvbb`、`Zvkt` 配置项（ACT 使用的 Sail 参考模型能力声明，字段 `supported: false`） | not-run | ACT Sail config | 三项各 `supported: false` | 作为 ACT 元数据记录 | 已检查配置字段；不据此单独推断 RTL 缺失/不合规 | none |
 | E6 | C1–C2、自检 | test-inspected | unverified | Heliodor / `heliodor-master-20261012` | `test/vfarith/vfarith_test.S` §V3j（SEW=32→64 widen convert）及 §V4h（SEW=64→32 narrow convert）；`test/vnarrow/vnarrow_test.S` 的 SEW=16 `vnsrl/vnsra` 整数案例；`test/riscv-arch-test/build/rv64uzbb/binvi.hex` | not-run | 定向 FP 测试 / ACT 已构建镜像 | vfarith §V3j/V4h 为单/双 FP 转换，vnarrow 为 32→16 位整数窄化；rv64uzbb/binvi 为标量 Zbb | 只说明检查过的不同测试域 | 不是 Zvfhmin binary16 转换、Zvbb vector cases 或本轮通过结果 | none |
-| E7 | C3、自检 | source | inspected | 两项目 / 对应 `sources.lock` snapshot | `rg -n` 文本搜索 `sources/xiangshan/src/main/scala`、`src/test/scala`、`sources/heliodor/src/core`、`test`，词组 `zvfhmin|zvbb|zvkt|data.independent|constant.time|DIEL|formal|assert|cover|latency|timing`；另检查 `sail.json` 配置 | not-run | 固定源码快照 | 查找可证明数据操作数不影响执行时延的证据 | 需要可复查的时序/形式证据；译码/功能测试不充分 | 本轮未发现对应证明材料；负向搜索不证明其不存在 | none |
-| E8 | 规范边界、自检 | spec | inspected | RISC-V RVA23 v1.0、V v1.0、Vector Crypto v1.0 | RVA23 §3.1.1.2；V §30.18.4；Vector Crypto §§32.1.2.1、32.1.2.15 | not-run | 已 ratify 规范文本 | 必选项、binary16 conversions、Zvbb 列表/EEW 与 Zvkt DIEL 范围/豁免 | 各结论按指定条款限定 | 已检查规范定义；这不是实现验证 | none |
+| E7 | C3、自检 | source | inspected | 两项目 / 对应 `sources.lock` snapshot | `rg -n` 文本搜索 `sources/xiangshan/src/main/scala`、`src/test/scala`、`sources/heliodor/src/core`、`test`，词组 `zvfhmin|zvbb|zvkt|data.independent|constant.time|DIEL|formal|assert|cover|latency|timing`；另检查 `sail.json` 配置 | not-run | 固定源码快照 | 查找可证明数据操作数不影响执行时延的证据 | 需要可复查的时序/形式证据；译码/功能测试不充分 | 未发现可证明数据操作数时延无关的实现证据；该全树搜索只能说明本次搜索未命中，不能证明其不存在 | none |
+| E8 | 规范边界、自检 | spec | inspected | RISC-V RVA23 v1.0、V v1.0、Vector Crypto v1.0 | RVA23 §3.1.1.2；V §30.18.4；Vector Crypto §§31.1.4、31.2、31.2.1、31.2.15 | not-run | 已 ratify 规范文本 | 必选项、binary16 conversions、Zvbb 列表/EEW 与 Zvkt DIEL 范围/豁免 | 各结论按指定条款限定 | 已检查规范定义；这不是实现验证 | none |
 
 ## 学习者总结
 
