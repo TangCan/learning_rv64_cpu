@@ -5,3 +5,4 @@
 | unit_id | stage_id | 学习单元 | 当前版本文件（`<unit_id>-vN.md`） | 状态 |
 | --- | --- | --- | --- | --- |
 | `add` | 阶段 1 | RV64I `ADD` 双核对照 | [`notes/units/add-v1.md`](add-v1.md) | 试点完成 |
+| `dependency` | 阶段 2 | RV64I `ADDI` RAW 依赖双核对照 | [`notes/units/dependency-v1.md`](dependency-v1.md) | 单元记录完成；未运行验证 |
