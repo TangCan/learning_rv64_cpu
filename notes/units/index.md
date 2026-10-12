@@ -4,4 +4,4 @@
 
 | unit_id | stage_id | 学习单元 | 当前版本文件（`<unit_id>-vN.md`） | 状态 |
 | --- | --- | --- | --- | --- |
-| — | — | 尚无已登记单元 | — | — |
+| `add` | 阶段 1 | RV64I `ADD` 双核对照 | [`notes/units/add-v1.md`](add-v1.md) | 试点完成 |
