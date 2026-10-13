@@ -1,0 +1,197 @@
+
+experiments/ssstateen/ssstateen_probe.elf:     file format elf64-littleriscv
+
+
+Disassembly of section .text:
+
+0000000080000000 <_start>:
+    80000000:	00001117          	auipc	sp,0x1
+    80000004:	31010113          	addi	sp,sp,784 # 80001310 <stack_top>
+    80000008:	00000297          	auipc	t0,0x0
+    8000000c:	23c28293          	addi	t0,t0,572 # 80000244 <m_trap>
+    80000010:	30529073          	csrw	mtvec,t0
+    80000014:	00001297          	auipc	t0,0x1
+    80000018:	ffc28293          	addi	t0,t0,-4 # 80001010 <report>
+    8000001c:	34029073          	csrw	mscratch,t0
+    80000020:	10c02373          	csrr	t1,sstateen0
+    80000024:	0062b023          	sd	t1,0(t0)
+    80000028:	10d02373          	csrr	t1,sstateen1
+    8000002c:	0062b423          	sd	t1,8(t0)
+    80000030:	10e02373          	csrr	t1,sstateen2
+    80000034:	0062b823          	sd	t1,16(t0)
+    80000038:	10f02373          	csrr	t1,sstateen3
+    8000003c:	0062bc23          	sd	t1,24(t0)
+    80000040:	60c02373          	csrr	t1,hstateen0
+    80000044:	0262b023          	sd	t1,32(t0)
+    80000048:	60d02373          	csrr	t1,hstateen1
+    8000004c:	0262b423          	sd	t1,40(t0)
+    80000050:	60e02373          	csrr	t1,hstateen2
+    80000054:	0262b823          	sd	t1,48(t0)
+    80000058:	60f02373          	csrr	t1,hstateen3
+    8000005c:	0262bc23          	sd	t1,56(t0)
+    80000060:	fff00313          	li	t1,-1
+    80000064:	30c31073          	csrw	mstateen0,t1
+    80000068:	30d31073          	csrw	mstateen1,t1
+    8000006c:	30e31073          	csrw	mstateen2,t1
+    80000070:	30f31073          	csrw	mstateen3,t1
+    80000074:	10c31073          	csrw	sstateen0,t1
+    80000078:	10c023f3          	csrr	t2,sstateen0
+    8000007c:	0672b023          	sd	t2,96(t0)
+    80000080:	10d31073          	csrw	sstateen1,t1
+    80000084:	10d023f3          	csrr	t2,sstateen1
+    80000088:	0672b423          	sd	t2,104(t0)
+    8000008c:	10e31073          	csrw	sstateen2,t1
+    80000090:	10e023f3          	csrr	t2,sstateen2
+    80000094:	0672b823          	sd	t2,112(t0)
+    80000098:	10f31073          	csrw	sstateen3,t1
+    8000009c:	10f023f3          	csrr	t2,sstateen3
+    800000a0:	0672bc23          	sd	t2,120(t0)
+    800000a4:	60c31073          	csrw	hstateen0,t1
+    800000a8:	60c023f3          	csrr	t2,hstateen0
+    800000ac:	0872b023          	sd	t2,128(t0)
+    800000b0:	60d31073          	csrw	hstateen1,t1
+    800000b4:	60d023f3          	csrr	t2,hstateen1
+    800000b8:	0872b423          	sd	t2,136(t0)
+    800000bc:	60e31073          	csrw	hstateen2,t1
+    800000c0:	60e023f3          	csrr	t2,hstateen2
+    800000c4:	0872b823          	sd	t2,144(t0)
+    800000c8:	60f31073          	csrw	hstateen3,t1
+    800000cc:	60f023f3          	csrr	t2,hstateen3
+    800000d0:	0872bc23          	sd	t2,152(t0)
+    800000d4:	30c01073          	csrw	mstateen0,zero
+    800000d8:	30d01073          	csrw	mstateen1,zero
+    800000dc:	30e01073          	csrw	mstateen2,zero
+    800000e0:	30f01073          	csrw	mstateen3,zero
+    800000e4:	60c01073          	csrw	hstateen0,zero
+    800000e8:	60d01073          	csrw	hstateen1,zero
+    800000ec:	60e01073          	csrw	hstateen2,zero
+    800000f0:	60f01073          	csrw	hstateen3,zero
+    800000f4:	00001297          	auipc	t0,0x1
+    800000f8:	f1c28293          	addi	t0,t0,-228 # 80001010 <report>
+    800000fc:	30c023f3          	csrr	t2,mstateen0
+    80000100:	0472b023          	sd	t2,64(t0)
+    80000104:	30d023f3          	csrr	t2,mstateen1
+    80000108:	0472b423          	sd	t2,72(t0)
+    8000010c:	30e023f3          	csrr	t2,mstateen2
+    80000110:	0472b823          	sd	t2,80(t0)
+    80000114:	30f023f3          	csrr	t2,mstateen3
+    80000118:	0472bc23          	sd	t2,88(t0)
+    8000011c:	00000297          	auipc	t0,0x0
+    80000120:	01c28293          	addi	t0,t0,28 # 80000138 <hs_blocked>
+    80000124:	34129073          	csrw	mepc,t0
+    80000128:	00001337          	lui	t1,0x1
+    8000012c:	8003031b          	addiw	t1,t1,-2048 # 800 <_start-0x7ffff800>
+    80000130:	30031073          	csrw	mstatus,t1
+    80000134:	30200073          	mret
+
+0000000080000138 <hs_blocked>:
+    80000138:	fff00313          	li	t1,-1
+    8000013c:	10c31073          	csrw	sstateen0,t1
+    80000140:	10c023f3          	csrr	t2,sstateen0
+    80000144:	10d31073          	csrw	sstateen1,t1
+    80000148:	10d023f3          	csrr	t2,sstateen1
+    8000014c:	10e31073          	csrw	sstateen2,t1
+    80000150:	10e023f3          	csrr	t2,sstateen2
+    80000154:	10f31073          	csrw	sstateen3,t1
+    80000158:	10f023f3          	csrr	t2,sstateen3
+    8000015c:	60c31073          	csrw	hstateen0,t1
+    80000160:	60c023f3          	csrr	t2,hstateen0
+    80000164:	60d31073          	csrw	hstateen1,t1
+    80000168:	60d023f3          	csrr	t2,hstateen1
+    8000016c:	60e31073          	csrw	hstateen2,t1
+    80000170:	60e023f3          	csrr	t2,hstateen2
+    80000174:	60f31073          	csrw	hstateen3,t1
+    80000178:	60f023f3          	csrr	t2,hstateen3
+    8000017c:	60a31073          	csrw	henvcfg,t1
+    80000180:	60a023f3          	csrr	t2,henvcfg
+    80000184:	10a31073          	csrw	0x10a,t1
+    80000188:	10a023f3          	csrr	t2,0x10a
+    8000018c:	00000073          	ecall
+
+0000000080000190 <hs_enabled>:
+    80000190:	00001297          	auipc	t0,0x1
+    80000194:	e8028293          	addi	t0,t0,-384 # 80001010 <report>
+    80000198:	fff00313          	li	t1,-1
+    8000019c:	10c31073          	csrw	sstateen0,t1
+    800001a0:	10c023f3          	csrr	t2,sstateen0
+    800001a4:	0c72b023          	sd	t2,192(t0)
+    800001a8:	10d31073          	csrw	sstateen1,t1
+    800001ac:	10d023f3          	csrr	t2,sstateen1
+    800001b0:	0c72b423          	sd	t2,200(t0)
+    800001b4:	10e31073          	csrw	sstateen2,t1
+    800001b8:	10e023f3          	csrr	t2,sstateen2
+    800001bc:	0c72b823          	sd	t2,208(t0)
+    800001c0:	10f31073          	csrw	sstateen3,t1
+    800001c4:	10f023f3          	csrr	t2,sstateen3
+    800001c8:	0c72bc23          	sd	t2,216(t0)
+    800001cc:	60c31073          	csrw	hstateen0,t1
+    800001d0:	60c023f3          	csrr	t2,hstateen0
+    800001d4:	0e72b023          	sd	t2,224(t0)
+    800001d8:	60d31073          	csrw	hstateen1,t1
+    800001dc:	60d023f3          	csrr	t2,hstateen1
+    800001e0:	0e72b423          	sd	t2,232(t0)
+    800001e4:	60e31073          	csrw	hstateen2,t1
+    800001e8:	60e023f3          	csrr	t2,hstateen2
+    800001ec:	0e72b823          	sd	t2,240(t0)
+    800001f0:	60f31073          	csrw	hstateen3,t1
+    800001f4:	60f023f3          	csrr	t2,hstateen3
+    800001f8:	0e72bc23          	sd	t2,248(t0)
+    800001fc:	60a31073          	csrw	henvcfg,t1
+    80000200:	60a023f3          	csrr	t2,henvcfg
+    80000204:	1072b023          	sd	t2,256(t0)
+    80000208:	10a31073          	csrw	0x10a,t1
+    8000020c:	10a023f3          	csrr	t2,0x10a
+    80000210:	1072b423          	sd	t2,264(t0)
+    80000214:	00001297          	auipc	t0,0x1
+    80000218:	dfc28293          	addi	t0,t0,-516 # 80001010 <report>
+    8000021c:	1102b303          	ld	t1,272(t0)
+    80000220:	0e02b383          	ld	t2,224(t0)
+    80000224:	03f3d393          	srli	t2,t2,0x3f
+    80000228:	00131313          	slli	t1,t1,0x1
+    8000022c:	00736333          	or	t1,t1,t2
+    80000230:	000802b7          	lui	t0,0x80
+    80000234:	0012829b          	addiw	t0,t0,1 # 80001 <_start-0x7ff7ffff>
+    80000238:	00c29293          	slli	t0,t0,0xc
+    8000023c:	0062a023          	sw	t1,0(t0)
+    80000240:	0000006f          	j	80000240 <hs_enabled+0xb0>
+
+0000000080000244 <m_trap>:
+    80000244:	fe010113          	addi	sp,sp,-32
+    80000248:	00513023          	sd	t0,0(sp)
+    8000024c:	00613423          	sd	t1,8(sp)
+    80000250:	00713823          	sd	t2,16(sp)
+    80000254:	00001297          	auipc	t0,0x1
+    80000258:	dbc28293          	addi	t0,t0,-580 # 80001010 <report>
+    8000025c:	1102b303          	ld	t1,272(t0)
+    80000260:	342023f3          	csrr	t2,mcause
+    80000264:	00331e13          	slli	t3,t1,0x3
+    80000268:	118e0e13          	addi	t3,t3,280
+    8000026c:	005e0e33          	add	t3,t3,t0
+    80000270:	007e3023          	sd	t2,0(t3)
+    80000274:	00130313          	addi	t1,t1,1
+    80000278:	1062b823          	sd	t1,272(t0)
+    8000027c:	342023f3          	csrr	t2,mcause
+    80000280:	00900e13          	li	t3,9
+    80000284:	03c39a63          	bne	t2,t3,800002b8 <trap_resume>
+    80000288:	fff00e93          	li	t4,-1
+    8000028c:	03ee9e93          	slli	t4,t4,0x3e
+    80000290:	30ce9073          	csrw	mstateen0,t4
+    80000294:	60ce9073          	csrw	hstateen0,t4
+    80000298:	fff00e9b          	addiw	t4,zero,-1
+    8000029c:	03fe9e93          	slli	t4,t4,0x3f
+    800002a0:	30de9073          	csrw	mstateen1,t4
+    800002a4:	60de9073          	csrw	hstateen1,t4
+    800002a8:	30ee9073          	csrw	mstateen2,t4
+    800002ac:	60ee9073          	csrw	hstateen2,t4
+    800002b0:	30fe9073          	csrw	mstateen3,t4
+    800002b4:	60fe9073          	csrw	hstateen3,t4
+
+00000000800002b8 <trap_resume>:
+    800002b8:	341023f3          	csrr	t2,mepc
+    800002bc:	00438393          	addi	t2,t2,4
+    800002c0:	34139073          	csrw	mepc,t2
+    800002c4:	00013283          	ld	t0,0(sp)
+    800002c8:	00813303          	ld	t1,8(sp)
+    800002cc:	01013383          	ld	t2,16(sp)
+    800002d0:	02010113          	addi	sp,sp,32
+    800002d4:	30200073          	mret
