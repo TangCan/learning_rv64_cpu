@@ -25,5 +25,8 @@
 | `rva23s64-sscofpmf` | Epic 5 / Story 5.4 | Sscofpmf HPM overflow、过滤与 LCOFI 对照 | [`rva23s64-sscofpmf-v1.md`](rva23s64-sscofpmf-v1.md) | 两侧活动路径静态检查；Heliodor counter3/event5 目标在 Veryl check 被 testbench `dram` `$readmemh` `invalid_initial_assign` 阻断，仿真未启动；Kunminghu 定向 harness 未定位；OF 清除/re-arm、scountovf 门控、各模式与委托陷阱未动态验证，Heliodor VS/VU filter 静态缺口 |
 | `rva23s64-ssnpm` | Epic 5 / Story 5.5 | Ssnpm S64 pointer masking 双核对照 | [`rva23s64-ssnpm-v1.md`](rva23s64-ssnpm-v1.md) | 双核配置与地址路径静态映射；Heliodor 现有 M-mode Supm 目标被 Veryl `dram` `$readmemh` 检查阻断；S/U/VS/VU、vector、CMO 与权限边界未运行验证 |
 | `rva23s64-ssstateen` | Epic 5 / Story 5.6 | Ssstateen 状态访问门控双核对照 | [`rva23s64-ssstateen-v1.md`](rva23s64-ssstateen-v1.md#自检) | Kunminghu NewCSR 活动路径静态映射，CPU 运行被缺失 Mill 阻断；Heliodor 隔离 M/HS 用例实际发现 CSR 读写与 stateen gate 行为缺失（run-fail）；VS/VU 与 WARL 矩阵未覆盖 |
+| `rva23s64-closeout-audit` | Epic 5 / Story 5.7 | RVA23S64 深度学习证据与项目结项审计 | [`rva23s64-closeout-audit-v1.md`](rva23s64-closeout-audit-v1.md) | 五个精确 mandatory 键与版本已关联；实际运行失败、启动前阻塞、静态证据及未验证案例分别记录；本项目学习交付接受，CPU 行为仍未完成验证 |
 
 RVA23 必选项覆盖目录（Epic 4，后续专题更新状态）：[`notes/rva23-coverage.md`](../rva23-coverage.md)。Story 4.2 已填基础整数与标量映射；Story 4.3 已填 F、D、Zfhmin、Zfa；Story 4.4 已填基础 V 的双核静态映射；Story 4.5 已填 Zvfhmin、Zvbb、Zvkt 的有限双核静态映射；Story 4.6 已填 A 与内存/缓存要求；Story 4.7–4.9 已填 S64 trap、地址转换及 Sha 八项的有限映射；Story 4.10 核对目录完整性并汇总各状态；Stories 5.2–5.5 更新了 Zifencei、Sstc、Sscofpmf、Ssnpm；Story 5.6 更新了 Ssstateen。各单元列出未验证子案例；未调查项在目录中明确标注。
+
+Story 5.7 的全量证据审计、文档链接/sprint 检查结果和项目学习结项决定见 [`rva23s64-closeout-audit-v1.md`](rva23s64-closeout-audit-v1.md)。

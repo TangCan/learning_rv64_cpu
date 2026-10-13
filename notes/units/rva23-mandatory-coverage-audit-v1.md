@@ -62,4 +62,6 @@ source_snapshots:
 
 U64 两侧均已有逐项学习记录，但仍存在未验证子案例。Story 4.10 时 S64 的 Zifencei、Sstc、Sscofpmf 尚未调查；Stories 5.2–5.5 随后分别补充了双核学习单元，因此当前目录计数将这些要求两侧记为 `studied-unverified`。Sscofpmf 和 Ssnpm 的 Heliodor 定向运行均在公共 testbench check 阶段阻断，Kunminghu 对应专题 harness 未定位。Story 5.6 增加 Ssstateen 单元，并将两侧状态更新为 Kunminghu `studied-unverified` 与 Heliodor `not-present`（仅限受控检查的 CSR 路径）。S64 Heliodor 的两个 `evidence-observed` 格保持原始单元定义和证据链接；这个覆盖状态仅表示目录所列证据观察，不能替代完整要求验证。详见 [`notes/rva23-coverage.md`](../rva23-coverage.md) 中的完整逐项映射与未解决项。
 
+Story 5.7 对五个深度单元及结项决定的最终审计见 [`rva23s64-closeout-audit-v1.md`](rva23s64-closeout-audit-v1.md)；此处 Epic 4 目录计数与 Story 4.10 时点的调查记录保持原状。
+
 <a id="rva23-mandatory-coverage-audit-v1-self-check"></a>
