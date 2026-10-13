@@ -30,7 +30,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 # - Retrospective appends its action items to action_items; the status view surfaces open ones
 generated: 10-12-2026 14:04
-last_updated: 10-13-2026 10:41
+last_updated: 10-13-2026 12:30
 project: learning_rv64_cpu
 project_key: NOKEY
 tracking_system: file-system
@@ -66,8 +66,8 @@ development_status:
   4-10-核对-rva23-必选项映射完整性: done
   epic-4-retrospective: done
 
-  epic-5: backlog
-  5-1-确认活动实现路径与验证就绪度: backlog
+  epic-5: in-progress
+  5-1-确认活动实现路径与验证就绪度: review
   5-2-比较-zifencei-与-fence-i: backlog
   5-3-比较-sstc-与-s-vs-timer: backlog
   5-4-比较-sscofpmf-计数溢出和模式过滤: backlog
