@@ -69,7 +69,7 @@ development_status:
   epic-5: in-progress
   5-1-确认活动实现路径与验证就绪度: review
   5-2-比较-zifencei-与-fence-i: review
-  5-3-比较-sstc-与-s-vs-timer: in-progress
+  5-3-比较-sstc-与-s-vs-timer: review
   5-4-比较-sscofpmf-计数溢出和模式过滤: backlog
   5-5-比较-ssnpm-指针屏蔽: backlog
   5-6-比较-ssstateen-状态访问门控: backlog

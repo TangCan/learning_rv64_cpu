@@ -20,8 +20,8 @@ ALLOWED = {"not-studied", "partially-studied", "studied-unverified", "evidence-o
 EXPECTED_COUNTS = {
     ("U64", "Kunminghu"): {"partially-studied": 21, "studied-unverified": 13},
     ("U64", "Heliodor"): {"partially-studied": 14, "studied-unverified": 20},
-    ("S64", "Kunminghu"): {"partially-studied": 37, "studied-unverified": 17, "not-studied": 4},
-    ("S64", "Heliodor"): {"partially-studied": 26, "studied-unverified": 25, "not-studied": 5, "evidence-observed": 2},
+    ("S64", "Kunminghu"): {"partially-studied": 37, "studied-unverified": 19, "not-studied": 2},
+    ("S64", "Heliodor"): {"partially-studied": 26, "studied-unverified": 27, "not-studied": 3, "evidence-observed": 2},
 }
 
 
