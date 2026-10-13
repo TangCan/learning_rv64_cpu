@@ -1,7 +1,7 @@
 ---
 unit_id: "dependency"
 stage_id: "阶段 2"
-scope: "追踪 RV64I 两条相邻整数 ADDI 的寄存器 RAW 依赖，从重命名到整数执行结果写回 ROB 并按序提交；比较 Kunminghu V2 与 Heliodor 固定快照的结构路径。"
+scope: "追踪 RV64I 两条相邻整数 ADDI 的寄存器 RAW 依赖，从重命名到整数执行结果写回 ROB 并按序提交；本案例限定两条指令位于同一 rename bundle；比较 Kunminghu V2 与 Heliodor 固定快照的结构路径。"
 exclusions:
   - "不确定发射/执行/提交周期数、两条指令的具体调度顺序或任何未固定配置下的行为。"
   - "不覆盖 WAW/WAR、多源/多生产者、异常、分支恢复、访存依赖及所有参数化配置。"
@@ -10,11 +10,11 @@ spec_refs:
   - name: "RISC-V Unprivileged ISA Manual, RV64I Base Integer Instruction Set"
     edition: "v20260120; RV64I version 2.1"
     section: "§3.1.2 Integer Computational Instructions; §3.1.2.1 Integer Register-Immediate Instructions"
-    profile_category: "mandatory"
+    profile_category: "not-profile-specific"
   - name: "RISC-V Unprivileged ISA Manual, RV32I Base Integer Instruction Set"
     edition: "v20260120; RV32I version 2.1"
     section: "§1.1.4 Integer Computational Instructions; §1.1.4.1 Integer Register-Immediate Instructions"
-    profile_category: "mandatory"
+    profile_category: "not-profile-specific"
 source_snapshots:
   - project: "Kunminghu V2"
     snapshot_id: "xiangshan-kunminghu-v2-20261012"
@@ -30,15 +30,15 @@ source_snapshots:
 
 ## 单元自检
 
-- **问题：** 当 `addi x6,x5,1` 在 `addi x5,x0,10` 之后被重命名时，为什么它不能直接把 `x5` 的旧值当成操作数？两边分别用什么状态保持这一依赖？
+- **问题：** 当同一 rename bundle 中 `addi x6,x5,1` 紧随 `addi x5,x0,10` 被重命名时，为什么它不能直接把 `x5` 的旧值当成操作数？两边分别用什么状态保持这一依赖？
 - **学习者答案：** 第二条指令的源必须指向第一条指令新分配的物理目的寄存器，而不是重命名前 `x5` 所映射的物理寄存器。重命名建立这个标签关联；若源尚未就绪，发射队列保持依赖。Kunminghu 可由 IQ wakeup 提前唤醒并选择 forward/bypass 数据路径，也可由写回唤醒后从 PRF、寄存器缓存或其他选择路径取得数据；这条指令对实际采用哪条路未确认。结果写入各自 ROB 项，ROB 按程序顺序提交，使架构寄存器应为 `x5=10`、`x6=11`。源码说明这些结构关系，但本文未运行程序验证最终值。
 - **检查类型：** explanation + source-location
 - **证据 ID：** E2–E12；未运行，见 E17–E18
 
 ## 架构行为与子案例
 
-- **可观察行为：** 输入指令序列 `addi x5,x0,10; addi x6,x5,1`，初始 `x0=0`。RV64I 中每条 ADDI 将 `rs1` 与符号扩展的 12 位立即数相加，忽略算术溢出并写入 `rd` 的低 XLEN 位；两条指令的架构结果为 `x5=10`、`x6=11`。ADDI 不产生算术异常。RV64I v20260120 §3.1 建立在 RV32I §1.1 上，只列出相对 RV32I 的差异，并要求结合前章阅读；因此 ADDI 的共同规则由 RV32I §1.1.4.1 与 RV64I §3.1.2.1 一起引用。
-- **规范依据：** [RV64I §3.1、§3.1.2、§3.1.2.1，官方 Unprivileged ISA v20260120](https://docs.riscv.org/reference/isa/unpriv/rv64.html)；[RV32I §1.1.4、§1.1.4.1，同版本](https://docs.riscv.org/reference/isa/v20260120/unpriv/rv32.html)。这两章规定 ADDI 的架构运算，不规定本文所比较的微架构队列和唤醒实现。
+- **可观察行为：** 输入同一 rename bundle 内的指令序列 `addi x5,x0,10; addi x6,x5,1`，初始 `x0=0`。本文只追踪同 bundle 的 producer 到 consumer rename 映射；跨 bundle 的 RAT lookup/旁路路径不在本案例结论范围内。RV64I 中每条 ADDI 将 `rs1` 与符号扩展的 12 位立即数相加，忽略算术溢出并写入 `rd` 的低 XLEN 位；两条指令的架构结果为 `x5=10`、`x6=11`。ADDI 不产生算术异常。RV64I v20260120 §3.1 建立在 RV32I §1.1 上，只列出相对 RV32I 的差异，并要求结合前章阅读；因此 ADDI 的共同规则由 RV32I §1.1.4.1 与 RV64I §3.1.2.1 一起引用。
+- **规范依据：** [RV64I §3.1、§3.1.2、§3.1.2.1，官方 Unprivileged ISA v20260120](https://docs.riscv.org/reference/isa/v20260120/unpriv/rv64.html)；[RV32I §1.1.4、§1.1.4.1，同版本](https://docs.riscv.org/reference/isa/v20260120/unpriv/rv32.html)。这两章规定 ADDI 的架构运算，不规定本文所比较的微架构队列和唤醒实现。
 
 | 子案例 | 覆盖状态 | 说明 / 排除原因 |
 | --- | --- | --- |
@@ -73,7 +73,7 @@ source_snapshots:
 
 | ID | 支持的 claim / 自检 | Kind | Status | 项目 / snapshot | 证据位置 / 测试文件 | Command | Configuration | Input / case | Expected | Observed | 产物路径 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| E1 | 架构行为 | spec | inspected | RISC-V Unprivileged ISA Manual v20260120 | RV64I §3.1.2.1 https://docs.riscv.org/reference/isa/unpriv/rv64.html; RV32I §1.1.4、§1.1.4.1 https://docs.riscv.org/reference/isa/v20260120/unpriv/rv32.html | not-run | 不适用 | `addi x5,x0,10; addi x6,x5,1` | `x5=10`、`x6=11`（XLEN=64） | RV64I 章说明其建立在 RV32I 之上、需结合阅读；合读后 ADDI 将 sign-extended imm 与 rs1 相加并写低 XLEN 位 | none |
+| E1 | 架构行为 | spec | inspected | RISC-V Unprivileged ISA Manual v20260120 | RV64I §3.1.2.1 https://docs.riscv.org/reference/isa/v20260120/unpriv/rv64.html; RV32I §1.1.4、§1.1.4.1 https://docs.riscv.org/reference/isa/v20260120/unpriv/rv32.html | not-run | 不适用 | `addi x5,x0,10; addi x6,x5,1` | `x5=10`、`x6=11`（XLEN=64） | RV64I 章说明其建立在 RV32I 之上、需结合阅读；合读后 ADDI 将 sign-extended imm 与 rs1 相加并写低 XLEN 位 | none |
 | E2 | Kunminghu ADDI 解码 | source | inspected | Kunminghu / `xiangshan-kunminghu-v2-20261012` | `src/main/scala/xiangshan/backend/decode/DecodeUnit.scala:147` | not-run | sources.lock 固定快照 | ADDI | reg + imm，ALU add，IMM_I，xWen | 源码解码表如此标注 | none |
 | E3 | Kunminghu RAT | source | inspected | Kunminghu / `xiangshan-kunminghu-v2-20261012` | `src/main/scala/xiangshan/backend/rename/RenameTable.scala:105-149,151-169` | not-run | sources.lock 固定快照 | speculative/architectural mapping | 重命名查 spec map，提交更新 arch map；spec 写有旁路 | 源码包含两张表、spec 读旁路及 arch 更新逻辑 | none |
 | E4 | Kunminghu producer→consumer rename mapping | source | inspected | Kunminghu / `xiangshan-kunminghu-v2-20261012` | `src/main/scala/xiangshan/backend/rename/Rename.scala:391-415,518-584` | not-run | sources.lock 固定快照 | 同一 rename bundle 中前序目的与后序源相同 | consumer psrc 旁路到前序 pdest | 源码按 ldest/lsrc 匹配并选择前序 pdest；具体 bundle/cycle 未验证 | none |

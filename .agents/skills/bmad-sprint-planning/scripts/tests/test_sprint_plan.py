@@ -522,3 +522,86 @@ def test_validate_missing_file_and_bad_yaml(tmp_path, capsys):
 
 if __name__ == "__main__":
     sys.exit(pytest.main([__file__, "-q"]))
+
+
+def test_epic_start_gate_requires_previous_retrospective_done(tmp_path, capsys):
+    status_file = tmp_path / "sprint-status.yaml"
+    status_file.write_text(STATUS_FIXTURE, encoding="utf-8")
+    with pytest.raises(SystemExit) as excinfo:
+        mod.main(["gate", "--status-file", str(status_file), "--story-key", "2-1-personality-system"])
+    assert excinfo.value.code == 1
+    blocked = json.loads(capsys.readouterr().out)
+    assert blocked["allowed"] is False
+    assert "epic-1-retrospective must be done" in blocked["error"]
+
+    status_file.write_text(STATUS_FIXTURE.replace("epic-1-retrospective: optional", "epic-1-retrospective: done"), encoding="utf-8")
+    mod.main(["gate", "--status-file", str(status_file), "--story-key", "2-1-personality-system"])
+    assert json.loads(capsys.readouterr().out)["allowed"] is True
+
+
+def test_epic_one_can_start_and_started_story_can_resume(tmp_path, capsys):
+    status_file = tmp_path / "sprint-status.yaml"
+    status_file.write_text(STATUS_FIXTURE, encoding="utf-8")
+    mod.main(["gate", "--status-file", str(status_file), "--story-key", "1-1-user-authentication"])
+    assert json.loads(capsys.readouterr().out)["allowed"] is True
+
+    status_file.write_text(STATUS_FIXTURE.replace("2-1-personality-system: backlog", "2-1-personality-system: in-progress"), encoding="utf-8")
+    mod.main(["gate", "--status-file", str(status_file), "--story-key", "2-1-personality-system"])
+    assert json.loads(capsys.readouterr().out)["reason"] == "story already started; resume allowed"
+
+
+def test_validate_detects_started_epic_without_previous_retro(tmp_path, capsys):
+    started = STATUS_FIXTURE.replace("2-1-personality-system: backlog", "2-1-personality-system: in-progress")
+    result = run_validate(tmp_path, capsys, started)
+    assert result["valid"] is False
+    assert any("epic-1-retrospective must be done" in problem for problem in result["problems"])
+
+
+def test_status_recommends_required_retrospective_before_next_epic(tmp_path, capsys):
+    fixture = (STATUS_FIXTURE
+               .replace("epic-1: in-progress", "epic-1: done")
+               .replace("1-2-account-management: drafted", "1-2-account-management: done")
+               .replace("epic-1-retrospective: optional", "epic-1-retrospective: optional"))
+    result = run_status(tmp_path, capsys, fixture=fixture)
+    assert result["recommendation"]["skill"] == "bmad-retrospective"
+    assert "must be done before starting a later epic" in result["recommendation"]["reason"]
+
+    completed = fixture.replace("epic-1-retrospective: optional", "epic-1-retrospective: done")
+    result = run_status(tmp_path, capsys, fixture=completed)
+    assert result["recommendation"]["skill"] == "bmad-build"
+    assert result["recommendation"]["story_key"] == "2-1-personality-system"
+
+
+def test_gate_uses_previous_configured_epic_when_numbers_skip(tmp_path, capsys):
+    content = STATUS_FIXTURE.replace("epic-2: backlog", "epic-3: backlog").replace(
+        "2-1-personality-system: backlog", "3-1-system-story: backlog"
+    ).replace("epic-2-retrospective: optional", "epic-3-retrospective: optional")
+    status_file = tmp_path / "sprint-status.yaml"
+    status_file.write_text(content, encoding="utf-8")
+    with pytest.raises(SystemExit):
+        mod.main(["gate", "--status-file", str(status_file), "--story-key", "3-1-system-story"])
+    blocked = json.loads(capsys.readouterr().out)
+    assert "epic-1-retrospective must be done" in blocked["error"]
+
+    status_file.write_text(content.replace("epic-1-retrospective: optional", "epic-1-retrospective: done"), encoding="utf-8")
+    mod.main(["gate", "--status-file", str(status_file), "--story-key", "3-1-system-story"])
+    assert json.loads(capsys.readouterr().out)["allowed"] is True
+
+
+def test_gate_rejects_existing_non_story_key_even_if_done(tmp_path, capsys):
+    status_file = tmp_path / "sprint-status.yaml"
+    status_file.write_text(STATUS_FIXTURE, encoding="utf-8")
+    with pytest.raises(SystemExit):
+        mod.main(["gate", "--status-file", str(status_file), "--story-key", "epic-1"])
+    assert "not a recognized story key" in json.loads(capsys.readouterr().out)["error"]
+
+
+def test_status_surfaces_gate_when_previous_retro_is_missing_or_invalid(tmp_path, capsys):
+    complete_epic = (STATUS_FIXTURE.replace("epic-1: in-progress", "epic-1: done")
+                     .replace("1-2-account-management: drafted", "1-2-account-management: done"))
+    missing = complete_epic.replace("  epic-1-retrospective: optional\n", "")
+    result = run_status(tmp_path, capsys, fixture=missing)
+    assert result["recommendation"]["skill"] == "bmad-retrospective"
+    invalid = complete_epic.replace("epic-1-retrospective: optional", "epic-1-retrospective: someday")
+    result = run_status(tmp_path, capsys, fixture=invalid)
+    assert result["recommendation"]["skill"] == "bmad-retrospective"

@@ -23,7 +23,7 @@
 #   - done: Story completed
 #
 # Retrospective Status:
-#   - optional: Can be completed but not required
+#   - optional: May be skipped only if no later epic is started; the next epic requires this status to become done
 #   - done: Retrospective has been completed
 #
 # Action Item Status:
@@ -34,6 +34,7 @@
 # WORKFLOW NOTES:
 # ===============
 # - Epic transitions to 'in-progress' automatically when its first story starts (via build's sprint sync)
+# - Before a story in Epic N (N > 1) starts, the previous configured Epic retrospective must be 'done'; Epic 1 has no predecessor. 'optional' permits ending the project without another epic, not bypassing this gate
 # - Stories can be worked in parallel if team capacity allows
 # - Developer typically creates the next story after the previous one is 'done' to incorporate learnings
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)

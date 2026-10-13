@@ -95,7 +95,27 @@ git -C sources/heliodor checkout --detach FETCH_HEAD
 - **答案：** `xiangshan-kunminghu-v2-20261012` 的 Chisel 核心位于 `sources/xiangshan/src/main/scala/xiangshan/`；已检查 `sources/xiangshan/Makefile.test` 的 `mill -i XiangShan.test.test` 入口。`heliodor-master-20261012` 的 Veryl 核心位于 `sources/heliodor/src/core/`；已检查其 README 中的 `veryl test` 入口。
 - **证据状态：** `inspected`（路径、Makefile/README 命令已检查）；没有 `run-pass` 或 `run-fail` 证据。本机尚不能运行两边默认入口，因为缺 Mill 与 Veryl。
 
-精确 SHA 的错误路径也做了隔离模拟：在临时本地 bare 仓库请求一个不存在的 SHA，`git fetch --depth=1` 返回非零（128），没有创建 HEAD 或 refs；真实来源 checkout 未受影响。真实两份 checkout 的 SHA 已逐字核对 `sources.lock`，均为浅克隆且无工作区改动。
+精确 SHA 的错误路径可用以下隔离命令复现；它创建临时 bare remote 和一次性 source 仓库，再请求 remote 中不存在的全零 SHA，不访问或修改项目的来源 checkout：
+
+```sh
+tmp=$(mktemp -d)
+git init --quiet --bare "$tmp/remote.git"
+git -C "$tmp/remote.git" symbolic-ref HEAD refs/heads/master
+git init --quiet "$tmp/source"
+git -C "$tmp/source" -c user.name=Test -c user.email=test@example.invalid commit --allow-empty -m seed
+git -C "$tmp/source" push "$tmp/remote.git" HEAD:refs/heads/main >/dev/null
+before=$(git -C "$tmp/remote.git" show-ref)
+git -C "$tmp/remote.git" fetch --depth=1 "$tmp/remote.git" 0000000000000000000000000000000000000000
+rc=$?
+after=$(git -C "$tmp/remote.git" show-ref)
+head_target=$(git -C "$tmp/remote.git" symbolic-ref HEAD)
+[ "$rc" -ne 0 ] || exit 1
+[ "$before" = "$after" ] || exit 1
+[ "$head_target" = "refs/heads/master" ] || exit 1
+printf 'fetch exit=%s; refs unchanged=yes; HEAD target=%s\n' "$rc" "$head_target"
+```
+
+最后一次 fetch 预期非零（本机 Git 2.x 观察到 128）；`show-ref` 前后应一致，且 HEAD 仍为初始化时的符号目标 `refs/heads/master`。seed push 预先创建的 `refs/heads/main` 保持不变；失败请求不创建目标 SHA 对应的对象或 ref。真实来源 checkout 不受影响。实际两份来源 checkout 的 SHA 已逐字核对 `sources.lock`，均为浅克隆且无工作区改动。
 
 ## 尚未完成或待后续确认
 

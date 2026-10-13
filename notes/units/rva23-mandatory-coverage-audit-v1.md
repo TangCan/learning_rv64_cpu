@@ -35,7 +35,7 @@ source_snapshots:
 
 官方规范基线为 [RVA23 Profile v1.0 §3.1](https://docs.riscv.org/reference/rva23/v1.0/rva23-profiles.html)。规范清单按 profile 和 section 定义必选键；可复查的固定键 manifest 位于 [`scripts/check_rva23_coverage.py`](../../scripts/check_rva23_coverage.py) 的 `U64_IDS`、`S64_IDS`。目录计数为 U64 34 行、S64 58 行、合计 92 个 profile 行。S64 的 33 个继承扩展行均指向同 ID 的 U64 原始要求，因此去重总数为 59（34 个 U64 原始要求、S64 的独立基础要求 1 项、S64 特有要求 24 项）。Sha 作为 8 个组成要求展开，没有额外重复行。
 
-每条行都有 Kunminghu 和 Heliodor 状态格，使用目录允许的状态词。链接审计仅检查本目录引用的本地文件与 evidence-table 锚点是否存在；此前专题中的源码位置、证据内容与技术结论均未在本次独立复核。原有 33 条 S64 继承行此前留有空白模板；本次改为沿用对应 U64 原始行状态、位置范围、子案例和证据链接，并明确说明未新增独立调查。四条 S64 特有项 Zifencei、Sstc、Sscofpmf、Ssnpm 在两个实现侧均保留 `not-studied`，逐条说明调查范围和规范子案例，不以无记录推断支持或缺失。Ssnpm 中的 `henvcfg.PME` 也不能由 U64 Supm 映射替代。
+每条行都有 Kunminghu 和 Heliodor 状态格，使用目录允许的状态词。链接审计仅检查本目录引用的本地文件与 evidence-table 锚点是否存在；此前专题中的源码位置、证据内容与技术结论均未在本次独立复核。原有 33 条 S64 继承行此前留有空白模板；本次改为沿用对应 U64 原始行状态、位置范围、子案例和证据链接，并明确说明未新增独立调查。四条 S64 特有项 Zifencei、Sstc、Sscofpmf、Ssnpm 在 Kunminghu 与 Heliodor 两侧均为 `not-studied`；此外 Heliodor 的 Ssstateen 状态为 `not-studied`，而 Kunminghu 已有局部静态映射。Ssnpm 中的 `henvcfg.PME` 也不能由 U64 Supm 映射替代。五个未调查实现侧均纳入下一阶段学习路线规划，并在后续规划时拆分定向调查故事；当前 Epic 4 只记录状态与边界，不计作完成了调查。
 
 | Profile | 实现 | partially-studied | studied-unverified | not-studied | evidence-observed | not-present | out-of-scope | 行数 |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
@@ -46,7 +46,7 @@ source_snapshots:
 
 统计单位是 profile 行的实现侧状态格，一格计一次；继承行在各 profile 统计中保留，但在去重规范要求数中不重复。覆盖表状态与证据表 Kind/Status 是不同维度。非强制选项、建议项和上游自述均独立列出，不进入 mandatory 状态计数。
 
-**未解决项：** 四个 S64 专有要求尚未做实现专题调查；其余 `partially-studied` 与 `studied-unverified` 行仍列有未穷尽子案例或未运行验证。目录不声明完整实现覆盖、认证或符合性。
+**未解决项：** S64 的 Zifencei、Sstc、Sscofpmf、Ssnpm 在两侧均未做实现专题调查；Ssstateen 的 Heliodor 侧也未调查（Kunminghu 侧只有局部静态映射）。以上五个未调查实现侧均纳入下一阶段学习路线并在规划时形成故事；其余 `partially-studied` 与 `studied-unverified` 行仍列有未穷尽子案例或未运行验证。目录不声明完整实现覆盖、认证或符合性。
 
 ## 证据表
 

@@ -29,14 +29,14 @@ source_snapshots:
 ## 单元自检
 
 - **问题：** RV64I `ADD` 对两个寄存器操作数执行什么架构行为？它与 `ADDW`、`ADDI` 的边界是什么？两边各如何把结果送入整数寄存器写回？现有测试能证明什么？
-- **学习者答案：** RV64I 的 XLEN 为 64。`ADD rd, rs1, rs2` 将 `rs1` 与 `rs2` 的 64 位值相加，结果按模 2^64 保留低 64 位写入 `rd`；算术溢出被忽略，不产生算术溢出异常。`ADDW` 是独立的 32 位结果并符号扩展变体；`ADDI` 使用立即数，二者的完整实现比较不在本单元范围。Kunminghu 将 ADD 译码为双寄存器输入及 ALU add 操作，ALU 输出经执行单元结果选择和写回路径传递；Heliodor 解码 `Opcode::OP` 的 `funct7=0`、`funct3=0` 为 `AluOp::ADD`，ALU 结果经 CDB 送入整数 PRF 写端口。源码表明两边采用的组织不同，但都实现寄存器加法结果路径；未运行测试，因此不声称运行验证通过。**[E1–E10]**
+- **学习者答案：** RV64I 的 XLEN 为 64。`ADD rd, rs1, rs2` 将 `rs1` 与 `rs2` 的 64 位值相加，结果按模 2^64 保留低 64 位写入 `rd`；算术溢出被忽略，不产生算术溢出异常。`ADDW` 是独立的 32 位结果并符号扩展变体；`ADDI` 使用立即数，二者的完整实现比较不在本单元范围。Kunminghu 将 ADD 译码为双寄存器输入及 ALU add 操作，ALU 输出经执行单元结果选择和写回路径传递；Heliodor 解码 `Opcode::OP` 的 `funct7=0`、`funct3=0` 为 `AluOp::ADD`，ALU 结果经 CDB 送入整数 PRF 写端口。源码表明两边采用的组织不同，但都实现寄存器加法结果路径；未运行测试，因此不声称运行验证通过。**[E1–E10、E11–E13]**
 - **检查类型：** explanation + source-location
-- **证据 ID：** E1–E10（静态检查；没有运行证据）
+- **证据 ID：** E1–E10、E11–E13（静态检查；没有运行证据）
 
 ## 架构行为与子案例
 
 - **可观察行为：** 读取两个 XLEN 位整数寄存器值，执行加法，将低 XLEN 位写回目的寄存器；溢出不触发算术溢出异常。
-- **规范依据：** RISC-V Unprivileged ISA Manual Version 20260120。RV32I §1.1.4.2 说明 ADD 对 rs1、rs2 求和，忽略溢出并写入结果低 XLEN 位，且 RV32I commentary 也适用于 RV64I；RV64I §3.1.1 定义 XLEN=64，§3.1.2.2 说明普通整数计算指令操作 XLEN 位值，`W` 后缀指令则忽略高 32 位并将 32 位有符号结果符号扩展至 64 位。
+- **规范依据：** RISC-V Unprivileged ISA Manual Version 20260120。RV32I §1.1.4.2 说明 ADD 对 rs1、rs2 求和，忽略溢出并写入结果低 XLEN 位，且 RV32I commentary 也适用于 RV64I；RV64I §3.1.1 定义 XLEN=64，§3.1.2.2 说明普通整数计算指令操作 XLEN 位值，`W` 后缀指令则忽略高 32 位并将 32 位有符号结果符号扩展至 64 位（[官方 RV64I v20260120](https://docs.riscv.org/reference/isa/v20260120/unpriv/rv64.html)）。
 
 | 子案例 | 覆盖状态 | 说明 / 排除原因 |
 | --- | --- | --- |
@@ -57,7 +57,7 @@ source_snapshots:
 
 - **阶段与状态变化：** `decoder.veryl` 对 `Opcode::OP` 选择寄存器 A/B 和整数寄存器写使能；在 `funct7=0000000` 分支下，以 `funct3=000` 选择 `AluOp::ADD`。`alu.veryl` 直接计算 `i_a + i_b`。`alu_wrap.veryl` 选择寄存器操作数、调用 ALU，并将普通 ALU 情况的 `alu_out` 作为 `wb_data`；有效 CDB 项携带 `has_rd`、目的物理寄存器和数据。核心将有效 CDB 的目的及数据接到整数 PRF 写端口。
 - **源码位置：** `decoder.veryl:410-428`（E10）；`alu.veryl:143-155`（E11）；`alu_wrap.veryl:121-132, 400-421`（E12）；`heliodor_core.veryl:3362-3368`（E13）。
-- **相关验证：** `tb/test_alu.veryl:33-45` 有 ADD 输入向量 10+20、期望 30。native testbench 运行 29 次时钟迭代后只断言一次 `pass`，没有等待 `done` 或检查 `tc`；因此静态源码不能确认最终断言对应哪个案例，也不能证明 ADD 或 DIV 被断言。本机未运行 `veryl test`。文件注释提到早先案例由 riscv-tests arch tests 覆盖，但该说法未在本试点核实。E14 为检查过的测试源码；E16 单独记录未运行状态。
+- **相关验证：** `tb/test_alu.veryl:33-45` 有 ADD 输入向量 10+20、期望 30。native testbench 源码设置为经过 29 次时钟迭代后只断言一次 `pass`，没有等待 `done` 或检查 `tc`；因此静态源码不能确认最终断言对应哪个案例，也不能证明 ADD 或 DIV 被断言。本机未运行 `veryl test`。文件注释提到早先案例由 riscv-tests arch tests 覆盖，但该说法未在本试点核实。E14 为检查过的测试源码；E16 单独记录未运行状态。
 
 ## 比较结论
 
@@ -72,7 +72,7 @@ source_snapshots:
 | ID | 支持的 claim / 自检 | Kind | Status | 项目 / snapshot | 证据位置 / 测试文件 | Command | Configuration | Input / case | Expected | Observed | 产物路径 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | E1 | 自检、ADD 规范行为 | spec | inspected | RISC-V Unprivileged ISA Manual v20260120 | [RV32I §1.1.4.2](https://docs.riscv.org/reference/isa/v20260120/unpriv/rv32.html) | not-run | 不适用 | 两寄存器加法与溢出语义 | 低 XLEN 位写回，溢出忽略 | 规范文字已检查；无执行观察 | none |
-| E2 | 自检、ADD/ADDW 边界 | spec | inspected | RISC-V Unprivileged ISA Manual v20260120 | [RV64I §3.1.1、§3.1.2.2](https://docs.riscv.org/reference/isa/unpriv/rv64.html) | not-run | 不适用 | XLEN 与 W 后缀边界 | XLEN=64；W 结果符号扩展 | 规范文字已检查；无执行观察 | none |
+| E2 | 自检、ADD/ADDW 边界 | spec | inspected | RISC-V Unprivileged ISA Manual v20260120 | [RV64I §3.1.1、§3.1.2.2](https://docs.riscv.org/reference/isa/v20260120/unpriv/rv64.html) | not-run | 不适用 | XLEN 与 W 后缀边界 | XLEN=64；W 结果符号扩展 | 规范文字已检查；无执行观察 | none |
 | E3 | C1、Kunminghu 译码 | source | inspected | Kunminghu / `xiangshan-kunminghu-v2-20261012` | `sources/xiangshan/src/main/scala/xiangshan/backend/decode/DecodeUnit.scala:154` | not-run | 锁定 snapshot | ADD decode table entry | 两个寄存器源、ALU add、整数写使能 | 源码静态检查确认映射 | none |
 | E4 | C1、C2、Kunminghu 运算/选择 | source | inspected | Kunminghu / `xiangshan-kunminghu-v2-20261012` | `sources/xiangshan/src/main/scala/xiangshan/backend/fu/Alu.scala:25-35,370-380` | not-run | 锁定 snapshot | XLEN 两输入加法及 ALU 结果选择 | add 结果作为 ALU result | 源码静态检查确认连接 | none |
 | E5 | C1、C2、Kunminghu wrapper | source | inspected | Kunminghu / `xiangshan-kunminghu-v2-20261012` | `sources/xiangshan/src/main/scala/xiangshan/backend/fu/wrapper/Alu.scala:8-22` | not-run | 锁定 snapshot | 输入操作数/功能码与结果 | wrapper 传递输入并输出结果 | 源码静态检查确认连接 | none |
@@ -84,7 +84,7 @@ source_snapshots:
 | E11 | C1、C2、Heliodor 运算 | source | inspected | Heliodor / `heliodor-master-20261012` | `sources/heliodor/src/core/alu.veryl:143-155` | not-run | 锁定 snapshot | `AluOp::ADD` | `i_a+i_b` 的 64 位结果 | 源码静态检查确认表达式 | none |
 | E12 | C1、C2、Heliodor wrapper/CDB | source | inspected | Heliodor / `heliodor-master-20261012` | `sources/heliodor/src/core/alu_wrap.veryl:121-132,400-421` | not-run | 锁定 snapshot | issue operands、ALU result、CDB | 普通 ALU 结果作为 CDB data 携带目的寄存器 | 源码静态检查确认连接 | none |
 | E13 | C1、C2、Heliodor 整数 PRF 写回 | source | inspected | Heliodor / `heliodor-master-20261012` | `sources/heliodor/src/core/heliodor_core.veryl:3362-3368` | not-run | 锁定 snapshot | CDB valid/has_rd/pdst/data | 有效整数结果接到 PRF 写端口 | 源码静态检查确认连接 | none |
-| E14 | C3、Heliodor testbench 断言范围 | test-inspected | inspected | Heliodor / `heliodor-master-20261012` | `sources/heliodor/tb/test_alu.veryl:33-45,223-249` | not-run | 默认 Veryl testbench；29 次时钟迭代后一次 `pass` 断言 | 含 ADD 10+20 期望 30 的向量 | 需确认断言时的 `tc`/案例才能判断覆盖 | 未等待 `done` 或检查 `tc`；源码无法确认最终断言对应案例，不能证明 ADD 或 DIV 已断言。见 E16 | none |
+| E14 | C3、Heliodor testbench 断言范围 | test-inspected | inspected | Heliodor / `heliodor-master-20261012` | `sources/heliodor/tb/test_alu.veryl:33-45,223-249` | not-run | 默认 Veryl testbench 源码设置为 29 次时钟迭代后一次 `pass` 断言 | 含 ADD 10+20 期望 30 的向量 | 需确认断言时的 `tc`/案例才能判断覆盖 | 未等待 `done` 或检查 `tc`；源码无法确认最终断言对应案例，不能证明 ADD 或 DIV 已断言。见 E16 | none |
 | E15 | C3、Kunminghu 测试运行状态 | test-run | unverified | Kunminghu / `xiangshan-kunminghu-v2-20261012` | `sources/xiangshan/Makefile.test:10-12` | `mill -i XiangShan.test.testOnly xiangshan.DecodeUnitTest`（未运行） | 定向 DecodeUnitTest / Verilator | ADD decode/output assertion | 需实际运行并观察 ADD 行为 | 未运行；Mill 当前不可用 | none |
 | E16 | C3、Heliodor 测试运行状态 | test-run | unverified | Heliodor / `heliodor-master-20261012` | `sources/heliodor/tb/test_alu.veryl` | `veryl test`（未运行） | 默认 Veryl testbench | ADD 向量的独立 assertion/观察 | 需实际运行并观察 ADD 行为 | 未运行；Veryl 当前不可用 | none |
 

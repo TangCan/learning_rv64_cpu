@@ -138,7 +138,7 @@ Sha 是 profile 定义的增强型 Hypervisor 要求组合；本清单将其展�
 
 状态解释：`partially-studied` / `studied-unverified` 表示已有静态映射但未完整运行验证；`not-studied` 表示该实现侧尚未调查。目录含 2 个 `evidence-observed` 格（均为 S64 Heliodor）；没有 `not-present` 或 `out-of-scope` 项。`evidence-observed` 的证据表词汇不等同于覆盖表状态。
 
-**未解决项：** S64 的 Zifencei、Sstc、Sscofpmf、Ssnpm 两侧均未调查；各个非完整状态行列出的子案例和运行验证缺口也仍未解决。非强制选项和上游项目自述单独列出，不计入必选项行或覆盖率。详见[审计证据记录](units/rva23-mandatory-coverage-audit-v1.md)。
+**未解决项：** S64 的 Zifencei、Sstc、Sscofpmf、Ssnpm 在 Kunminghu 与 Heliodor 两侧均未调查；Ssstateen 的 Heliodor 侧未调查（Kunminghu 侧仅有局部静态映射）。这五个未调查实现侧已纳入下一阶段学习路线，后续规划时建立定向调查故事；它们不属于本 Epic 的已调查结论。各个非完整状态行列出的子案例和运行验证缺口仍未解决。非强制选项和上游项目自述单独列出，不计入必选项行或覆盖率。详见[审计证据记录](units/rva23-mandatory-coverage-audit-v1.md)。
 
 ## 非强制项目（与强制目录分开）
 

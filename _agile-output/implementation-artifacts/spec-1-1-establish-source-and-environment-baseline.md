@@ -64,7 +64,7 @@ context:
 
 调查阶段于 2026-10-12 查询上游：Kunminghu `kunminghu-v2` SHA `c098f996bf4d301b88693b20315486d31e93bc9d`；Heliodor `master` SHA `94e9c5821c24a8941c3ddc3b76daddc7124a855a`。GitHub 仓库 API 的规模指标分别为 127033 KiB 和 29078 KiB，非实测 checkout 占用。本机 Ubuntu 24.04.4，项目盘可用 227 GiB，内存可用 191 GiB；计划使用浅克隆，不运行测试。
 
-已在 `sources/` 完成两个 detached shallow checkout，实际 `HEAD` 与锁文件 SHA 一致；检出目录被 Git 忽略，两个源仓库工作区干净。主机记录更新为 checkout 后的 226 GiB 可用磁盘和 190 GiB available 内存。已检查源代码、Makefile、Veryl 配置和测试入口，未运行 CPU 测试、仿真或构建。环境中 Mill、Veryl、Sail、系统 Ruby 与 Linux RISC-V GCC 不可用；现有 ELF GCC 15.1.0 与 Heliodor 锁定工具链说明中的 GCC 16 不同。不存在的 SHA 获取失败路径在临时本地仓库中模拟，`git fetch` 返回 128，未创建 HEAD 或 refs。
+已在 `sources/` 完成两个 detached shallow checkout，实际 `HEAD` 与锁文件 SHA 一致；检出目录被 Git 忽略，两个源仓库工作区干净。主机记录更新为 checkout 后的 226 GiB 可用磁盘和 190 GiB available 内存。已检查源代码、Makefile、Veryl 配置和测试入口，未运行 CPU 测试、仿真或构建。环境中 Mill、Veryl、Sail、系统 Ruby 与 Linux RISC-V GCC 不可用；现有 ELF GCC 15.1.0 与 Heliodor 锁定工具链说明中的 GCC 16 不同。不存在的 SHA 获取失败路径可按 `notes/source-environment-baseline.md` 的完整临时 bare 仓库命令复现：向仅含 seed commit 的本地 remote 请求全零 40 位 SHA；预期 fetch 非零、ref 集合保持不变且 HEAD 符号目标仍为 `refs/heads/master`；隔离复现已观察到 exit 128。
 
 ## Spec Change Log
 

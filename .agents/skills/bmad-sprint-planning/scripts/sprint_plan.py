@@ -92,7 +92,7 @@ Story Status:
   - done: Story completed
 
 Retrospective Status:
-  - optional: Can be completed but not required
+  - optional: May be skipped only if no later epic is started; the next epic requires this status to become done
   - done: Retrospective has been completed
 
 Action Item Status:
@@ -103,6 +103,7 @@ Action Item Status:
 WORKFLOW NOTES:
 ===============
 - Epic transitions to 'in-progress' automatically when its first story starts (via build's sprint sync)
+- Before a story in Epic N (N > 1) starts, the previous configured Epic retrospective must be 'done'; Epic 1 has no predecessor. 'optional' permits ending the project without another epic, not bypassing this gate
 - Stories can be worked in parallel if team capacity allows
 - Developer typically creates the next story after the previous one is 'done' to incorporate learnings
 - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
@@ -568,17 +569,34 @@ def cmd_status(args):
     elif by_status.get("review"):
         recommendation = {"skill": "bmad-code-review", "story_key": by_status["review"][0],
                           "reason": "review the completed implementation"}
-    elif by_status.get("ready-for-dev"):
-        recommendation = {"skill": "bmad-build", "story_key": by_status["ready-for-dev"][0],
-                          "reason": "start the next ready story"}
-    elif by_status.get("backlog"):
-        recommendation = {"skill": "bmad-build", "story_key": by_status["backlog"][0],
-                          "reason": "start the first backlog story"}
     else:
-        optional_retros = sorted(num for num, status in retro_status.items() if status == "optional")
-        if optional_retros:
+        gate_retros = set()
+        configured_epics = sorted(epic_status)
+        for waiting_status in ("backlog", "ready-for-dev"):
+            for story in by_status.get(waiting_status, []):
+                story_epic = classify_key(story)[1]
+                predecessors = [num for num in configured_epics if num < story_epic]
+                if not predecessors:
+                    continue
+                previous_epic = max(predecessors)
+                if (epic_status[previous_epic] == "done"
+                        and retro_status.get(previous_epic) != "done"):
+                    gate_retros.add(previous_epic)
+        gate_retros = sorted(gate_retros)
+        if gate_retros:
             recommendation = {"skill": "bmad-retrospective", "story_key": None,
-                              "reason": f"all stories done — epic-{optional_retros[0]}-retrospective is still open"}
+                              "reason": f"epic-{gate_retros[0]}-retrospective must be done before starting a later epic"}
+        elif by_status.get("ready-for-dev"):
+            recommendation = {"skill": "bmad-build", "story_key": by_status["ready-for-dev"][0],
+                              "reason": "start the next ready story"}
+        elif by_status.get("backlog"):
+            recommendation = {"skill": "bmad-build", "story_key": by_status["backlog"][0],
+                              "reason": "start the first backlog story"}
+        else:
+            optional_retros = sorted(num for num, status in retro_status.items() if status == "optional")
+            if optional_retros:
+                recommendation = {"skill": "bmad-retrospective", "story_key": None,
+                                  "reason": f"all stories done — epic-{optional_retros[0]}-retrospective is still open"}
 
     print(json.dumps({
         "ok": True, "action": "status", "status_file": str(args.status_file),
@@ -591,6 +609,54 @@ def cmd_status(args):
         "recommendation": recommendation,
         "all_done": recommendation is None,
     }, default=str))
+
+
+def epic_start_gate_error(dev, story_key):
+    """Return why starting ``story_key`` is blocked, or None when allowed."""
+    parsed = classify_key(story_key)
+    if parsed is None or parsed[0] != "story":
+        return f"'{story_key}' is not a recognized story key"
+    _, epic_num = parsed
+    configured_epics = [
+        int(match.group(1)) for key in dev
+        if (match := EPIC_KEY_RE.match(str(key))) and int(match.group(1)) < epic_num
+    ]
+    if not configured_epics:
+        return None
+    previous_epic = max(configured_epics)
+    previous_status, _ = _normalize(dev.get(f"epic-{previous_epic}-retrospective"))
+    if previous_status != "done":
+        return (f"cannot start {story_key}: epic-{previous_epic}-retrospective must be done "
+                f"(found {previous_status!r})")
+    return None
+
+
+def cmd_gate(args):
+    path = Path(args.status_file)
+    if not path.exists():
+        _fail(f"status file does not exist: {path}")
+    try:
+        _, data = _load_existing(path)
+    except SystemExit:
+        raise
+    except Exception as exc:  # noqa: BLE001
+        _fail(f"cannot parse status file: {exc}")
+    if not isinstance(data, dict) or not isinstance(data.get("development_status"), dict):
+        _fail("status file has no development_status mapping")
+    dev = data["development_status"]
+    if args.story_key not in dev:
+        _fail(f"story key not found: {args.story_key}")
+    parsed = classify_key(args.story_key)
+    if parsed is None or parsed[0] != "story":
+        _fail(f"'{args.story_key}' is not a recognized story key", allowed=False)
+    current, _ = _normalize(dev[args.story_key])
+    if current in STORY_RANK and STORY_RANK[current] >= STORY_RANK["in-progress"]:
+        print(json.dumps({"ok": True, "allowed": True, "reason": "story already started; resume allowed"}))
+        return
+    error = epic_start_gate_error(dev, args.story_key)
+    if error:
+        _fail(error, allowed=False)
+    print(json.dumps({"ok": True, "allowed": True, "reason": "previous epic retrospective is done"}))
 
 
 def cmd_validate(args):
@@ -638,6 +704,13 @@ def cmd_validate(args):
                     legacy_mapped.append({"key": str(key), "from": raw, "to": status})
                 if status not in RANKS[kind]:
                     problems.append(f"illegal {kind} status {str(raw)!r} on '{key}'")
+            for key, raw in dev.items():
+                parsed = classify_key(str(key))
+                status, _ = _normalize(raw)
+                if parsed and parsed[0] == "story" and status in ("in-progress", "review", "done"):
+                    error = epic_start_gate_error(dev, str(key))
+                    if error:
+                        problems.append(error)
         elif isinstance(data.get("development_status"), dict):
             problems.append("development_status is empty")
         items = data.get("action_items")
@@ -681,6 +754,11 @@ def build_parser():
     st.add_argument("--date", default=None)
     st.add_argument("--stale-days", type=int, default=STALE_DAYS_DEFAULT)
     st.set_defaults(func=cmd_status)
+
+    gate = sub.add_parser("gate", add_help=False)
+    gate.add_argument("--status-file", required=True)
+    gate.add_argument("--story-key", required=True)
+    gate.set_defaults(func=cmd_gate)
 
     val = sub.add_parser("validate", add_help=False)
     val.add_argument("--status-file", required=True)
