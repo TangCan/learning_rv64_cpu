@@ -30,7 +30,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 # - Retrospective appends its action items to action_items; the status view surfaces open ones
 generated: 10-12-2026 14:04
-last_updated: 10-13-2026 09:14
+last_updated: 10-13-2026 10:41
 project: learning_rv64_cpu
 project_key: NOKEY
 tracking_system: file-system
@@ -65,6 +65,16 @@ development_status:
   4-9-映射-rva23s64-的-hypervisor-必选要求: done
   4-10-核对-rva23-必选项映射完整性: done
   epic-4-retrospective: done
+
+  epic-5: backlog
+  5-1-确认活动实现路径与验证就绪度: backlog
+  5-2-比较-zifencei-与-fence-i: backlog
+  5-3-比较-sstc-与-s-vs-timer: backlog
+  5-4-比较-sscofpmf-计数溢出和模式过滤: backlog
+  5-5-比较-ssnpm-指针屏蔽: backlog
+  5-6-比较-ssstateen-状态访问门控: backlog
+  5-7-审计-rva23s64-覆盖与学习结项证据: backlog
+  epic-5-retrospective: optional
 action_items:
   - id: "epic-1-retro-item-1-修订-add-记录的证据可追溯性和测试表述-自检答案补充-heliodor-写回"
     epic: 1

@@ -1,9 +1,11 @@
 ---
 status: final
 stepsCompleted: [1, 2, 3, 4]
+updated: 2026-10-13
 inputDocuments:
   - _agile-output/planning-artifacts/prds/prd-learning_rv64_cpu-2026-10-12/prd.md
   - _agile-output/planning-artifacts/architecture/architecture-learning_rv64_cpu-2026-10-12/ARCHITECTURE-SPINE.md
+  - _agile-output/planning-artifacts/research/technical-rv64-cpu-learning-completion-plan-for-re-2026-10-13/research.md
 ---
 
 # learning_rv64_cpu - RV64 Learning Plan
@@ -20,11 +22,13 @@ inputDocuments:
 - **FR-2：引用规范与验证证据。** 每份对照记录指向适用 ISA/profile 规范和实现测试或验证证据；缺少证据时明确标为未验证。
 - **FR-3：从架构行为追踪到实现。** 从规范描述或指令行为追踪至两边实现的关键阶段和结果，不止记录文件名或复制代码片段。
 - **FR-4：总结差异及依据。** 每份记录至少说明一项有源码、设计文档或验证依据的实现差异；若实现方式相同，也记录结论依据。
-- **FR-5：完成首轮对照并通过阶段门。** ADD 试点复盘必须给出 `ready`、`adjust` 或 `defer`；`ready` 须列明获准启动的史诗 2–4 子集并确认其范围与节奏。
-- **FR-6：逐步覆盖核心主题。** 按阶段学习来源与环境、指令路径、乱序处理器、内存与特权、RVA23 扩展；每阶段记录规范行为、两边源码路径、验证依据和自检答案，并按先修条件推进。
+- **FR-5：完成首轮对照并通过阶段门。** ADD 试点复盘必须给出 `ready`、`adjust` 或 `defer`；`ready` 须列明获准启动的史诗 2–5 子集并确认其范围与节奏。
+- **FR-6：逐步覆盖核心主题。** 按阶段学习来源与环境、指令路径、乱序处理器、内存与特权、RVA23 扩展及 RVA23S64 深度对照；每阶段记录规范行为、两边源码路径、验证依据和自检答案，并按先修条件推进。
 - **FR-7：对照 RVA23 要求。** 将 `RVA23U64` 与 `RVA23S64` 全部必选要求映射到实现对照或明确范围决定，注明规范依据、实现位置和验证状态；不把 README 声明当作完整符合证明，也不以官方认证为目标。
 - **FR-8：记录可复习的学习成果。** 每个完成单元包含中文总结、来源快照、可复查引用和未解问题；如有实验，记录运行条件和观察结果。
 - **FR-9：使用证据检查理解。** 每阶段至少通过解释、源码定位或测试/仿真检查理解；未运行的测试不能记为通过。
+- **FR-10：完成 RVA23S64 深度对照单元。** 完成 Zifencei、Sstc、Sscofpmf、Ssnpm、Ssstateen 五个主题的双实现记录，分别追溯固定快照、规范行为、源码路径、测试证据和验证状态；可运行案例须运行，受阻或未实现项须保留具体边界。
+- **FR-11：审计最终结项证据。** 将五个深度单元关联到必选项映射，检查证据链、自检答案和范围内子案例状态，记录检查器结果、剩余限制及复盘决定；学习结项不等于 CPU 获得 RVA23 符合性或认证。
 
 ### NonFunctional Requirements
 
@@ -35,6 +39,7 @@ PRD 没有单列编号的 NFR。以下为从 PRD 的质量目标和约束归纳�
 - **NFR-3（可复习性）：** 学习解释使用中文，ISA 名称、扩展名、符号和源码路径保留上游原文；记录结构稳定，支持不同实现横向比较。
 - **NFR-4（来源边界）：** 不在上游源码中直接做学习实验，不复制或重新分发上游源码；自建实验与学习记录分开放置。
 - **NFR-5（声明边界）：** RVA23 必选映射、上游项目自述和本项目实际观察的证据分开表达；不宣称本项目或上游获得官方认证。
+- **NFR-6（状态和术语准确）：** 活动配置、源码静态检查、测试文件检查、实际运行结果和阻塞状态分别记录；规范版本或字段命名不一致时先核实对应关系，不将不确定项表述为通过。
 
 ### Additional Requirements
 
@@ -47,6 +52,8 @@ PRD 没有单列编号的 NFR。以下为从 PRD 的质量目标和约束归纳�
 - 环境阶段记录主机 OS、可用磁盘/内存、隔离方式、工具链版本和配置、生成物位置、安装/清理步骤、确切命令和保留的输出；如果不能运行，记录阻塞原因并仅使用源码/规范检查证据。
 - 架构将上游 checkout 位置暂定为 Git 忽略的 `sources/`，需在克隆前确认仓库体量、磁盘空间和工作区。工具链及测试命令在选定快照与主机后确定。
 - 项目当前不以完整 CPU 实现、性能测量、穷举可选扩展、公开发布或官方认证为范围；公开笔记前检查许可证和引用。
+- Epic 5 开始前确认两边源码快照、Kunminghu 活动 CSR/配置路径、Heliodor 的测试入口与 Ssstateen 行为边界，以及 ACT4/Sail、编译器和仿真工具版本；前置条件若无法满足，须记录阻塞和影响范围。
+- RVA23S64 的五个深度主题为 Zifencei、Sstc、Sscofpmf、Ssnpm、Ssstateen。必选项图谱与深度学习记录是不同产物；单个源码入口或测试通过不能替代扩展行为覆盖。
 
 ### UX Design Requirements
 
@@ -55,18 +62,20 @@ PRD 没有单列编号的 NFR。以下为从 PRD 的质量目标和约束归纳�
 ### FR Coverage Map
 
 FR-1: Epic 1 — 建立两边来源快照记录方式。
-FR-2: Epics 1–4 — 每个单元关联适用规范和验证证据，缺失时标明未验证。
-FR-3: Epics 1–3 — 从架构行为追踪到实现；Epic 4 对 profile 要求追踪到实现或范围决定。
-FR-4: Epics 1–3 — 给出有依据的实现差异或相同点结论。
-FR-5: Epic 1 — 完成 ADD 对照试点并复核方法。
-FR-6: Epics 1–4 — 按来源环境、指令路径、乱序、内存特权、RVA23 路线分阶段学习。
-FR-7: Epic 4 — 映射 RVA23U64 与 RVA23S64 的全部必选要求。
-FR-8: Epics 1–4 — 每个完成单元保存总结、快照、引用和问题；有实验时记录条件与结果。
-FR-9: Epics 1–4 — 每阶段通过带证据的解释、源码定位或测试/仿真检查。
+FR-2: Epics 1–5 — 每个单元关联适用规范和验证证据，缺失时标明未验证。
+FR-3: Epics 1–5 — 从架构行为追踪到实现；Epic 4 对 profile 要求追踪到实现或范围决定。
+FR-4: Epics 1–5 — 给出有依据的实现差异或相同点结论。
+FR-5: Epic 1 — 完成 ADD 对照试点并复核方法；`ready` 仅授权列明的 Epics 2–5。
+FR-6: Epics 1–5 — 按来源环境、指令路径、乱序、内存特权、RVA23 图谱和深度对照路线分阶段学习。
+FR-7: Epics 4–5 — Epic 4 建立 RVA23U64 与 RVA23S64 必选项图谱；Epic 5 深入检查五个 RVA23S64 主题。
+FR-8: Epics 1–5 — 每个完成单元保存总结、快照、引用和问题；有实验时记录条件与结果。
+FR-9: Epics 1–5 — 每阶段通过带证据的解释、源码定位或测试/仿真检查。
+FR-10: Epic 5 — 完成五个 RVA23S64 深度对照单元，计划内可运行案例有运行结果或具体阻塞。
+FR-11: Epic 5 — 审计证据链和学习闭环；整体完成声明不代表符合性或认证。
 
 ## Workstream Summary
 
-史诗 2–4 是候选 backlog，不代表已批准启动。Epic 1 Story 1.3 的 ADD 试点复盘必须记录 `ready`、`adjust` 或 `defer`。`ready` 须确认记录方法、获准启动的史诗范围和学习节奏，并只授权复盘中列明的史诗；`adjust` 先更新 PRD、史诗和路线，修订后仍须记录 `ready` 才能启动；`defer` 暂停后续史诗，直到复盘另行决定。复盘还须确认是否加入 `BEQ`、`LD/SD` 以及后续主题范围和节奏。
+史诗 2–5 是候选 backlog，不代表已批准启动。Epic 1 Story 1.3 的 ADD 试点复盘必须记录 `ready`、`adjust` 或 `defer`。`ready` 须确认记录方法、获准启动的史诗范围和学习节奏，并只授权复盘中列明的史诗；`adjust` 先更新 PRD、史诗和路线，修订后仍须记录 `ready` 才能启动；`defer` 暂停后续史诗，直到复盘另行决定。复盘还须确认是否加入 `BEQ`、`LD/SD` 以及后续主题范围和节奏。Epic 5 另须在 Epic 4 图谱完成后通过源码活动路径与工具可用性前置门。
 
 ### Epic 1: 完成双核 ADD 对照试点
 学习者熟悉两个源码仓库和版本快照，按统一方法完成首份对照记录，并检查记录方法是否适合后续学习。
@@ -83,6 +92,10 @@ FR-9: Epics 1–4 — 每阶段通过带证据的解释、源码定位或测试/
 ### Epic 4: 建立 RVA23 必选项对照图谱
 学习者能够逐项映射 RVA23U64 与 RVA23S64 必选要求，分别记录 Kunminghu 与 Heliodor 的实现位置、学习状态和证据。
 **FRs covered:** FR-2, FR-6 (阶段 4), FR-7, FR-8, FR-9
+
+### Epic 5: 完成 RVA23S64 双实现深度学习与结项审计
+学习者能够深入对照 Zifencei、Sstc、Sscofpmf、Ssnpm 和 Ssstateen 的规范行为与 Kunminghu/Heliodor 实现，记录测试与验证边界，并审计整体学习证据。对于未实现、未验证或环境受阻项，学习者给出明确结论和证据边界；学习结项不代表 CPU 获得 RVA23 符合性或认证。
+**FRs covered:** FR-2, FR-3, FR-4, FR-6 (阶段 5), FR-7, FR-8, FR-9, FR-10, FR-11
 
 每个获准启动的史诗须交付可独立复习的阶段成果，并复用统一的来源和证据规则。
 
@@ -148,7 +161,7 @@ So that I can validate the comparative learning method with an evidence-backed e
 
 **Given** the pilot record is complete, **When** I review the method, **Then** I document reusable parts of the template, gaps encountered, and recommended changes, save the ADD record as a versioned file, and point the unit index to the current version.
 
-**Given** the ADD record and method review, **When** I decide whether to continue, **Then** I record exactly one gate outcome: `ready` (confirm the method, name the Epics among 2–4 authorized to start, and confirm scope/cadence), `adjust` (revise the PRD, epics, and route, then record a new `ready` before starting), or `defer` (pause them until a later review); no later epic starts without an explicit `ready` that names it.
+**Given** the ADD record and method review, **When** I decide whether to continue, **Then** I record exactly one gate outcome: `ready` (confirm the method, name the Epics among 2–5 authorized to start, and confirm scope/cadence), `adjust` (revise the PRD, epics, and route, then record a new `ready` before starting), or `defer` (pause them until a later review); no later epic starts without an explicit `ready` that names it.
 
 **Given** I create a learner-authored harness or experiment during the pilot, **When** I save it, **Then** I keep it under `experiments/ADD/`, record its source snapshot, inputs, procedure, and observed result, and do not edit upstream source in place; if no experiment is needed, I record that none was created.
 
@@ -451,3 +464,161 @@ So that I can find omissions, blank statuses, or conclusions that could be mista
 **Given** the coverage evidence and statuses, **When** I produce the summary, **Then** I report status counts by profile and implementation, distinguish mandatory items from optional items and upstream claims, and list unresolved items.
 
 **Given** the completed comparison map, **When** I write its summary, **Then** I identify it as this project's learning map of specification and implementation evidence and do not claim certification or use partial tests as proof of complete compliance.
+
+## Epic 5: 完成 RVA23S64 双实现深度学习与结项审计
+
+Epic 5 在 Epic 4 的 profile 必选项图谱基础上，完成五个 RVA23S64 主题的深入比较，并审计证据链。Epic 5 开始前须完成 Story 5.1 的准备门；主题故事依次推进，每项允许以“已验证、静态证据、未实现或受阻”等证据状态结束，不得把未知记为通过。
+
+### Story 5.1: 确认活动实现路径与验证就绪度
+
+**FRs covered:** FR-1, FR-2, FR-6 (阶段 5), FR-7, FR-8, FR-9, FR-10; NFR-1, NFR-2, NFR-6
+
+As a learner,
+I want to establish the active implementation paths and validation readiness for the five RVA23S64 topics,
+So that I can plan each comparison against the selected source snapshots, configurations, and runnable evidence.
+
+**Acceptance Criteria:**
+
+**Given** the project `sources.lock`, **When** I prepare Epic 5, **Then** I record and verify the full commit SHA for Kunminghu and Heliodor; any mismatch is resolved or recorded as a blocked prerequisite before using evidence from that checkout.
+
+**Given** the selected Kunminghu target and configuration, **When** I trace its CSR wrapper and configuration, **Then** I record which CSR implementation path is active for Sstc, Sscofpmf, Ssnpm, and Ssstateen, plus the relevant feature controls; code presence alone is not treated as proof that the selected target enables a feature.
+
+**Given** the Heliodor snapshot, **When** I inspect the FENCE.I, Sstc, Sscofpmf, pointer-masking and Ssstateen source/test entry points, **Then** I record each test’s build command, harness, expected observation, parameters and whether it has only been inspected, built, or actually run.
+
+**Given** the five study topics and the available ACT4/Sail and local toolchains, **When** I create the requirement-to-case readiness matrix, **Then** each topic has its applicable spec version, case list, candidate test source, dependency/tool version and current status; unsupported or uncertain cases are marked explicitly.
+
+**Given** the profile PDF and pointer-masking specification/source use different PME/PMM spellings, **When** I record the Ssnpm requirement, **Then** I preserve both source references and document the verified mapping or leave it explicitly unresolved; I do not silently normalize the terminology.
+
+**Given** these checks are complete, **When** I assess the Epic 5 gate, **Then** each feature has a known active path or a specific blocker, and each planned test is classified as available, needs setup, unsupported, or blocked with its reason; this story does not claim any CPU feature passed verification.
+
+### Story 5.2: 比较 Zifencei 与 `FENCE.I`
+
+**FRs covered:** FR-2, FR-3, FR-4, FR-6 (阶段 5), FR-7, FR-8, FR-9, FR-10; NFR-1, NFR-2, NFR-3, NFR-5, NFR-6
+
+As a learner,
+I want to trace `FENCE.I` from its architectural contract through both cores,
+So that I can explain how each implementation makes prior code stores visible to later instruction fetches on the same hart.
+
+**Acceptance Criteria:**
+
+**Given** the applicable ratified Zifencei specification and pinned snapshots, **When** I write the unit’s scope, **Then** I state that `FENCE.I` synchronizes instruction fetch on the executing hart and does not by itself guarantee instruction visibility on another hart.
+
+**Given** Kunminghu and Heliodor’s selected implementations, **When** I trace `FENCE.I`, **Then** I record each path from decode through serialization/invalidation to subsequent fetch, or mark any unconfirmed path as unverified.
+
+**Given** the Heliodor FENCE.I test entry and a matching Kunminghu test or harness, **When** the case can run, **Then** I execute a bounded self-modifying-code case that writes a new instruction, executes `FENCE.I`, and observes the new result; I record the command, configuration, expected and observed result, and artifact path. If it cannot run, I record the specific blocker and keep it unverified.
+
+**Given** the selected test checks the instruction encoding, **When** I review its operands and ignored/reserved fields, **Then** I record whether those cases are covered or leave them explicitly unverified.
+
+**Given** the unit is complete, **When** I compare the two implementations, **Then** I provide source and test evidence for each claim, answer how the local-hart guarantee is met, and list uncovered multi-hart coordination cases separately.
+
+### Story 5.3: 比较 Sstc 与 S/VS timer
+
+**FRs covered:** FR-2–FR-4, FR-6–FR-10; NFR-1–NFR-3, NFR-5, NFR-6
+
+As a learner,
+I want to trace supervisor and virtual-supervisor timer interrupts in both cores,
+So that I can explain the compare state, access gates and interrupt delivery in S-mode and VS-mode.
+
+**Acceptance Criteria:**
+
+**Given** the ratified Sstc specification and pinned snapshots, **When** I define the unit’s cases, **Then** I cover `stimecmp`, `vstimecmp`, `menvcfg.STCE`, `henvcfg.STCE`, timer pending state and the applicable delegation/visibility rules.
+
+**Given** each selected Kunminghu and Heliodor configuration, **When** I trace the timer path, **Then** I record compare-register access and state, the source of `time` or guest-visible time including `htimedelta`, pending-bit generation, and interrupt delivery; unconfirmed configuration or path details remain marked unknown.
+
+**Given** a test can run, **When** I exercise the comparator, **Then** I check `time < stimecmp`, `time == stimecmp`, and `time > stimecmp`, as well as STCE-enabled and disabled behavior and the resulting pending/access-trap behavior. I record observed values and trap/interrupt causes; unavailable cases retain a specific blocker.
+
+**Given** the selected target supports the guest timer path, **When** I test VS-mode behavior, **Then** I verify `vstimecmp`, `henvcfg.STCE`, guest time offset and VSTIP delivery independently of the S-mode case; if the path cannot be exercised, I document the exact gap.
+
+**Given** timer interrupts are asynchronous, **When** I assess delivery timing, **Then** I compare observations against the specification’s bounded-evaluation requirements and do not impose an unsupported cycle-exact latency expectation.
+
+**Given** the unit is complete, **When** I compare the two implementations, **Then** I provide the two source paths, command/configuration/result evidence for executed cases, self-check answers for S-mode and VS-mode, and an explicit list of untested boundaries.
+
+### Story 5.4: 比较 Sscofpmf 计数溢出和模式过滤
+
+**FRs covered:** FR-2–FR-4, FR-6–FR-10; NFR-1–NFR-3, NFR-5, NFR-6
+
+As a learner,
+I want to trace hardware performance-counter overflow and privilege-mode filtering,
+So that I can explain how overflow state, `scountovf`, and local counter-overflow interrupts interact.
+
+**Acceptance Criteria:**
+
+**Given** the ratified Sscofpmf specification and the selected implementation configurations, **When** I choose a bounded HPM counter case, **Then** I record the counter, supported event, counter width or preload mechanism, applicable mode filters, and relevant access controls.
+
+**Given** a selected hardware event that increments the counter, **When** I exercise overflow, **Then** I verify the event’s `OF` state, `scountovf` visibility, and local counter-overflow interrupt pending state; software writes that wrap a counter are not accepted as evidence of hardware overflow.
+
+**Given** the counter’s overflow flag is set, **When** I test clearing and re-arming, **Then** I record the architectural operation that clears `OF`, the condition for a subsequent overflow, and the observed interrupt/pending behavior; unsupported or non-deterministic mechanisms are marked as blockers.
+
+**Given** the event and mode configuration are supported, **When** I test privilege filtering, **Then** I cover `MINH`, `SINH`, `UINH`, `VSINH`, and `VUINH` for the selected event, or identify the specific unsupported mode/case and its evidence boundary.
+
+**Given** the `scountovf` read path and local interrupt path are available, **When** I test access and delivery, **Then** I check the applicable `mcounteren`/`hcounteren` gates, LCOFIP/LCOFIE, delegation, and observed trap cause separately; unavailable combinations remain explicitly unverified.
+
+**Given** ACT4/Sail tests are available for the chosen configuration, **When** I run them, **Then** I record their exact version, generated test, command, configuration and result separately from the directed case; a missing Sail model or coverpoint is recorded as a blocker, not a DUT failure.
+
+**Given** the unit is complete, **When** I compare both processors, **Then** I provide the source paths and evidence for overflow, filtering, access, and interrupt behavior, answer the self-check, and list uncovered combinations.
+
+### Story 5.5: 比较 Ssnpm 指针屏蔽
+
+**FRs covered:** FR-2–FR-4, FR-6–FR-10; NFR-1–NFR-3, NFR-5, NFR-6
+
+As a learner,
+I want to trace supervisor-controlled pointer masking and its memory-access scope in both cores,
+So that I can explain the required PMLEN settings, privilege controls, address transformation, and uncovered access families.
+
+**Acceptance Criteria:**
+
+**Given** the RVA23S64 profile and ratified Pointer Masking specification versions, **When** I define the Ssnpm requirement, **Then** I document the profile PDF’s `PME` spelling and the specification/source `PMM` spelling with their exact references, and record a verified mapping or an explicit unresolved discrepancy.
+
+**Given** the selected snapshots and active configurations, **When** I trace pointer masking, **Then** I identify the relevant `senvcfg`/`henvcfg` controls, PMLEN selection, privilege-mode applicability, and address transformation through the address-generation/translation path for Kunminghu and Heliodor separately.
+
+**Given** the selected configurations support the required settings, **When** I test pointer masking, **Then** I exercise PMLEN=0 and PMLEN=7, enabled/disabled behavior, and tagged-address transformation in applicable U-mode and VS/VU cases; unsupported configurations or cases include a concrete reason and evidence boundary.
+
+**Given** the specification defines multiple explicit memory-access families, **When** I build the coverage matrix, **Then** I list applicable load/store, atomic, floating-point, compressed, cache, vector, and hypervisor explicit-memory families, and classify each as tested, inspected only, unsupported, or unverified for each implementation.
+
+**Given** a family is supported by the selected target and a runnable test path exists, **When** I execute a representative case, **Then** I record the exact instruction, privilege/virtualization mode, control settings, expected transformed address or result, observed result, command and artifact; unrun families are not inferred from another family’s passing case.
+
+**Given** the unit is complete, **When** I compare both implementations, **Then** I answer how PMLEN=0 and 7 affect the selected addresses, provide the two source paths and validation evidence, and list all uncovered access families and address-boundary cases.
+
+### Story 5.6: 比较 Ssstateen 状态访问门控
+
+**FRs covered:** FR-2–FR-4, FR-6–FR-11; NFR-1–NFR-3, NFR-5, NFR-6
+
+As a learner,
+I want to trace the supervisor and hypervisor state-enable registers and access gates,
+So that I can explain how lower-privilege access to extension state is permitted or trapped in both cores.
+
+**Acceptance Criteria:**
+
+**Given** the RVA23S64/Sha requirements and ratified Smstateen/Ssstateen specification, **When** I build the unit’s checklist, **Then** I include `sstateen0–3` and `hstateen0–3`, relevant reset and WARL/read-only-zero behavior, and the state-enable bits used by the selected test.
+
+**Given** the selected Kunminghu configuration, **When** I trace state-enable behavior, **Then** I follow the active CSR path and record each required CSR’s read/write handling, state-bit mapping, privilege gate, and trap/permit decision; inactive or unconfirmed code paths are not treated as evidence for the target.
+
+**Given** Heliodor’s pinned source snapshot, **When** I investigate state-enable support, **Then** I record the bounded source-search scope and inspect generic CSR decode/permission paths; if no explicit implementation is found, I use a controlled CSR or extension-state access to observe the result and label the conclusion as supported, absent, or unresolved with its evidence limits.
+
+**Given** a supported state bit and runnable test path, **When** I check access gating, **Then** I exercise one permitted access and one blocked access across the applicable M/H/S/VS/VU hierarchy, recording the controlling register state, expected and observed trap cause, command, configuration, and artifacts.
+
+**Given** the state-enable test is complete, **When** I review reset and access behavior, **Then** I record observed reset/readback and WARL/RO-zero results for the required CSR set, or list each untested register/condition with its specific blocker.
+
+**Given** the unit is complete, **When** I compare the two implementations, **Then** I answer which gate controls the selected extension state at each tested privilege level, cite both source paths and actual test evidence where available, and distinguish a verified implementation gap from absence of a matching symbol.
+
+### Story 5.7: 审计 RVA23S64 覆盖与学习结项证据
+
+**FRs covered:** FR-2–FR-4, FR-6–FR-11; NFR-1–NFR-3, NFR-5, NFR-6
+
+As a learner,
+I want to audit the five RVA23S64 deep-comparison units and the overall learning record,
+So that I can confirm conclusions are traceable, unverified boundaries are clear, and decide whether the learning objectives are complete.
+
+**Acceptance Criteria:**
+
+**Given** the Epic 4 RVA23U64/RVA23S64 mandatory-requirement map, **When** I audit Epic 5, **Then** I link Zifencei, Sstc, Sscofpmf, Ssnpm, and Ssstateen to exact requirement IDs and specification versions; uncovered requirements include a reason and scope decision, and deep units are not presented as complete conformance proof.
+
+**Given** the five deep-comparison units, **When** I inspect each topic, **Then** I record Kunminghu and Heliodor status, source snapshots, specification basis, implementation paths, learner self-check questions and answers, planned subcase status, and evidence links; actual runs, static inspection, and upstream claims are distinguished.
+
+**Given** cases planned for execution in the stories, **When** I check validation records, **Then** every runnable case has an actual result, while each unrun case has a specific blocker and evidence boundary; unknown or unsupported conclusions are not marked as passed.
+
+**Given** all units and indexes, **When** I run the project's existing coverage checker, document/index link checker, and sprint status validator, **Then** I record the actual commands, tool versions, and outputs; I fix and rerun findings where possible and document any unresolved finding and its reason.
+
+**Given** the audit results, **When** I review the project learning objectives, **Then** I record which objectives have evidence, which remain blocked or unverified, and whether those residual limits are accepted; the completion statement covers only this project's learning scope and does not claim RVA23 conformance certification for Kunminghu, Heliodor, or this project.
+
+**Given** the audit record, **When** I complete this story, **Then** I provide a reviewable evidence index, checker results, self-check conclusions, and remaining items, and confirm the delivery status of Epic 5.
