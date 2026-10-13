@@ -2,7 +2,7 @@
 title: 'Story 5.4：比较 Sscofpmf 计数溢出与模式过滤'
 type: 'feature'
 created: '2026-10-13'
-status: 'in-progress'
+status: 'done'
 baseline_commit: 'fcf9b68245e7ca6662a944da978c3f956352c31f'
 route: 'dispatch'
 review_loop_iteration: 0
@@ -39,10 +39,10 @@ context:
 ## Tasks & Acceptance
 
 **Execution：**
-- [ ] `notes/units/rva23s64-sscofpmf-v1.md` — 新建单元，说明规范要求、双核活动路径、溢出/过滤/访问/中断证据、自检及未决边界。
-- [ ] `notes/rva23-coverage.md`、`notes/units/index.md` — 更新 Sscofpmf 两侧状态/证据链接与学习索引；同步 `notes/units/rva23-mandatory-coverage-audit-v1.md` 的当前计数语境及 `scripts/check_rva23_coverage.py` / 对应测试的固定计数。
-- [ ] Heliodor 定向目标 — 实际尝试现有 test；记录工具版本、输入、event/counter、预期、观察或具体阻塞。核对 OF 清除/re-arm、`scountovf` 的 mcounteren/hcounteren 可见性、LCOFIP 清除/再触发及 M/S 委托是否被该例覆盖。
-- [ ] Kunminghu 与 ACT4/Sail — 查明可运行的 CSR/HPM harness、模型和 coverpoint；若可用，运行有限案例并记录结果；否则记录精确搜索/工具缺口及不能运行的原因。不得安装工具或改上游源码。
+- [x] `notes/units/rva23s64-sscofpmf-v1.md` — 新建单元，说明规范要求、双核活动路径、溢出/过滤/访问/中断证据、自检及未决边界。
+- [x] `notes/rva23-coverage.md`、`notes/units/index.md` — 更新 Sscofpmf 两侧状态/证据链接与学习索引；同步 `notes/units/rva23-mandatory-coverage-audit-v1.md` 的当前计数语境及 `scripts/check_rva23_coverage.py` / 对应测试的固定计数。
+- [x] Heliodor 定向目标 — 实际尝试现有 test；记录工具版本、输入、event/counter、预期、观察或具体阻塞。核对 OF 清除/re-arm、`scountovf` 的 mcounteren/hcounteren 可见性、LCOFIP 清除/再触发及 M/S 委托是否被该例覆盖。
+- [x] Kunminghu 与 ACT4/Sail — 查明可运行的 CSR/HPM harness、模型和 coverpoint；确认工具/模型与 harness 阻塞，并记录精确搜索/工具缺口；未安装工具或改上游源码。
 
 **Acceptance Criteria：**
 - Given 锁定配置与所选 counter/event，when 定义硬件溢出案例，then 记录实现 counter 宽度、硬件事件、预载方式、过滤状态与访问控制，不把软件写入当作 overflow。
@@ -59,6 +59,18 @@ context:
 
 ## Review Triage Log
 
+| Finding | Verdict / evidence | Route |
+|---|---|---|
+| Blind 1: Sscofpmf section numbering conflicts | **patch** — official v1.0 page is Chapter 13; both the unit metadata and evidence now cite §§13.1.1–13.1.2. | Implementation note corrected |
+| Blind 2: sprint timestamp moved backward | **patch** — baseline contained the erroneous 15:10 value; local time at this correction is 14:51 Asia/Shanghai, so the timestamp now reflects the actual current time and corrects the inherited future value. | Sprint timestamp corrected |
+| Blind 3: verification outcomes absent from Verification section | **false (rejected)** — this finding asks to edit this build's spec, which the review workflow explicitly disallows as a finding fix. Actual command outcomes are present in the unit's implementation evidence and local run record. | Rejected per workflow rule |
+| Blind 4: `scountovf` mode access matrix missing | **patch** — normative Sscofpmf §13.1.2 states M always-readable, S/HS gated by `mcounteren`, VS gated by both `mcounteren` and `hcounteren`; the unit now records that matrix and distinguishes it from counter CSR traps. | Unit contract and comparison table corrected |
+| Blind 5: generalized visibility statement conflicts with Heliodor analysis | **patch** — same missing per-mode contract caused the ambiguity; the unit now explicitly states the normative matrix before comparing the shared Heliodor expression. | Unit contract clarified |
+| Blind 6: ACT4 and Sail claims conflated | **patch** — evidence is now split: E7 records ACT4 extension configuration/test availability and separately records Sail's `Sscofpmf.supported=false`; E6 is limited to Kunminghu harness/tool search. | Evidence table corrected |
+| Blind 7: MINH test behavior underspecified | **patch** — test source explicitly checks zero counter increments with MINH set and nonzero increments after clearing it; the unit now describes both expectations and says they were not run. | Test source analysis clarified |
+| Verification gap reviewer: no findings | **false** — reviewer reported no verification gaps after inspecting the diff. | No action |
+| Edge case reviewer: no findings | **false** — reviewer reported no edge-case findings after tracing the spec and diff. | No action |
+
 ## Verification
 
 **Commands：**
@@ -66,6 +78,7 @@ context:
 - `cd sources/heliodor && veryl test --test test_arch_sscofpmf` — 若可启动，记录真实运行结果；否则记录 testbench/tool blocker，不将 test source 算作通过。
 - `python3 scripts/check_rva23_coverage.py` 与 `python3 -m pytest -q scripts/tests/test_check_rva23_coverage.py` — 覆盖表行数、状态格与固定计数匹配，测试通过。
 - `git diff --check` — 无空白错误。
+- Heliodor 命令完整输出保存在本机 `/tmp/story-5-4-sscofpmf.log`；可移植失败摘要见单元记录。
 
 **Manual checks：**
 - 确认溢出由硬件事件增量产生，OF 清除/re-arm 操作符合规范；逐模式跟踪过滤，并分别检查 `scountovf` 门控、LCOFI pending、enable、delegation 和 trap cause。

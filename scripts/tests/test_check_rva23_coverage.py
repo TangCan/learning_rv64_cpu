@@ -66,7 +66,7 @@ def test_summary_rejects_status_or_profile_row_count_drift():
     wrong_status = COVERAGE.replace("| RVA23U64 | Kunminghu | 21 |", "| RVA23U64 | Kunminghu | 22 |", 1)
     with pytest.raises(SystemExit, match="summary mismatch"):
         checker.validate_summary_table(wrong_status, rows, ROOT / "notes/rva23-coverage.md")
-    wrong_rows = AUDIT.replace("| RVA23S64 | Heliodor | 26 | 27 | 3 | 2 | 0 | 0 | 58 |", "| RVA23S64 | Heliodor | 26 | 27 | 3 | 2 | 0 | 0 | 57 |", 1)
+    wrong_rows = AUDIT.replace("| RVA23S64 | Heliodor | 26 | 28 | 2 | 2 | 0 | 0 | 58 |", "| RVA23S64 | Heliodor | 26 | 28 | 2 | 2 | 0 | 0 | 57 |", 1)
     with pytest.raises(SystemExit, match="summary mismatch"):
         checker.validate_summary_table(wrong_rows, rows, ROOT / "notes/units/rva23-mandatory-coverage-audit-v1.md")
 
