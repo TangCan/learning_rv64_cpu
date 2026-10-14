@@ -9,17 +9,19 @@ def test_five_topics_map_to_exact_profile_keys_and_both_units():
     text = AUDIT.read_text(encoding="utf-8")
     rows = [line for line in text.splitlines() if line.startswith("| ")]
     expected = {
-        "Zifencei": "rva23s64-zifencei-v1.md",
-        "Sstc": "rva23s64-sstc-v1.md",
-        "Sscofpmf": "rva23s64-sscofpmf-v1.md",
-        "Ssnpm": "rva23s64-ssnpm-v1.md",
-        "Ssstateen": "rva23s64-ssstateen-v1.md",
+        "Zifencei": ("rva23s64-zifencei-v1.md", "studied-unverified"),
+        "Sstc": ("rva23s64-sstc-v1.md", "studied-unverified"),
+        "Sscofpmf": ("rva23s64-sscofpmf-v1.md", "studied-unverified"),
+        "Ssnpm": ("rva23s64-ssnpm-v1.md", "studied-unverified"),
+        "Ssstateen": ("rva23s64-ssstateen-v1.md", "not-present"),
     }
-    for topic, unit in expected.items():
+    for topic, (unit, heliodor_status) in expected.items():
         matching = [row for row in rows if f"| {topic} |" in row and "RVA23S64/v1.0/§3.1.2.2/" in row]
         assert len(matching) == 1, f"expected one exact profile mapping for {topic}"
-        assert unit in matching[0]
-        assert "studied-unverified" in matching[0]
+        cells = [cell.strip() for cell in matching[0].strip("|").split("|")]
+        assert unit in cells[5]
+        assert cells[3].startswith("`studied-unverified`")
+        assert f"`{heliodor_status}`" in cells[4]
     assert "c098f996bf4d301b88693b20315486d31e93bc9d" in text
     assert "94e9c5821c24a8941c3ddc3b76daddc7124a855a" in text
 
@@ -29,7 +31,9 @@ def test_cpu_run_failure_is_distinguished_from_pre_run_blockers():
     plan_section = text.split("## 计划案例、结果与范围", 1)[1].split("## 检查器与 sprint 记录", 1)[0]
     topic_rows = [line for line in plan_section.splitlines() if line.startswith("| 5.")]
     assert len(topic_rows) == 5
-    assert sum("`run-fail`" in row for row in topic_rows) == 1
+    row_56 = next(row for row in topic_rows if row.startswith("| 5.6："))
+    assert "`run-fail`" in row_56.split("|")[3]
+    assert "`run-fail`" not in row_56.split("|")[2]
     for story in ("5.2", "5.3", "5.4", "5.5"):
         row = next(row for row in topic_rows if row.startswith(f"| {story}："))
         assert "未启动" in row or "未运行" in row

@@ -31,8 +31,6 @@ Sscofpmf v1.0 §§13.1.1–13.1.2 为性能计数器提供事件过滤与溢出�
 
 `scountovf` 的每位是对应 `mhpmevent` OF 的只读影子，其读访问矩阵与相应 `hpmcounter` 的 S/VS 访问矩阵相同：M-mode 总是可读；S/HS-mode 在 `mcounteren[X]=1` 时可读，否则读零；VS-mode 需要 `mcounteren[X]=1` 且 `hcounteren[X]=1`，否则读零。该规则只说明 `scountovf` 的读取，不等同于 `hpmcounter` CSR 自身访问陷阱的完整行为。过滤字段分别为 `MINH`、`SINH`、`UINH`、`VSINH`、`VUINH`，分别抑制 M、HS、HU、VS、VU 模式的计数。不能从一个模式的测试推定其他模式覆盖。LCOFI 是独立的本地计数器溢出中断（cause 13）：OF sticky、`scountovf` 可见、`mip/sip.LCOFIP` pending、`mideleg` 委托和实际 trap 是不同观察点。Profile 将 Sscofpmf 列为 RVA23S64 必选项。
 
-过滤字段分别为 `MINH`、`SINH`、`UINH`、`VSINH`、`VUINH`，分别抑制 M、HS、HU、VS、VU 模式的计数。不能从一个模式的测试推定其他模式覆盖。LCOFI 是独立的本地计数器溢出中断（cause 13）：OF sticky、`scountovf` 可见、`mip/sip.LCOFIP` pending、`mideleg` 委托和实际 trap 是不同观察点。Profile 将 Sscofpmf 列为 RVA23S64 必选项。
-
 ## Kunminghu V2 活动路径
 
 目标配置沿用 readiness 记录确认的单核 `KunminghuV2Config`；活动 CSR 经 `backend/fu/wrapper/CSR.scala` 实例化 `NewCSR`。快照 HEAD 为 `c098f996bf4d301b88693b20315486d31e93bc9d`，与锁一致。

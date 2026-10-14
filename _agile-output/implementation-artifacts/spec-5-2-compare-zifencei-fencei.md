@@ -57,6 +57,18 @@ context:
 
 ## Spec Change Log
 
+### Review Findings
+
+- [x] Review/Patch README 编译源文件路径相对目录错误 [experiments/rva23s64-zifencei/README.md]
+- [x] Review/Patch 标明 fixture 只是汇编输入而非可运行 CPU 测试 [experiments/rva23s64-zifencei/README.md]
+- [x] Review/Patch 记录 Kunminghu 有界负搜索的复现命令 [notes/units/rva23s64-zifencei-v1.md]
+
+Rejected:
+- Blind Hunter 3 (false): README 说明 `make emu` 仅构建通用模拟器且不加载 fixture。
+- Blind Hunter 4 (false): 单元持久记录精确命令、Veryl 版本、退出码、错误类别和源码行；完整终端日志并非唯一核查证据。
+- Blind Hunter 6 (false): 覆盖表明确说明 fixture 只做汇编/对象检查，没有 CPU harness 执行。
+- Blind Hunter 7 (false): README 与汇编注释都说明 `.tohost` 的 RAM 放置及采集仍是 runner 的缺失前置条件；本次再补充未来需定义的地址/结果约定。
+
 ## Review Triage Log
 
 | Finding | Severity | Evidence / disposition |

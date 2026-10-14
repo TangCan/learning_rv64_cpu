@@ -57,6 +57,12 @@ context:
 
 ## Spec Change Log
 
+### Review Findings
+
+- [x] Review/Patch 删除规范契约中重复的 mode-filter/LCOFI 段落 [notes/units/rva23s64-sscofpmf-v1.md]
+
+Rejected: none.
+
 ## Review Triage Log
 
 | Finding | Verdict / evidence | Route |

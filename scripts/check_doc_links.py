@@ -25,7 +25,7 @@ DEFAULT_DOCS = (
 LINK_RE = re.compile(r"(?<!!)\[([^\]]*)\]\(\s*(?:<([^>]+)>|([^\s)]+))(?:\s+['\"].*?['\"])?\s*\)")
 REF_RE = re.compile(r"(?<!!)\[([^\]]+)\]\[([^\]]*)\]")
 DEF_RE = re.compile(r"^\s*\[([^\]]+)\]:\s*(?:<([^>]+)>|(\S+))", re.MULTILINE)
-HTML_LINK_RE = re.compile(r"\b(?:href|src)\s*=\s*['\"]([^'\"]+)['\"]", re.IGNORECASE)
+HTML_LINK_RE = re.compile(r"\b(?:href|src)\s*=\s*(?:['\"]([^'\"]+)['\"]|([^\s>]+))", re.IGNORECASE)
 FENCE_RE = re.compile(r"^ {0,3}(`{3,}|~{3,})(.*)$")
 EXPLICIT_ID_RE = re.compile(r"<a\s+(?:[^>]*\s)?id=['\"]([^'\"]+)['\"]\s*[^>]*>|<[^>]+\s+id=['\"]([^'\"]+)['\"]\s*[^>]*>", re.IGNORECASE)
 
@@ -48,8 +48,40 @@ def visible_markdown(text: str, *, strip_inline_code: bool = False) -> str:
             out.append("" if fence else line)
     visible = "\n".join(out)
     if strip_inline_code:
-        # Inline code spans can contain text that resembles links.
-        visible = re.sub(r"(?<!`)`+[^`\n]*`+(?!`)", "", visible)
+        # CommonMark code spans use a closing backtick run of the same length.
+        # Scan delimiter runs so embedded shorter runs do not end the span.
+        chars = list(visible)
+        i = 0
+        while i < len(visible):
+            if visible[i] != "`":
+                i += 1
+                continue
+            end = i + 1
+            while end < len(visible) and visible[end] == "`":
+                end += 1
+            width = end - i
+            search = end
+            closing = None
+            while search < len(visible):
+                candidate = visible.find("`", search)
+                if candidate < 0:
+                    break
+                candidate_end = candidate + 1
+                while candidate_end < len(visible) and visible[candidate_end] == "`":
+                    candidate_end += 1
+                if candidate_end - candidate == width:
+                    closing = candidate_end
+                    break
+                search = candidate_end
+            if closing is None:
+                i = end
+                continue
+            for position in range(i, closing):
+                if chars[position] != "\n":
+                    chars[position] = " "
+            visible = "".join(chars)
+            i = closing
+        visible = "".join(chars)
     return visible
 
 
@@ -88,10 +120,15 @@ def links_in_document(text: str):
         found.append((match.group(1), match.group(2) or match.group(3), text.count("\n", 0, match.start()) + 1))
     for match in REF_RE.finditer(text):
         ref = (match.group(2) or match.group(1)).strip().lower()
-        if ref in definitions:
-            found.append((match.group(1), definitions[ref], text.count("\n", 0, match.start()) + 1))
+        found.append((match.group(1), definitions.get(ref, f"__undefined_reference__:{ref}"), text.count("\n", 0, match.start()) + 1))
+    # Shortcut references ([label]) are supported when a matching definition exists.
+    for match in re.finditer(r"(?<!!)\[([^\]]+)\](?!\s*(?:\[|\(|:))", text):
+        label = match.group(1).strip().lower()
+        if label in definitions:
+            found.append((match.group(1), definitions[label], text.count("\n", 0, match.start()) + 1))
     for match in HTML_LINK_RE.finditer(text):
-        found.append((match.group(1), match.group(1), text.count("\n", 0, match.start()) + 1))
+        target = match.group(1) or match.group(2)
+        found.append((target, target, text.count("\n", 0, match.start()) + 1))
     for match in DEF_RE.finditer(text):
         target = match.group(2) or match.group(3)
         found.append((target, target, text.count("\n", 0, match.start()) + 1))
@@ -112,6 +149,9 @@ def check_document(path: Path) -> list[str]:
     except (OSError, UnicodeDecodeError) as exc:
         return [f"{display(path)}: cannot read document: {exc}"]
     for _, target, line in links_in_document(text):
+        if target.startswith("__undefined_reference__:"):
+            errors.append(f"{display(path)}:{line}: undefined reference link {target.partition(':')[2]}")
+            continue
         try:
             parsed = urlsplit(target)
         except ValueError as exc:

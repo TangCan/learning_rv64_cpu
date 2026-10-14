@@ -35,13 +35,13 @@ normal_harness = replace_once(
 normal_harness = replace_once(
     normal_harness,
     "    o_tohost: output logic<32>,\n",
-    "    o_tohost: output logic<32>,\n    o_trace : output logic<64> [64],\n",
+    "    o_tohost: output logic<32>,\n    o_trace : output logic<64> [192],\n",
 )
 normal_harness = replace_once(
     normal_harness,
     "    let tohost_lo: logic<32> = dram[TOHOST_IDX[19:0]];\n",
     "    always_comb {\n"
-    "        for i in 0..64 {\n"
+    "        for i in 0..192 {\n"
     "            o_trace[i] = {dram[1029 + i * 2], dram[1028 + i * 2]};\n"
     "        }\n"
     "    }\n"
@@ -55,7 +55,7 @@ module test_arch_ssstateen {
     var pass  : logic    ;
     var fail  : logic    ;
     var tohost: logic<32>;
-    var trace : logic<64> [64];
+    var trace : logic<64> [192];
     inst h: test_arch_common_harness #(
         HEX_FILE  : "test/ssstateen/ssstateen_probe.hex",
         TOHOST_IDX: 1024,
@@ -71,10 +71,21 @@ module test_arch_ssstateen {
         rst.assert(clk);
         clk.next(20000);
         $display("ssstateen probe tohost=%h pass=%b fail=%b", tohost, pass, fail);
-        for i in 0..64 {
+        for i in 0..192 {
             $display("ssstateen trace[%d]=%h", i, trace[i]);
         }
-        $assert(tohost == 32'h0000_002b, "Ssstateen expected 20 gate traps and SE0=1");
+        $assert(trace[34] == 64'd21, "Ssstateen expected 20 gate traps plus one HS ecall");
+        for i in 0..8 {
+            $assert(trace[12+i][63] == 1'b1, "each M-mode stateen write must set its defined SE0 bit");
+            $assert(trace[24+i][63] == 1'b1, "each HS-mode stateen write must set its defined SE0 bit");
+        }
+        for i in 0..20 {
+            $assert(trace[35+i] == 64'd2, "each blocked stateen/ENVCFG access must raise illegal instruction");
+            $assert(trace[100+i] == i + 64'd1, "trap trace must identify each blocked access in order");
+        }
+        $assert(trace[55] == 64'd9, "final recorded trap must be the HS ecall");
+        $assert(trace[120] == 64'd21, "trap trace must identify the final HS ecall");
+        $assert(tohost == 32'h0000_002b, "Ssstateen expected marker combines trap count and SE0");
         $finish();
     }
 }

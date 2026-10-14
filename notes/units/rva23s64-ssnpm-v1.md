@@ -15,11 +15,11 @@
 
 ### Kunminghu
 
-当前 HEAD 与锁定 SHA 相符。活动 NewCSR 的 `EnvCfg.PMM[33:32]` 默认 `00`，合法枚举为 Disable/PMLEN7/PMLEN16；`Hstatus.HUPMM[49:48]` 亦默认 Disable。`NewCSR.scala` 将 mseccfg、menvcfg、henvcfg、hstatus.HUPMM、senvcfg PMM 注册后传给 TLB。普通访问按有效模式选择：M 用 mseccfg，HS/S 用 menvcfg，VS 用 henvcfg，U/VU 用 senvcfg。规范另规定 HLV/HSV 访问如同 VS 时用 henvcfg；如同 VU 时，在 U 执行用 hstatus.HUPMM，在 HS/M 执行用 senvcfg。`TLB.scala` 的 hyperinst/imode 条件分支与这些控制相对应；fetch/HLVX 和有效 MXR 分支禁用 mask。随后 VA 截取 bit 56:0 / 47:0 并符号扩展，PA 则零扩展。该块还处理屏蔽后的 atomic/misaligned access 检查。静态路径：[`CSRBundles.scala`](../../sources/xiangshan/src/main/scala/xiangshan/backend/fu/NewCSR/CSRBundles.scala#L62)、[`CSRDefines.scala`](../../sources/xiangshan/src/main/scala/xiangshan/backend/fu/NewCSR/CSRDefines.scala#L194)、[`NewCSR.scala`](../../sources/xiangshan/src/main/scala/xiangshan/backend/fu/NewCSR/NewCSR.scala#L1469)、[`HypervisorLevel.scala`](../../sources/xiangshan/src/main/scala/xiangshan/backend/fu/NewCSR/HypervisorLevel.scala#L243)、[`TLB.scala`](../../sources/xiangshan/src/main/scala/xiangshan/cache/mmu/TLB.scala#L178)。访存入口在 `LoadUnit.scala`、`StoreUnit.scala`、`AtomicsUnit.scala`；`rg -ni 'PMM|Ssnpm|pointer.mask' sources/xiangshan/src/test` 未定位专题测试。证据 E1/E2。
+当前 HEAD 与锁定 SHA 相符。活动 NewCSR 的 `EnvCfg.PMM[33:32]` 默认 `00`，合法枚举为 Disable/PMLEN7/PMLEN16；`Hstatus.HUPMM[49:48]` 亦默认 Disable。`NewCSR.scala` 将 mseccfg、menvcfg、henvcfg、hstatus.HUPMM、senvcfg PMM 注册后传给 TLB。普通访问按有效模式选择：M 用 mseccfg，HS/S 用 menvcfg，VS 用 henvcfg，U/VU 用 senvcfg。规范另规定 HLV/HSV 访问如同 VS 时用 henvcfg；如同 VU 时，在 U 执行用 hstatus.HUPMM，在 HS/M 执行用 senvcfg。`TLB.scala:167-195` 的 `hyperinst`/`imode` 条件分支与这些控制相对应：普通 VS→henvcfg，VU→senvcfg，HLV/HSV-as-VS→henvcfg，HLV/HSV-as-VU 按 imode 选 HUPMM 或 senvcfg；`182-187` 中 fetch/HLVX 和有效 MXR 分支禁用 mask。`198-213` 随后令 VA 截取 bit 56:0 / 47:0 并符号扩展，PA 则零扩展。该块还处理屏蔽后的 atomic/misaligned access 检查。静态路径：[`CSRBundles.scala`](../../sources/xiangshan/src/main/scala/xiangshan/backend/fu/NewCSR/CSRBundles.scala#L62)、[`CSRDefines.scala`](../../sources/xiangshan/src/main/scala/xiangshan/backend/fu/NewCSR/CSRDefines.scala#L194)、[`NewCSR.scala`](../../sources/xiangshan/src/main/scala/xiangshan/backend/fu/NewCSR/NewCSR.scala#L1469)、[`HypervisorLevel.scala`](../../sources/xiangshan/src/main/scala/xiangshan/backend/fu/NewCSR/HypervisorLevel.scala#L243)、[`TLB.scala`](../../sources/xiangshan/src/main/scala/xiangshan/cache/mmu/TLB.scala#L178)。访存入口在 `LoadUnit.scala`、`StoreUnit.scala`、`AtomicsUnit.scala`；`rg -ni 'PMM|Ssnpm|pointer.mask' sources/xiangshan/src/test` 未定位专题测试。证据 E1/E2。
 
 ### Heliodor
 
-当前 HEAD 与锁定 SHA 相符。`csr.veryl:794-797` 将 mseccfg、menvcfg、senvcfg 的 `[33:32]` 分别输出为 M/S/U PMM；`henvcfg` 是单独存储的可读写 H CSR（声明 `:391`，读 `:546`、写 `:1130`），复位为零（`:876`）。CSR 可访问不表示字段已接入地址生成选择器。`heliodor_core.veryl:554-565` 按数据访问有效 privilege 从 M/S/U 三路选 PMM；主 load/AMO AGU 在 `:5283-5290` 变换地址，第二 load AGU 在 `:5313-5319` 重复同一变换。`alu_wrap.veryl:191-203` 对标量 AGU 也有 PMLEN 转换。按 `csr_pmm`、PMM 选择器和 HUPMM 相关符号检索所检查源码，未定位 `henvcfg.PMM` / `hstatus.HUPMM` 到 VS/VU mask selector 的路径；CSR 可读写性不构成该路径的证据。规范要求普通 VS 用 henvcfg、VU 用 senvcfg；HLV/HSV-as-VS 用 henvcfg；HLV/HSV-as-VU 在 U 执行时用 hstatus.HUPMM、在 HS/M 执行时用 senvcfg。该为所检查路径的缺口，不据此断言整个 Heliodor 完全不支持 H guest pointer masking。证据 E3/E4。
+当前 HEAD 与锁定 SHA 相符。`csr.veryl:794-797` 将 mseccfg、menvcfg、senvcfg 的 `[33:32]` 分别输出为 M/S/U PMM；`henvcfg` 是单独存储的可读写 H CSR（声明 `:391`，读 `:546`、写 `:1130`），复位为零（`:876`）。CSR 可访问不表示字段已接入地址生成选择器。`heliodor_core.veryl:554-565` 按数据访问有效 privilege 从 M/S/U 三路选 PMM；主 load/AMO AGU 在 `:5283-5290` 变换地址，第二 load AGU 在 `:5313-5319` 重复同一变换。`alu_wrap.veryl:191-203` 对标量 AGU 也有 PMLEN 转换。在 `sources/heliodor/src/core/{csr,heliodor_core,alu_wrap}.veryl` 上执行 `rg -ni 'henvcfg\.PMM|hstatus\.HUPMM|csr_pmm_h|HUPMM|PMM'`；该有界检索只定位 M/S/U PMM 输出/selector 和 `alu_wrap.i_pm_mode`，未定位 `henvcfg.PMM` / `hstatus.HUPMM` 到 VS/VU mask selector 的路径；CSR 可读写性不构成该路径的证据。规范要求普通 VS 用 henvcfg、VU 用 senvcfg；HLV/HSV-as-VS 用 henvcfg；HLV/HSV-as-VU 在 U 执行时用 hstatus.HUPMM、在 HS/M 执行时用 senvcfg。该为所检查路径的缺口，不据此断言整个 Heliodor 完全不支持 H guest pointer masking。证据 E3/E4。
 
 ## 访问族矩阵
 
@@ -27,10 +27,10 @@
 
 | 显式访存族（Zpm v1.0.0 §17.1.2.6） | Kunminghu | Heliodor | 边界 |
 |---|---|---|---|
-| Integer load/store | `inspected only`：TLB 从标量 Load/Store 请求使用 mask 地址；未运行 | `inspected only`：两 AGU 至 load/store MMU 地址有 mask；未运行 | 仅源码路径，不含运行观察 |
-| Atomic（含 LR/SC） | `inspected only`：TLB 将 atomic 纳入同一 effective-address 变换及后续检查；专题测试未定位 | `inspected only`：AGU 地址复用到 AMO/LR/SC 路径；已有 Supm 源码为 M-mode，不是 Ssnpm 证据 | 不外推到全 A 操作、权限或异常行为 |
-| Floating-point load/store | `inspected only`：按显式访存共用 Load/Store/TLB 接口追踪；未运行 | `inspected only`：静态路径归入通用 load/store AGU/MMU；未运行 | 未定位独立 FP Ssnpm 用例 |
-| Compressed load/store | `inspected only`：解码后访存经通用 Load/Store/TLB 路径；未运行 | `inspected only`：解码后访存进入通用 scalar AGU；未运行 | 未逐条检查压缩编码 |
+| Integer load/store | `inspected only`：`TLB.scala:178-214` 中 TLB request 有效地址 mask；未运行 | `inspected only`：`heliodor_core.veryl:5283-5290,5312-5319` 的两条 issue AGU mask 地址并送出访存路径；`alu_wrap.veryl:191-203` 另有 scalar AGU mask；未运行 | 仅所列源码路径，不含运行观察 |
+| Atomic（含 LR/SC） | `inspected only`：`TLB.scala:178-214` 将 TLB 请求统一变换；本轮未逐项核对所有 atomic 请求产生方式 | `inspected only`：`heliodor_core.veryl:5292-5306,5581-5590,6114-6123` 可见 issue AMO、LR/SC reservation 与 SC PMP 使用 `agu_addr_iss`；不作为完整端到端 AMO 证明 | 不外推到全部 A 操作、提交写入、权限或异常行为 |
+| Floating-point load/store | `unverified`：本轮未单独追踪 FP decode 到 TLB 请求；可能共用普通 Load/Store 路径，不能据此标 inspected | `unverified`：本轮未单独追踪 FP load/store decode 到已检查 AGU/MMU；未运行 | 两侧均未独立定位 FP Ssnpm 端到端路径/用例 |
+| Compressed load/store | `unverified`：本轮未追踪压缩指令 decode 到 TLB 请求；不能仅据通用接口标 inspected | `unverified`：本轮未追踪 compressed decode 到已检查 scalar AGU；未运行 | 未逐条检查压缩编码或独立入口 |
 | Cache management operations | `unverified`：本轮未检查 Zicbom/Zicbop/Zicboz 请求是否进入同一 TLB PMM 路径 | `unverified`：未定位这些 CMO 的 PMM 变换 | 不宣称覆盖；规范要求显式 CMO 受 mask |
 | Vector load/store | `unverified`：本轮未追踪向量 LSU 的完整地址入口 | `unverified`：VectorUnit 有独立 element-address 生成；未在该路径定位 PMM | 不从标量 AGU 推断向量行为 |
 | Hypervisor HLV/HSV and VS/VU | `inspected only`：普通 VS 用 henvcfg、VU 用 senvcfg；HLV/HSV-as-VS 用 henvcfg；HLV/HSV-as-VU 依调用模式用 HUPMM 或 senvcfg；未动态验证 | `unverified`：已检查路径未发现 henvcfg/HUPMM selector | Heliodor guest/H 路径仍未决；HLVX 免于 masking；不以 M-mode 案例替代 |
@@ -40,7 +40,7 @@
 
 ## Heliodor 案例与验证记录
 
-本轮尝试执行现有 `test/supm/supm_test.S`、对应 `.hex` 及 `tb/test_arch_common.veryl` 的 `test_arch_supm`，没有执行成功。测试程序集覆盖 Bare M-mode `mseccfg.PMM=11` 的 tagged LD、LR/SC alias，`PMM=10` 的 tagged LR/SC alias，以及 `PMM=0` clean LR/SC；其注释指出 flat DRAM 与 Sv39 MMU 会让 tagged LD/SD alias 在禁用时也可能可观察为同一位置，故 LR/SC 才是 discriminator。它没有写 `senvcfg` / `henvcfg`，不覆盖 S/U/VS/VU profile Ssnpm 要求。
+本轮尝试执行现有 `test/supm/supm_test.S` 与 checkout 中已跟踪的 `test/supm/supm_test.hex`（SHA-256 `aef6f4f1a8073b27fa1dd25051647a64b8803bdd8c0dcc92e5cb7abf844a7690`）及 `tb/test_arch_common.veryl` 的 `test_arch_supm`，没有执行成功。测试程序集覆盖 Bare M-mode `mseccfg.PMM=11` 的 tagged LD、LR/SC alias，`PMM=10` 的 tagged LR/SC alias，以及 `PMM=0` clean LR/SC；其注释指出 flat DRAM 与 Sv39 MMU 会让 tagged LD/SD alias 在禁用时也可能可观察为同一位置，故 LR/SC 才是 discriminator。检查 ID 与输入期望：41 为 PMLEN16 tagged LD 读取初始化值 `0x1111`（源码注释说明该 load 单独不能区分 mask 是否启用）；42/43 为 PMLEN16 tagged SC 成功且 clean 地址读取 `0x2222`；44/45 为 PMLEN7 tagged SC 成功且 clean 地址读取 `0x3333`；46/47 为 PMM=0 clean SC 成功且读取 `0x4444`。这些是汇编中的检查分支/期望值，不是运行观察。HEX 的哈希固定了实际输入身份，但锁定 checkout 缺生成 provenance，故不能证明它由当前 `.S` 生成。它没有写 `senvcfg` / `henvcfg`，不覆盖 S/U/VS/VU profile Ssnpm 要求。
 
 - 命令 `cd sources/heliodor && make -C test/supm`：exit 0，输出 `Nothing to be done for 'all'`；现有 `test/supm/supm_test.hex` 已存在，本次未重建输入。
 - 命令 `cd sources/heliodor && /nvme_data1/richard/.local/share/veryl/toolchains/latest/veryl --version`：Veryl `0.22.0 (967e477 2026-10-02)`。
@@ -54,8 +54,8 @@
 | E1 | spec | inspected | RVA23 Profile v1.0 §3.1.2.2 (`Ssnpm`)，发布 PDF p.7；归档 profile 源提交 `e030b70992447784ad9081045d47ce6e278f381e`, `src/rva23-profile.adoc:402` | 发布件 `PME`、固定源文本 `PMM` 的拼写差异及 PMLEN0/7 最低要求；PMM 架构定义另见 E2 |
 | E2 | spec | inspected | Pointer Masking v1.0.0 §§17.1.2.2–.8；H v1.0 §14.1.2.1 | `PMM` 编码、地址变换、模式、访问族及 HLV/HSV-as-VS/VU 控制规则 |
 | E3 | source | inspected | Kunminghu `c098f996bf4d301b88693b20315486d31e93bc9d`；`backend/fu/wrapper/CSR.scala`、`backend/fu/NewCSR/CSRBundles.scala:67-74`、`backend/fu/NewCSR/CSRDefines.scala:194-200`、`backend/fu/NewCSR/NewCSR.scala:1469-1473`、`backend/fu/NewCSR/HypervisorLevel.scala:243`、`cache/mmu/TLB.scala:178-214` | PMM 定义、传递、模式选择和地址变换静态路径；无 Ssnpm run |
-| E4 | source | inspected | Heliodor `94e9c5821c24a8941c3ddc3b76daddc7124a855a`；`src/core/csr.veryl:129-134,391,546,794-797,876,1130`；`src/core/heliodor_core.veryl:452-454,554-565,5283-5290,5313-5319`；`src/core/alu_wrap.veryl:191-203` | M/S/U PMM、henvcfg CSR 可读写性、两个 load AGU 及 scalar AGU 变换；在所检索路径未定位 guest PMM selector |
-| E5 | test-inspected | inspected | Heliodor `test/supm/supm_test.S`, `test/supm/supm_test.hex`, `tb/test_arch_common.veryl:6055-6080` | 仅检查 M-mode Supm 测试材料；不是 Ssnpm 验证 |
+| E4 | source | inspected | Heliodor `94e9c5821c24a8941c3ddc3b76daddc7124a855a`；`src/core/csr.veryl:129-134,391,546,794-797,876,1130`；`src/core/heliodor_core.veryl:452-454,554-565,5283-5290,5312-5319,5581-5590,6114-6123`；`src/core/alu_wrap.veryl:191-203` | M/S/U PMM、henvcfg CSR 可读写性、两条 issue AGU、scalar `alu_wrap` AGU mask 以及 AMO/LR/SC issue/reservation/SC-PMP 使用 `agu_addr_iss`；此处不声称完整提交写回地址已追踪。guest selector 的检索范围和命令见 Heliodor 路径段。 |
+| E5 | test-inspected | inspected | Heliodor `test/supm/supm_test.S`, `test/supm/supm_test.hex` (SHA-256 `aef6f4f1a8073b27fa1dd25051647a64b8803bdd8c0dcc92e5cb7abf844a7690`), `tb/test_arch_common.veryl:6055-6080` | 仅检查 M-mode Supm 测试材料；不是 Ssnpm 验证 |
 | E6 | test-run | run-fail | Heliodor `make -C test/supm`; Veryl 0.22.0 `test --test test_arch_supm`; `tb/test_arch_common.veryl:440` | build 目标无需更新；testbench check 因 `$readmemh`/`dram` 初始化错误退出1，仿真未启动 |
 
 ## 自检

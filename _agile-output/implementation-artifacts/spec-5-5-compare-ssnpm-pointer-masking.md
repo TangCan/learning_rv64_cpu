@@ -64,6 +64,18 @@ context:
 
 ## Spec Change Log
 
+### Review Findings
+
+- [x] Review/Patch 固定 Supm HEX 输入哈希，并声明无法证明其由当前汇编源生成 [notes/units/rva23s64-ssnpm-v1.md]
+- [x] Review/Patch 为 Kunminghu VS/VU 与 HLV/HSV PMM selector 增加精确 TLB 行范围 [notes/units/rva23s64-ssnpm-v1.md]
+- [x] Review/Patch 限定 Heliodor AMO/LR/SC 共享地址的证据和结论范围 [notes/units/rva23s64-ssnpm-v1.md]
+- [x] Review/Patch 将未逐项追踪的 FP/compressed 地址族降为 unverified [notes/units/rva23s64-ssnpm-v1.md]
+- [x] Review/Patch 记录 Heliodor H guest PMM 负搜索的文件集与精确词项 [notes/units/rva23s64-ssnpm-v1.md]
+- [x] Review/Patch 在覆盖矩阵中列明 Heliodor 已检查的两条 issue AGU 与 scalar AGU [notes/rva23-coverage.md]
+- [x] Review/Patch 记录 M-mode Supm 测试各检查 ID 的输入和预期结果 [notes/units/rva23s64-ssnpm-v1.md]
+
+Rejected: none.
+
 ## Review Triage Log
 
 - **R1 — low / patch：** “Heliodor Ssnpm 案例”容易被读成已完成 Ssnpm 实验；实际只检查并尝试运行 M-mode Supm 既有目标，仿真未启动。已将单元改为明确写成本轮尝试及失败结果，并注明不覆盖 Ssnpm。

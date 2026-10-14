@@ -30,7 +30,7 @@ source_snapshots:
 
 Sstc v1.0 增加 S 级 `stimecmp`（CSR `0x14D`）和 H 扩展下的 VS 级 `vstimecmp`（`0x24D`）。比较按无符号数进行：当 `time >= stimecmp` 时 STIP pending；当截断为 64 位的 `time + htimedelta >= vstimecmp` 时 VSTIP pending。严格小于时相应硬件 pending 为低，等于和大于时为高。比较状态发生变化后，规范保证 STIP/VSTIP **最终**反映变化，但不保证立即；中断实际陷入还受标准中断使能、当前特权态和委托规则控制，因此允许有限范围的异步传播时间，不要求周期精确延迟。
 
-Sstc 访问受两个控制层影响。`mcounteren.TM=0` 时，低于 M 的模式访问 `stimecmp`/`vstimecmp` 触发 illegal-instruction；`menvcfg.STCE=0` 时，非 M 对这些 CSR 的访问也触发 illegal-instruction，STIP 退回未实现 Sstc 时的软件控制语义。若 M 级 STCE 为 1 而 `henvcfg.STCE=0`，VS 对 `stimecmp`（即 `vstimecmp` 别名）的访问触发 virtual-instruction，VSTIP 退回未实现此功能时的语义。VS 访问还受 `hcounteren.TM` 和 `mcounteren.TM` 限制。RVA23S64 v1.0 §3.1.2.2 将 Sstc 列为必选扩展。
+Sstc CSR 访问权限按当前特权模式区分：HS/S 访问 `stimecmp` 受 `mcounteren.TM` 和 `menvcfg.STCE` 控制；VS 访问 `vstimecmp`（或 `stimecmp` alias）还受 `hcounteren.TM` 与 `henvcfg.STCE` 控制，并同时受 `mcounteren.TM` 和 M 级 `menvcfg.STCE` 约束。对应关闭时，低于 M 的访问触发 illegal-instruction，VS 在上层 STCE 允许而 `henvcfg.STCE=0` 时触发 virtual-instruction；`menvcfg.STCE=0` 时，非 M 对这些 CSR 的访问也触发 illegal-instruction，STIP 退回未实现 Sstc 时的软件控制语义。若 M 级 STCE 为 1 而 `henvcfg.STCE=0`，VS 对 `stimecmp`（即 `vstimecmp` 别名）的访问触发 virtual-instruction，VSTIP 退回未实现此功能时的语义。RVA23S64 v1.0 §3.1.2.2 将 Sstc 列为必选扩展。
 
 ## Kunminghu V2 活动路径
 
@@ -44,20 +44,20 @@ Sstc 访问受两个控制层影响。`mcounteren.TM=0` 时，低于 M 的模式
 
 ## Heliodor 活动路径
 
-锁定 `heliodor_core` 的 CSR 状态、权限检查和中断交付路径位于 `csr.veryl`、`alu_wrap.veryl` 及 `heliodor_core.veryl`。测试入口由 `tb/test_arch_common.veryl` 注册。
+锁定 `heliodor_core` 的 CSR 状态、权限检查和中断交付路径位于 `csr.veryl`、`alu_wrap.veryl` 及 `heliodor_core.veryl`。测试入口由仓库根目录下的 `tb/test_arch_common.veryl` 注册（对应 `sources/heliodor/tb/test_arch_common.veryl`）。
 
-- `csr.veryl` 保存 64 位 `stimecmp` 和 `vstimecmp`，均复位为全 1。Menvcfg/henvcfg 的 bit 63 作为 STCE；STIP 比较 `i_mtime >= stimecmp`，VS 比较 `(i_mtime + htimedelta) >= vstimecmp`。64 位向量加法输出为 64 位，符合规范中的 64 位截断形式。`henvcfg.STCE` 可写值虽存储，但 guest 硬件路径由 M/H 两级 STCE 同时门控。
+- `csr.veryl` 保存 64 位 `stimecmp` 和 `vstimecmp`，均复位为全 1。Menvcfg/henvcfg 的 bit 63 作为 STCE；STIP 比较 `i_mtime >= stimecmp`，VS 比较 `(i_mtime + htimedelta) >= vstimecmp`。静态源码中的 64 位向量加法输出为 64 位，路径形态对应规范规定的 64 位截断；本轮没有非零 `htimedelta` 溢出/截断运行案例或观察。`henvcfg.STCE` 可写值虽存储，但 guest timer 比较器由 M/H 两级 STCE 同时门控。该比较器门控结论独立于下文的 CSR 访问权限检查结论。
 - V=1 时 guest 读 `time` 得 `i_mtime + htimedelta`，写 `stimecmp` 别名更新 `vstimecmp`；HS/M 可通过独立 VS CSR 地址观察/写入状态。STIP 在 STCE 开启时由比较结果驱动，否则回到 `mip.STIP` 软件值。VSTIP 在 guest Sstc 关闭时回到 `hvip.VSTIP`；打开时由比较源与软件注入 pending 组合。`hip.VSTIP`、`vsip.STIP` 和 hideleg/VS 使能的 VS delivery 路径均可静态追踪。
 - 已检查的 `alu_wrap.veryl` 通用 CSR permission check 依据 CSR 地址特权级、只读属性和未实现地址判断；该检查片段未显示 `menvcfg.STCE`、`henvcfg.STCE` 或 TM 条件。现有 S/VS 测试也不检查 STCE 关闭时 CSR 访问应触发的异常。因此这里记录为权限门控静态待核项，不能从比较器路径推断访问条件满足规范。
 
 | Heliodor CSR 访问场景 | 此次静态检查可确认 | 尚未由已检查路径/测试确认 |
 |---|---|---|
-| HS/S-mode 读写 `stimecmp` | 通用 checker 可按 CSR 地址特权级与读写属性处理；S 测试检查 STCE=0 时比较器不产生意外 pending，并单独在 STCE=1 时走 S interrupt。 | `mcounteren.TM` 与 `menvcfg.STCE` 对 S-mode `stimecmp` 访问异常的专用判定；当前 S 测试未执行 STCE=0 CSR 访问。 |
-| VS-mode 读写 `stimecmp` alias / `vstimecmp` | CSR 状态路径可见 V=1 时使用 guest compare state，测试材料设置两级 STCE 为 1 并走 VS delivery。 | `hcounteren.TM`、`mcounteren.TM` 与 `henvcfg.STCE` 的独立关闭行为，以及 virtual-instruction / illegal-instruction 的异常类型。 |
+| HS/S-mode 读写 `stimecmp` | 通用 checker 可按 CSR 地址特权级与读写属性处理；S 测试检查比较器门控而非 CSR 访问权限：M-mode 打开 `mie.STIE`/`mstatus.MIE`、令 `stimecmp=0` 并把 `mtvec` 指向失败 handler；只有 timer pending 造成可观察的 M trap 才会失败；另在 `STCE=1` 时走 S interrupt。 | `mcounteren.TM` 与 `menvcfg.STCE` 对 S-mode `stimecmp` 访问异常的专用判定；当前 S 测试未执行 STCE=0 CSR 访问。 |
+| VS-mode 读写 `stimecmp` alias / `vstimecmp` | CSR 状态路径可见 V=1 时使用 guest compare state；测试材料为比较器和中断交付同时打开 M/H 两级 STCE 并走 VS delivery。这不验证 CSR 访问权限 gate。 | `hcounteren.TM`、`mcounteren.TM` 与 `henvcfg.STCE` 的独立关闭行为，以及 virtual-instruction / illegal-instruction 的异常类型。 |
 
 ## 测试材料与覆盖评估
 
-Heliodor 已检入 `test/sstc/sstc_test.S`/`.hex` 和 `test/hsstc/hsstc_test.S`/`.hex`。两个 testbench 目标均开启 `MTIME_EN=1`，运行 100000 clocks，比较的是 tohost/pass；这些输入和断言不是本次 CPU 观察。
+Heliodor 已检入 `test/sstc/sstc_test.S`/`.hex` 和 `test/hsstc/hsstc_test.S`/`.hex`。两个 testbench 目标均开启 `MTIME_EN=1`，配置的测试预算为 100000 clocks；由于语义检查阶段即失败，该预算并未实际运行。比较的是 tohost/pass；这些输入和断言不是本次 CPU 观察。
 
 | 案例 | 输入与期望 | 覆盖及未覆盖 |
 |---|---|---|

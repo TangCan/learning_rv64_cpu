@@ -65,6 +65,13 @@ context:
 
 | Finding | Verdict / evidence | Route |
 |---|---|---|
+| Blind review：规格 `done`、sprint `review` 状态不一致 | patch — 审查期间统一为 `review`；完成审查后与 sprint 同步回 `done`。 |
+| Blind review：扩展规范缺少直接规范链接 | patch — 就绪矩阵补齐五项扩展版本的规范链接和章节。 |
+| Blind review：Kunminghu Zifencei 取指同步端点未明确 | patch — 补充从 fence 请求追至前端/ICache 同步完成及恢复取指的范围，并链接 Story 5.2 的后续结论。 |
+| Blind review：Kunminghu Sstc 输入/输出追踪范围不明确 | patch — 列出 NewCSR、SstcInterruptGen、MachineLevel、CLINT 与 htimedelta 端点。 |
+| Blind review：Heliodor Sscofpmf 未列出测试缺口 | patch — 明确现有测试仅检查 M-mode MINH、硬件 wrap 及 cause/OF/scountovf，并列出 clear/re-arm、其他模式及委托缺口。 |
+| Blind review：Heliodor 测试 hex 重建前置条件不明确 | patch — 核对并列出四个已跟踪 hex；仅缺失或汇编变更时才运行 make 重建。 |
+| Blind review：Ssstateen 负搜索记录不易发现 | patch — Code Map 与就绪矩阵加入 Ssstateen 单元直接链接。 |
 | Blind review：GCC 版本与 Code Map 不一致 | medium：就绪矩阵先前记录 13.3.0，规格环境摘要写 15.1，读者可能据此误判本机工具可用性；已按本机查询统一为 13.3.0。 | patch — 已修正文档与本规格摘要 |
 | Blind review：`unresolved` 不在验收状态枚举中 | medium：Ssnpm、Ssstateen 先前把调查结论直接写成状态；已将状态统一为 `needs setup`，把 unresolved 留作结论限定。 | patch — 已修正 |
 | Blind review：候选测试依赖未记录版本或不可用状态 | medium：Veryl/Mill 版本及测试程序交叉编译器状况会决定入口能否复现；矩阵现在写明已知版本要求和本机未检查/不可用项。 | patch — 已补充 |

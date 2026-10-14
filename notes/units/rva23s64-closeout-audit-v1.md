@@ -52,13 +52,13 @@ Epic 4 目录当前为 U64 34 行、S64 58 行，共 92 profile 行、184 个实
 | 检查 | 实际命令与版本 | 实际输出 / 结果 |
 |---|---|---|
 | RVA23 inventory | `python3 scripts/check_rva23_coverage.py`；Python 3.12.3 | `valid: true`; `profile_rows: U64=34 S64=58 total=92`; `implementation_status_cells: 184`; `deduplicated_requirements: 59`。S64 Heliodor：partially-studied=26、studied-unverified=29、evidence-observed=2、not-present=1；S64 Kunminghu：36、22；U64 Heliodor：14、20；U64 Kunminghu：21、13。 |
-| 本地文档目标/锚点 | `python3 scripts/check_doc_links.py`；Python 3.12.3 | `valid: 36 document(s); all supported local targets and anchors exist`。检查 notes 文档、Epic 5 context/start-gate 和 Story 5.1–5.7；支持常规 Markdown inline/reference 与 HTML href/src、相对文件、heading/显式锚点以及已有的 `file:line` / `#Lnn` 源码引用。不是完整 CommonMark 解析器；自动链接、转义定界符及带未转义嵌套括号的 inline destination 不在支持范围。 |
+| 本地文档目标/锚点 | `python3 scripts/check_doc_links.py`；Python 3.12.3 | `valid: 36 document(s); all supported local targets and anchors exist`。检查 notes 文档、Epic 5 context/start-gate 和 Story 5.1–5.7；支持常规 Markdown inline、full/shortcut reference 与 HTML href/src（含无引号属性）、相对文件、heading/显式锚点以及已有的 `file:line` / `#Lnn` 源码引用。不是完整 CommonMark 解析器；自动链接、转义定界符及带未转义嵌套括号的 inline destination 不在支持范围。 |
 | sprint YAML | `uv run --no-cache --with ruamel.yaml python .agents/skills/bmad-sprint-planning/scripts/sprint_plan.py validate --status-file _agile-output/implementation-artifacts/sprint-status.yaml`；uv 0.12.5，Python 3.12.3 | `{"ok": true, "action": "validate", "status_file": "_agile-output/implementation-artifacts/sprint-status.yaml", "valid": true, "problems": [], "legacy_mapped": []}`。故事键为 `5-7-审计-rva23s64-覆盖与学习结项证据`。 |
-| checker 回归测试 | `python3 -m pytest -q scripts/tests/test_check_doc_links.py`；pytest 9.1.1 | `10 passed`。涵盖相对链接和 heading anchor、缺目标/缺锚点及行号、explicit/重复/CJK anchor、外链与 inline/fenced code 排除、reference/HTML 链接、CLI 成功/错误退出、非法 UTF-8 和无效 URL。 |
-| 全脚本测试 | `python3 -m pytest -q scripts/tests`；pytest 9.1.1 | `25 passed`（覆盖目录、链接解析及结项分类检查）。 |
+| checker 回归测试 | `python3 -m pytest -q scripts/tests/test_check_doc_links.py`；pytest 9.1.1 | `13 passed`。涵盖相对链接和 heading anchor、缺目标/缺锚点及行号、explicit/重复/CJK anchor、外链与 inline/fenced code 排除、full/shortcut/undefined reference 与 quoted/unquoted HTML 链接、CLI 成功/错误退出、非法 UTF-8 和无效 URL。 |
+| 全脚本测试 | `python3 -m pytest -q scripts/tests`；pytest 9.1.1 | `31 passed`（覆盖目录、链接解析及结项分类检查；Story 5.7 review fixes 后复跑）。 |
 | whitespace 检查 | `git diff --check` | 检查通过，无 whitespace error。 |
 
-Story 5.7 开始实施时由 `backlog` 切换为 `in-progress`；交付审查时改为 `review`。Epic 5 仍是 `in-progress`；Story 5.1–5.6 当前也都处于 `review`，不能据此将 Epic 5 标记为 done。Epic 5 retrospective 仍是 `optional`。
+Story 5.7 开始实施时由 `backlog` 切换为 `in-progress`，交付审查后按 review 结果完成；Epic 5 及 Stories 5.1–5.7 当前均为 `done`。Epic 5 retrospective 仍是 `optional`。
 
 ## 学习结项决定与自检
 

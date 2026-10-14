@@ -57,18 +57,35 @@ def test_fence_closing_marker_must_match_length_and_have_no_info_string(tmp_path
     source.write_text("````md\n```text\n[inside](missing.md)\n````\n[real](missing.md)\n", encoding="utf-8")
     errors = checker.check_document(source)
     assert len(errors) == 1
-    assert "[real]" not in errors[0]
     assert "missing.md" in errors[0]
+    assert ":5:" in errors[0]
 
 
 def test_reference_and_html_links_are_checked(tmp_path):
     target = tmp_path / "target.md"
     target.write_text("# Section\n", encoding="utf-8")
     source = tmp_path / "source.md"
-    source.write_text('[reference][target]\n[target]: target.md#section\n<a href="missing.html">link</a>\n', encoding="utf-8")
+    source.write_text('[reference][target]\n[target]: target.md#section\n<a href="missing.html">link</a>\n<a href=unquoted.html>link</a>\n', encoding="utf-8")
+    errors = checker.check_document(source)
+    assert len(errors) == 2
+    assert any("missing.html" in error for error in errors)
+    assert any("unquoted.html" in error for error in errors)
+
+
+def test_reference_links_check_missing_definition_and_shortcut_form(tmp_path):
+    target = tmp_path / "target.md"
+    target.write_text("# Target\n", encoding="utf-8")
+    source = tmp_path / "source.md"
+    source.write_text("[shortcut]\n[shortcut]: target.md\n[broken][missing]\n", encoding="utf-8")
     errors = checker.check_document(source)
     assert len(errors) == 1
-    assert "missing.html" in errors[0]
+    assert "undefined reference link missing" in errors[0]
+
+
+def test_variable_length_inline_code_span_ignores_link_like_text(tmp_path):
+    source = tmp_path / "source.md"
+    source.write_text("``text with ` ticks and [fake](missing.md)``\n", encoding="utf-8")
+    assert checker.check_document(source) == []
 
 
 def test_cli_returns_nonzero_for_missing_document(tmp_path, capsys):

@@ -44,7 +44,16 @@ context: ['{project-root}/_agile-output/implementation-artifacts/epic-5-context.
 - [x] `scripts/check_doc_links.py`、`scripts/tests/test_check_doc_links.py`、`scripts/tests/test_closeout_audit.py` — 检查本地链接/锚点，并锁定五项映射及运行/阻塞分类。
 - [x] 五单元、Story specs 与 `sources.lock` — 交叉核对状态、快照、规范、证据、自检及计划案例；未发现有证据支持但需要修复的矛盾。
 - [x] 覆盖表、审计记录、索引 — 汇总实际验证和未决边界、工具结果及项目学习结项决定。
-- [x] Story spec 与 `sprint-status.yaml` — 记录验证结果；实现已完成并交由 BMAD review，Story 5.7 进入 review，Epic 5 保持 in-progress。
+- [x] Story spec 与 `sprint-status.yaml` — 记录实现、审查修复和复验结果；Story 5.7 与 Epic 5 状态均为 done。
+
+### Review Findings
+
+- [x] Review/Patch 修复可见 Markdown 处理的多反引号跨度匹配；加入包含较短反引号和链接样式文本的回归用例。
+- [x] Review/Patch 补充 shortcut reference 和未定义 reference 检查；增强引用链接测试，分别断言引用目标和缺失定义。
+- [x] Review/Patch 支持无引号 HTML href/src；测试验证 inline、shortcut reference 与 HTML 链接各自的缺项。
+- [x] Review/Patch 改正 fence 测试断言，锁定报告源行号以证明代码围栏内的链接被忽略、真实链接被发现。
+- [x] Review/Patch 加强五单元双侧状态断言，并将 `run-fail` 精确绑定到 5.6 Heliodor 列。
+- [x] Review/Patch 重跑全量脚本测试并用最终结果更新审计记录。
 
 **Acceptance Criteria：**
 - Given Epic 4 目录和五单元，when 审计，then 每项可追溯到精确规范键、双核状态及证据；缺调查、缺验证、阻塞和运行失败有区别。
@@ -65,8 +74,8 @@ context: ['{project-root}/_agile-output/implementation-artifacts/epic-5-context.
 - 新增 `scripts/check_doc_links.py`，默认检查 `notes/` 及 Epic 5 的 context、start-gate 和 Stories 5.1–5.7；可传文档/目录参数。只依赖 Python 标准库，检查常规 Markdown inline/reference 链接、HTML href/src、本地 heading/显式 anchor、`file:line` 与 `#Lnn`，按源文档行号报告并在缺项时退出非零。它会忽略 fenced/inline code，但不是完整 CommonMark 解析器；自动链接、转义定界符及带未转义嵌套括号的 inline destination 不受检查。
 - 新增 `scripts/tests/test_check_doc_links.py`，测试本地目标、heading/CJK/重复/显式 anchor、缺失目标、行号、外链/inline/fenced code、reference/HTML 链接、CLI 成功/错误退出、非法 UTF-8 和无效 URL。
 - 交叉核验五个单元、覆盖目录和锁定 checkout：实际 SHA 均匹配 `sources.lock`。五项 exact key/版本及案例结果汇总于 [结项审计](../../notes/units/rva23s64-closeout-audit-v1.md)；仅 Ssstateen Heliodor M/HS fixture 有 CPU 运行观察，结果 `run-fail`。其他被计划的 CPU 案例分别为启动前阻塞或静态/未验证，不记通过。
-- 检查结果：`python3 scripts/check_rva23_coverage.py` 输出 92 profile rows、184 状态格、59 去重要求，valid；`python3 scripts/check_doc_links.py` 输出 36 documents 中所有受支持语法的本地目标和锚点存在；指定 sprint validator 输出 valid=true、problems=[]；`python3 -m pytest -q scripts/tests` 为 29 passed；`git diff --check` 通过。工具版本和完整边界见结项审计。
-- 学习结项接受范围仅为本项目的对照记录与证据边界；Epic 5 的 5.1–5.6 仍处 review，本故事实现已交 review，Epic 5 保持 in-progress。无 RVA23 整体符合性/认证结论。
+- 检查结果：`python3 scripts/check_rva23_coverage.py` 输出 92 profile rows、184 状态格、59 去重要求，valid；`python3 scripts/check_doc_links.py` 输出受支持语法的本地目标和锚点全部存在；指定 sprint validator 输出 valid=true、problems=[]；`python3 -m pytest -q scripts/tests` 最终为 31 passed；`git diff --check` 通过。工具版本和完整边界见结项审计。
+- 学习结项接受范围仅为本项目的对照记录与证据边界；Stories 5.1–5.7 和 Epic 5 完成，Epic 5 retrospective 保持 optional。无 RVA23 整体符合性/认证结论。
 
 ## Spec Change Log
 
@@ -84,3 +93,9 @@ context: ['{project-root}/_agile-output/implementation-artifacts/epic-5-context.
 - `low — patch`（盲审：checker 未定义支持的 Markdown 子集）：与带括号目的地问题同属链接语法支持范围未定义；在 spec 和审计结果中明确列出支持的常规 inline/reference/HTML 形式及未覆盖自动链接、转义定界符、嵌套括号形式。
 - `low — patch`（边界审查：无效 UTF-8 文档导致 traceback）：已核实；文档读取只捕获 `OSError`，无效 UTF-8 会抛出未处理的 `UnicodeDecodeError`。改为以单条不可读文档错误返回，并加入测试。
 - `low — patch`（边界审查：非法 URL 导致 traceback）：已核实；`urlsplit()` 对损坏的 IPv6 URL 会抛出 `ValueError`。现在报告链接行的 invalid target 并继续扫描，加入测试。
+- `medium — patch`（盲审/验证审查：未定义 reference 被静默忽略）：已核实；checker 现在报告 unresolved reference；加入未定义引用及 shortcut reference 回归测试。
+- `low — patch`（盲审/边界审查：多反引号 inline code 误解析）：已核实；改为按相同长度的反引号 delimiter 扫描，并测试跨度中含较短反引号和链接样式文本。
+- `low — patch`（盲审：无引号 HTML href/src 被忽略）：已核实；HTML 属性解析器支持引号与无引号目标，加入对应回归断言。
+- `low — patch`（盲审：fence/reference 测试断言未证明其命名行为）：已核实；fence 测试验证错误源行号，reference 测试分别断言目标链接与未定义引用。
+- `low — patch`（盲审：结项映射测试未验证两侧状态且 run-fail 未绑定故事）：已核实；测试逐个断言 Kunminghu/Heliodor 状态，且只允许 5.6 Heliodor 列包含 run-fail。
+- `low — patch`（验收审查：已记录的全量测试数过时）：已核实；最终 `python3 -m pytest -q scripts/tests` 为 31 passed，已同步审计表与本 spec。

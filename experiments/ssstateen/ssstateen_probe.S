@@ -83,29 +83,51 @@ _start:
     csrw    mstatus, t1          /* MPP=HS/S */
     mret
 
+/* IDs 1-20 identify each gated CSR operation; handler records ID+mcause per trap. */
 /* With M stateen SE bits and ENVCFG clear, these HS accesses should trap. */
 hs_blocked:
     li      t1, -1
+    li      t6, 1          /* blocked access ID */
     csrw    0x10c, t1
+    li      t6, 2          /* blocked access ID */
     csrr    t2, 0x10c
+    li      t6, 3          /* blocked access ID */
     csrw    0x10d, t1
+    li      t6, 4          /* blocked access ID */
     csrr    t2, 0x10d
+    li      t6, 5          /* blocked access ID */
     csrw    0x10e, t1
+    li      t6, 6          /* blocked access ID */
     csrr    t2, 0x10e
+    li      t6, 7          /* blocked access ID */
     csrw    0x10f, t1
+    li      t6, 8          /* blocked access ID */
     csrr    t2, 0x10f
+    li      t6, 9          /* blocked access ID */
     csrw    0x60c, t1
+    li      t6, 10          /* blocked access ID */
     csrr    t2, 0x60c
+    li      t6, 11          /* blocked access ID */
     csrw    0x60d, t1
+    li      t6, 12          /* blocked access ID */
     csrr    t2, 0x60d
+    li      t6, 13          /* blocked access ID */
     csrw    0x60e, t1
+    li      t6, 14          /* blocked access ID */
     csrr    t2, 0x60e
+    li      t6, 15          /* blocked access ID */
     csrw    0x60f, t1
+    li      t6, 16          /* blocked access ID */
     csrr    t2, 0x60f
+    li      t6, 17          /* blocked access ID */
     csrw    0x60a, t1
+    li      t6, 18          /* blocked access ID */
     csrr    t2, 0x60a            /* henvcfg */
+    li      t6, 19          /* blocked access ID */
     csrw    0x10a, t1
+    li      t6, 20          /* blocked access ID */
     csrr    t2, 0x10a            /* senvcfg */
+    li      t6, 21             /* HS ecall control-flow marker */
     ecall                        /* M trap enables the controls, then resumes */
 
 /* With SE0/ENVCFG enabled, read/write all required CSRs and capture results. */
@@ -154,7 +176,8 @@ hs_enabled:
     sw      t1, 0(t0)
 1:  j       1b
 
-/* Trap log at report+216; every synchronous trap resumes at the next 32-bit op. */
+/* Trap count at report+272; mcause/operation-ID arrays at +280/+800, capped at 64 records. */
+/* Every synchronous trap resumes at the next 32-bit op. */
 m_trap:
     addi    sp, sp, -32
     sd      t0, 0(sp)
@@ -163,10 +186,16 @@ m_trap:
     la      t0, report
     ld      t1, 272(t0)
     csrr    t2, mcause
+    li      t3, 64
+    bgeu    t1, t3, trap_skip_record
     slli    t3, t1, 3
-    addi    t3, t3, 280
-    add     t3, t3, t0
-    sd      t2, 0(t3)
+    addi    t4, t3, 280
+    add     t4, t4, t0
+    sd      t2, 0(t4)          /* mcause log */
+    addi    t4, t3, 800
+    add     t4, t4, t0
+    sd      t6, 0(t4)          /* operation ID log */
+trap_skip_record:
     addi    t1, t1, 1
     sd      t1, 272(t0)
     csrr    t2, mcause
@@ -198,7 +227,7 @@ trap_resume:
     .section .bss
     .align  4
 report:
-    .space  512
+    .space  1536
 stack:
     .space  256
 stack_top:

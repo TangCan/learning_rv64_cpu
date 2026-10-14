@@ -61,6 +61,20 @@ context:
 
 ## Spec Change Log
 
+### Review Findings
+
+- [x] Review/Patch 区分静态 64 位 guest-time 加法与未执行的溢出/截断观察 [notes/units/rva23s64-sstc-v1.md]
+- [x] Review/Patch 明确 VS timer CSR 访问同时受 M/H TM 与 STCE gate 控制，并与比较器门控分开 [notes/units/rva23s64-sstc-v1.md]
+- [x] Review/Patch 将 100000 clocks 标为未执行的 testbench 配置预算 [notes/units/rva23s64-sstc-v1.md]
+- [x] Review/Patch 明确 Veryl 错误位置相对 Heliodor checkout 根目录 [notes/units/rva23s64-sstc-v1.md]
+- [x] Review/Patch 在 index 限定 Kunminghu harness 搜索范围 [notes/units/index.md]
+
+Rejected:
+- Blind Hunter 1 (false): 审查完成后 story spec 与 sprint status 均同步为 `done`；审查前的 `review` 是正式待审阶段。
+- Blind Hunter 2 (false): Execution task 记录的是执行尝试与调查，且明确以 blocker 记录失败；并未声称测试运行成功。
+- Blind Hunter 5 (false): 测试行已写明 M-mode STIE/MIE、`stimecmp=0`、失败 trap handler 和何种异常会被观察。
+- Blind Hunter 10 (false): Story 4.10 的段落明确区分审计时历史状态与 Stories 5.2/5.3 的后续更新；当前统计表反映后续映射。
+
 ## Review Triage Log
 
 | Finding | Verdict / evidence | Route |

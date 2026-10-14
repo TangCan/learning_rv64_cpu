@@ -66,6 +66,20 @@ context: ['{project-root}/_agile-output/implementation-artifacts/epic-5-context.
 
 ## Spec Change Log
 
+### Review Findings
+
+- [x] Review/Patch 为每次 stateen/ENVCFG gate trap 检查 `mcause`，区分非法指令与 ecall [experiments/ssstateen/run_isolated.py]
+- [x] Review/Patch 为 20 次受控访问写入独立 operation ID，输出 trap 对应操作位置 [experiments/ssstateen/ssstateen_probe.S]
+- [x] Review/Patch 断言 M/HS 对八个 stateen CSR 写回后的定义 SE0 bit63，同时保留 reset/WARL trace [experiments/ssstateen/run_isolated.py]
+- [x] Review/Patch 断言明确的总 trap 数、cause 顺序、操作编号与功能 marker [experiments/ssstateen/run_isolated.py]
+- [x] Review/Patch 在 cause/operation-ID 记录前增加容量保护，并扩大报告区避免数组覆盖 stack [experiments/ssstateen/ssstateen_probe.S]
+- [x] Review/Patch 更新单元证据说明，反映唯一临时目录、assert、最终输入与实际 run-fail 日志 [notes/units/rva23s64-ssstateen-v1.md]
+- [x] Review/Patch 重建 fixture 并记录添加逐项断言后的 Veryl exit 1 和 0 passed/1 failed [experiments/ssstateen/README.md]
+
+Rejected:
+- Blind Hunter 4 (false): `henvcfg`/`senvcfg` 原始读回仍完整保存在 trace；此 story 的断言针对 stateen gate 与已定义 SE0，而不对各自 WARL/保留位的全值作无规范依据的预设。
+- Blind Hunter 6 (false): 添加逐项断言后已重新运行隔离 target，保存 exit 1 及确切 assertion failure 和观察 trace。
+
 ## Review Triage Log
 
 | Verdict | Finding and evidence |
