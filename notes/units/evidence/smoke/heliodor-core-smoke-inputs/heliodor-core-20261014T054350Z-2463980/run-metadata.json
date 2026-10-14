@@ -1,0 +1,67 @@
+{
+  "artifact_sha256": {
+    "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T054350Z-2463980/run.py": "6d81d4010f50c5b9afcc357ae440a053b207d493cdec22e3c1ef099315e45661"
+  },
+  "artifacts": [
+    "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T054350Z-2463980/run.py"
+  ],
+  "assertion_failed": false,
+  "blocker": "manifest/source validation failed: heliodor/heliodor-core-20261014T053346Z-2308039: artifact does not exist or match a path pattern: notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T053346Z-2308039/run.py; heliodor/heliodor-core-20261014T053346Z-2308039: artifact does not exist or match a path pattern: notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T053346Z-2308039/test_smoke.veryl; heliodor/heliodor-core-20261014T053346Z-2308039: artifact does not exist or match a path pattern: notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T053346Z-2308039/v4_smoke.hex; heliodor/heliodor-core-20261014T053346Z-2308039: artifact does not exist or match a path pattern: notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T053346Z-2308039/test_arch_common.veryl; heliodor/heliodor-core-20261014T053346Z-2308039: artifact does not exist or match a path pattern: notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T053346Z-2308039/rv64ui-add.hex; heliodor/heliodor-core-20261014T053346Z-2308039: output file does not exist: notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T053346Z-2308039/output.log; heliodor/heliodor-core-20261014T053346Z-2308039: stdout file does not exist: notes/units/evidence/smoke/heliodor-core-20261014T053346Z-2308039.stdout.log; heliodor/heliodor-core-20261014T053346Z-2308039: stderr file does not exist: notes/units/evidence/smoke/heliodor-core-20261014T053346Z-2308039.stderr.log",
+  "command": "preflight not reached",
+  "configuration": "Heliodor test_smoke plus test_arch_rv64ui_add; one harness/DUT; 5000 smoke cycles and 300000 arch cycles; expected x10=7, x11=11, x12=77, x13=11 and tohost=1.",
+  "cpu_started": false,
+  "exit_code": 1,
+  "expected": "Both CPU tests pass: test_smoke reports x10=7, x11=11, x12=77, x13=11; test_arch_rv64ui_add reports tohost=1/pass=1 and its PASS marker.",
+  "expected_marker": "[test_smoke] PASS",
+  "expected_markers": [
+    "[test_smoke] PASS",
+    "v4 rv64ui-add PASS"
+  ],
+  "expected_observed": false,
+  "first_failed_stage": "locked-source-preflight",
+  "fixture_sha256": "",
+  "id": "heliodor-core-20261014T054350Z-2463980",
+  "input": "sources/heliodor/test/riscv-arch-test/build/rv64ui/add.hex",
+  "input_sha256": "fadad9d6e8d0c890042d1128c8a71ed0b7a26ea674edc9f384b77c4b87766e33",
+  "inputs": [
+    {
+      "path": "sources/heliodor/test/v4_smoke.hex",
+      "sha256": "2cf451e3cee19059d2dbc19c08cbe4af9b552ec842d6d2881d039f4bc1aaeeb1"
+    },
+    {
+      "path": "sources/heliodor/test/riscv-arch-test/build/rv64ui/add.hex",
+      "sha256": "fadad9d6e8d0c890042d1128c8a71ed0b7a26ea674edc9f384b77c4b87766e33"
+    }
+  ],
+  "isolated_inputs_sha256": "",
+  "isolated_tree_sha256": "",
+  "log_path_warnings": [],
+  "next_environment_change": "Restore the sources.lock revision, clean Heliodor checkout, gitlinks, and valid toolchain manifest before retrying.",
+  "observed": "CPU-start=False; results={}; smoke_marker=False; arch_marker=False",
+  "output": "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T054350Z-2463980/output.log",
+  "output_sha256": "169f24774e13a79b6341d6c41c58f159e180701e87e9028aa70afdf8712b6fbb",
+  "resources": {
+    "disk_free_bytes": 861480476672,
+    "logical_cpu_count": 64,
+    "memory_available_bytes": 161104556032,
+    "test_timeout_seconds": 180.0
+  },
+  "result": "blocked",
+  "run_seconds": 1.418,
+  "smoke_fixture_sha256": "",
+  "snapshot_sha": "94e9c5821c24a8941c3ddc3b76daddc7124a855a",
+  "source_commit": "94e9c5821c24a8941c3ddc3b76daddc7124a855a",
+  "source_tree_sha256": "",
+  "stderr": "notes/units/evidence/smoke/heliodor-core-20261014T054350Z-2463980.stderr.log",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stdout": "notes/units/evidence/smoke/heliodor-core-20261014T054350Z-2463980.stdout.log",
+  "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "tools": {
+    "cxx": "unavailable",
+    "verilator": "unavailable",
+    "veryl": "unavailable"
+  },
+  "transformed_arch_harness_sha256": "",
+  "transformed_test_sha256": "",
+  "working_directory": "/nvme_data1/richard/learning_rv64_cpu"
+}

@@ -30,7 +30,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 # - Retrospective appends its action items to action_items; the status view surfaces open ones
 generated: 10-12-2026 14:04
-last_updated: 10-14-2026 12:41
+last_updated: 10-14-2026 13:47
 project: learning_rv64_cpu
 project_key: NOKEY
 tracking_system: file-system
@@ -79,7 +79,7 @@ development_status:
   epic-6: in-progress
   6-1-固定-cpu-验证工具链与结果归档: done
   6-2-建立-kunminghu-fixture-加载与模拟器入口: done
-  6-3-建立-heliodor-arch-harness-隔离运行入口: backlog
+  6-3-建立-heliodor-arch-harness-隔离运行入口: done
   6-4-运行-zifencei-自修改代码对照: backlog
   6-5-运行-sstc-s-vs-comparator-与陷阱对照: backlog
   6-6-运行-sscofpmf-硬件计数器溢出与过滤对照: backlog
