@@ -286,13 +286,39 @@ def missing_dependencies(gcc: str | None, objcopy: str | None,
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--topic", choices=("fixture", "zifencei"), default="fixture")
     parser.add_argument("--manifest", type=pathlib.Path,
                         default=ROOT / "notes/units/evidence/cpu-validation-toolchain-v1.yaml")
     parser.add_argument("--evidence-dir", type=pathlib.Path,
                         default=ROOT / "notes/units/evidence/smoke/kunminghu-fixture-runs")
+    parser.add_argument("--case", choices=("standard", "funct12", "rs1", "rd"))
     parser.add_argument("--timeout", type=float, default=120.0,
                         help="maximum emulator wall time in seconds")
+    parser.add_argument("--input", type=pathlib.Path, help=argparse.SUPPRESS)
     args = parser.parse_args()
+    if args.case and args.topic != "zifencei":
+        parser.error("--case requires --topic zifencei")
+    if args.topic == "zifencei" and args.input is None:
+        cases = (args.case,) if args.case else ("standard", "funct12", "rs1", "rd")
+        status = 0
+        for case in cases:
+            command = [sys.executable, str(pathlib.Path(__file__).resolve()), "--topic", "zifencei",
+                       "--input", str(ROOT / "experiments/rva23s64-zifencei" / f"{case}.S"),
+                       "--timeout", str(args.timeout), "--manifest", str(args.manifest),
+                       "--evidence-dir", str(args.evidence_dir)]
+            status |= subprocess.run(command, cwd=ROOT, check=False).returncode
+        return status
+    if args.topic == "zifencei":
+        global SOURCE, LINKER
+        case_path = args.input.resolve()
+        topic_dir = (ROOT / "experiments/rva23s64-zifencei").resolve()
+        if (not case_path.is_relative_to(topic_dir) or not case_path.is_file()
+                or case_path.suffix != ".S" or case_path.stem not in {"standard", "funct12", "rs1", "rd"}):
+            parser.error("--input must select one of the four supported Story 6.4 assembly sources")
+        if args.case and args.case != case_path.stem:
+            parser.error("--case must match the --input assembly stem")
+        SOURCE = case_path
+        LINKER = topic_dir / "fixture.ld"
     if not math.isfinite(args.timeout) or args.timeout <= 0:
         parser.error("--timeout must be finite and greater than zero")
     manifest_path = args.manifest if args.manifest.is_absolute() else ROOT / args.manifest
@@ -518,7 +544,18 @@ def main() -> int:
         "input_sha256": input_sha256 or "unavailable",
         "linker_script": str(LINKER.relative_to(ROOT)),
         "linker_script_sha256": linker_sha256 or "unavailable",
-        "configuration": "KunminghuV2Config; NUM_CORES=1; RV64I arithmetic fixture at 0x80000000; NEMU difftest.",
+        "configuration": ("KunminghuV2Config; NUM_CORES=1; Zifencei self-modifying fixture at 0x80000000; NEMU difftest."
+                           if args.topic == "zifencei" else
+                           "KunminghuV2Config; NUM_CORES=1; RV64I arithmetic fixture at 0x80000000; NEMU difftest."),
+        **({"topic": "zifencei", "case": SOURCE.stem,
+            "fence_i_encoding": {"standard": "0x0000100f", "funct12": "0x0010100f",
+                                 "rs1": "0x0000900f", "rd": "0x0000108f"}[SOURCE.stem],
+            "expected_values": {"before_fence_i": 1, "after_fence_i": 42},
+            "observed_values": ({"before_fence_i": 1, "after_fence_i": 42,
+                                 "evidence_method": "fixture equality checks for a0==1 before patch and a0==42 after FENCE.I; the successful NEMU marker is reachable only after both checks"}
+                                if observed["expected_observed"] else None),
+            "reserved_field_trap": "not observed" if observed["expected_observed"] else "see run log"}
+           if args.topic == "zifencei" else {}),
         "command": " && ".join(commands) if commands else "preflight only; no build or simulator command executed",
         "working_directory": ".",
         "tools": tools,
@@ -613,6 +650,8 @@ def main() -> int:
         return 1
 
     print(f"run_id={run_dir.name}")
+    if args.topic == "zifencei":
+        print(f"case={SOURCE.stem} fence_i_encoding={record['fence_i_encoding']}")
     print(f"result={observed['result']}")
     print(f"evidence={run_dir.relative_to(ROOT)}")
     if failed_stage:

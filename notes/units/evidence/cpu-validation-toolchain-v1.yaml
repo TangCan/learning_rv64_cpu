@@ -509,6 +509,662 @@
             "emulator_timeout_seconds": 120.0
           },
           "next_environment_change": "No environment change required; this smoke completed successfully."
+        },
+        {
+          "id": "kunminghu-fixture-20261014T055918Z-3e81181d1d02",
+          "snapshot_sha": "c098f996bf4d301b88693b20315486d31e93bc9d",
+          "input": "experiments/rva23s64-zifencei/standard.S",
+          "input_sha256": "960d13173a27a6c2da0f26ac8e2332afbc8eddfa4abdfabc6a6475e7e3b17039",
+          "linker_script": "experiments/rva23s64-zifencei/fixture.ld",
+          "linker_script_sha256": "ef98d55689874a6db2ff6e180c0df0372ae7324e67245c0b3846f18d71b89714",
+          "configuration": "KunminghuV2Config; NUM_CORES=1; Zifencei self-modifying fixture at 0x80000000; NEMU difftest.",
+          "topic": "zifencei",
+          "case": "standard",
+          "fence_i_encoding": "0x0000100f",
+          "expected_values": {
+            "before_fence_i": 1,
+            "after_fence_i": 42
+          },
+          "observed_values": {
+            "before_fence_i": 1,
+            "after_fence_i": 42,
+            "evidence_method": "fixture equality checks for a0==1 before patch and a0==42 after FENCE.I; the successful NEMU marker is reachable only after both checks"
+          },
+          "reserved_field_trap": "not observed",
+          "command": "$ /home/richard/richard_opt/riscv/bin/riscv64-unknown-elf-gcc -march=rv64imac -mabi=lp64 -nostdlib -nostartfiles -Wl,--build-id=none -Wl,-T,/nvme_data1/richard/learning_rv64_cpu/experiments/rva23s64-zifencei/fixture.ld -Wl,-Map,/nvme_data1/richard/learning_rv64_cpu/notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T055918Z-3e81181d1d02/fixture.map -o /nvme_data1/richard/learning_rv64_cpu/notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T055918Z-3e81181d1d02/fixture.elf /nvme_data1/richard/learning_rv64_cpu/experiments/rva23s64-zifencei/standard.S && $ /home/richard/richard_opt/riscv/bin/riscv64-unknown-elf-objcopy -O binary /nvme_data1/richard/learning_rv64_cpu/notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T055918Z-3e81181d1d02/fixture.elf /nvme_data1/richard/learning_rv64_cpu/notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T055918Z-3e81181d1d02/fixture.bin && $ /nvme_data1/richard/learning_rv64_cpu/sources/xiangshan/build/verilator-compile/emu -i /nvme_data1/richard/learning_rv64_cpu/notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T055918Z-3e81181d1d02/fixture.bin --diff /nvme_data1/richard/learning_rv64_cpu/sources/xiangshan/ready-to-run/riscv64-nemu-interpreter-so --max-cycles=10000 --max-instr=1000 --dump-commit-trace",
+          "working_directory": ".",
+          "tools": {
+            "cross_gcc": "riscv64-unknown-elf-gcc () 15.1.0",
+            "cross_objcopy": "GNU objcopy (GNU Binutils) 2.44",
+            "emulator": "emu compiled at Oct 14 2026, 10:53:44; binary sha256 21f0700203205870403df50eadf2afd182e33573afdeee9a264a49b328f9e897",
+            "nemu": "locked ready-to-run reference library; binary sha256 3e9d63c31d2cd68ec68d55fa9df56ec990ce9a9fd3a8e59709ecb92f21176c40",
+            "mill": "0.12.3; java -cp /tmp/mill-dist-0.12.3-assembly.jar mill.runner.MillMain (jar sha256 336346091edc69b248c306ca51aaccb73d888d8bf525ce45e02df89db449b41d)",
+            "java": "OpenJDK 17.0.20.1 (Ubuntu; /usr/lib/jvm/java-17-openjdk-amd64)",
+            "verilator": "5.050 2026-07-01; upstream tag v5.050, commit 0a24d49771fa57c36ff667272bf7b5c6705e4df0; binary sha256 fb2cc573b1055cf096c90e1efc9966fe56bdb4b265c83590cf2a49f7a0defcdf",
+            "cxx": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0; gcc same version",
+            "mill_launcher_sha256": "7f086728571afda31d433f7875a2df610f3c9f8e9c76e5bd13f97c3e564c53a4",
+            "verilator_build_cxx": "Ubuntu 22.04 GCC/G++ 11.4.0 in image sha256:829f6df217bcbae2b371026e81711d1a787c61b2967ad09d015063663ebafbf7"
+          },
+          "exit_code": 0,
+          "cpu_started": true,
+          "result": "run-pass",
+          "output": "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T055918Z-3e81181d1d02/output.log",
+          "output_sha256": "6e889f7446dfd02d43b9fe326bf6fb0b6b233c86d821aaf049c37369e15fbfed",
+          "stdout": "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T055918Z-3e81181d1d02/stdout.log",
+          "stdout_sha256": "8de2b8f27d45596e957a6e4080b48c55fc32719e492db83f99b7d2cefd81e363",
+          "stderr": "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T055918Z-3e81181d1d02/stderr.log",
+          "stderr_sha256": "835dd7f6f195ae044855e66bedc5f051b15b6c460c3db25f5fea9cea592cc3b0",
+          "artifacts": [
+            "experiments/rva23s64-zifencei/standard.S",
+            "experiments/rva23s64-zifencei/fixture.ld",
+            "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T055918Z-3e81181d1d02/fixture.elf",
+            "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T055918Z-3e81181d1d02/fixture.map",
+            "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T055918Z-3e81181d1d02/fixture.bin"
+          ],
+          "expected_artifacts": [
+            "experiments/rva23s64-zifencei/standard.S",
+            "experiments/rva23s64-zifencei/fixture.ld",
+            "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T055918Z-3e81181d1d02/fixture.elf",
+            "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T055918Z-3e81181d1d02/fixture.map",
+            "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T055918Z-3e81181d1d02/fixture.bin"
+          ],
+          "missing_artifacts": [],
+          "artifact_sha256": {
+            "experiments/rva23s64-zifencei/standard.S": "960d13173a27a6c2da0f26ac8e2332afbc8eddfa4abdfabc6a6475e7e3b17039",
+            "experiments/rva23s64-zifencei/fixture.ld": "ef98d55689874a6db2ff6e180c0df0372ae7324e67245c0b3846f18d71b89714",
+            "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T055918Z-3e81181d1d02/fixture.elf": "5bcbefba4b7e12260b3eb5c80f2f3a5be18a262b0dfeb9531cc7fbadb9d04575",
+            "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T055918Z-3e81181d1d02/fixture.map": "f01756a75d0aaface4fcffb279b8b7e4fd11e31fe3513bf095056f122c805c45",
+            "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T055918Z-3e81181d1d02/fixture.bin": "7e7a7bb2fe367df78139aad7af87add87569568012446cd0dcfccc56090eb158"
+          },
+          "assertion_failed": false,
+          "expected_observed": true,
+          "expected": "recorded fixture image loaded at 0x80000000; first instruction commits; NEMU good trap.",
+          "observed": "image loaded; first instruction committed; HIT GOOD TRAP",
+          "expected_good_trap_pc": "0x80000054",
+          "blocker": "",
+          "expected_marker": "HIT GOOD TRAP",
+          "resources": {
+            "disk_free_bytes": 860737343488,
+            "memory_available_bytes": 164227903488,
+            "logical_cpu_count": 64,
+            "build_command_timeout_seconds": 120,
+            "emulator_timeout_seconds": 120.0
+          },
+          "next_environment_change": "No environment change required; this smoke completed successfully."
+        },
+        {
+          "id": "kunminghu-fixture-20261014T055927Z-3e81181d1d02",
+          "snapshot_sha": "c098f996bf4d301b88693b20315486d31e93bc9d",
+          "input": "experiments/rva23s64-zifencei/funct12.S",
+          "input_sha256": "4a4766c287ca020a0242d15b945f33150425c626b55294c9e4210b96de27a07a",
+          "linker_script": "experiments/rva23s64-zifencei/fixture.ld",
+          "linker_script_sha256": "ef98d55689874a6db2ff6e180c0df0372ae7324e67245c0b3846f18d71b89714",
+          "configuration": "KunminghuV2Config; NUM_CORES=1; Zifencei self-modifying fixture at 0x80000000; NEMU difftest.",
+          "topic": "zifencei",
+          "case": "funct12",
+          "fence_i_encoding": "0x0010100f",
+          "expected_values": {
+            "before_fence_i": 1,
+            "after_fence_i": 42
+          },
+          "observed_values": {
+            "before_fence_i": 1,
+            "after_fence_i": 42,
+            "evidence_method": "fixture equality checks for a0==1 before patch and a0==42 after FENCE.I; the successful NEMU marker is reachable only after both checks"
+          },
+          "reserved_field_trap": "not observed",
+          "command": "$ /home/richard/richard_opt/riscv/bin/riscv64-unknown-elf-gcc -march=rv64imac -mabi=lp64 -nostdlib -nostartfiles -Wl,--build-id=none -Wl,-T,/nvme_data1/richard/learning_rv64_cpu/experiments/rva23s64-zifencei/fixture.ld -Wl,-Map,/nvme_data1/richard/learning_rv64_cpu/notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T055927Z-3e81181d1d02/fixture.map -o /nvme_data1/richard/learning_rv64_cpu/notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T055927Z-3e81181d1d02/fixture.elf /nvme_data1/richard/learning_rv64_cpu/experiments/rva23s64-zifencei/funct12.S && $ /home/richard/richard_opt/riscv/bin/riscv64-unknown-elf-objcopy -O binary /nvme_data1/richard/learning_rv64_cpu/notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T055927Z-3e81181d1d02/fixture.elf /nvme_data1/richard/learning_rv64_cpu/notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T055927Z-3e81181d1d02/fixture.bin && $ /nvme_data1/richard/learning_rv64_cpu/sources/xiangshan/build/verilator-compile/emu -i /nvme_data1/richard/learning_rv64_cpu/notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T055927Z-3e81181d1d02/fixture.bin --diff /nvme_data1/richard/learning_rv64_cpu/sources/xiangshan/ready-to-run/riscv64-nemu-interpreter-so --max-cycles=10000 --max-instr=1000 --dump-commit-trace",
+          "working_directory": ".",
+          "tools": {
+            "cross_gcc": "riscv64-unknown-elf-gcc () 15.1.0",
+            "cross_objcopy": "GNU objcopy (GNU Binutils) 2.44",
+            "emulator": "emu compiled at Oct 14 2026, 10:53:44; binary sha256 21f0700203205870403df50eadf2afd182e33573afdeee9a264a49b328f9e897",
+            "nemu": "locked ready-to-run reference library; binary sha256 3e9d63c31d2cd68ec68d55fa9df56ec990ce9a9fd3a8e59709ecb92f21176c40",
+            "mill": "0.12.3; java -cp /tmp/mill-dist-0.12.3-assembly.jar mill.runner.MillMain (jar sha256 336346091edc69b248c306ca51aaccb73d888d8bf525ce45e02df89db449b41d)",
+            "java": "OpenJDK 17.0.20.1 (Ubuntu; /usr/lib/jvm/java-17-openjdk-amd64)",
+            "verilator": "5.050 2026-07-01; upstream tag v5.050, commit 0a24d49771fa57c36ff667272bf7b5c6705e4df0; binary sha256 fb2cc573b1055cf096c90e1efc9966fe56bdb4b265c83590cf2a49f7a0defcdf",
+            "cxx": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0; gcc same version",
+            "mill_launcher_sha256": "7f086728571afda31d433f7875a2df610f3c9f8e9c76e5bd13f97c3e564c53a4",
+            "verilator_build_cxx": "Ubuntu 22.04 GCC/G++ 11.4.0 in image sha256:829f6df217bcbae2b371026e81711d1a787c61b2967ad09d015063663ebafbf7"
+          },
+          "exit_code": 0,
+          "cpu_started": true,
+          "result": "run-pass",
+          "output": "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T055927Z-3e81181d1d02/output.log",
+          "output_sha256": "4fd37541f08a9c87caa007cad24e5ab2453d6487a13f2c2f5bea1172f6789100",
+          "stdout": "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T055927Z-3e81181d1d02/stdout.log",
+          "stdout_sha256": "50be89844e09f97fe1eb7e81891afdb67ad664d6dcf40987c2d2c90f2316dc5f",
+          "stderr": "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T055927Z-3e81181d1d02/stderr.log",
+          "stderr_sha256": "835dd7f6f195ae044855e66bedc5f051b15b6c460c3db25f5fea9cea592cc3b0",
+          "artifacts": [
+            "experiments/rva23s64-zifencei/funct12.S",
+            "experiments/rva23s64-zifencei/fixture.ld",
+            "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T055927Z-3e81181d1d02/fixture.elf",
+            "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T055927Z-3e81181d1d02/fixture.map",
+            "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T055927Z-3e81181d1d02/fixture.bin"
+          ],
+          "expected_artifacts": [
+            "experiments/rva23s64-zifencei/funct12.S",
+            "experiments/rva23s64-zifencei/fixture.ld",
+            "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T055927Z-3e81181d1d02/fixture.elf",
+            "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T055927Z-3e81181d1d02/fixture.map",
+            "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T055927Z-3e81181d1d02/fixture.bin"
+          ],
+          "missing_artifacts": [],
+          "artifact_sha256": {
+            "experiments/rva23s64-zifencei/funct12.S": "4a4766c287ca020a0242d15b945f33150425c626b55294c9e4210b96de27a07a",
+            "experiments/rva23s64-zifencei/fixture.ld": "ef98d55689874a6db2ff6e180c0df0372ae7324e67245c0b3846f18d71b89714",
+            "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T055927Z-3e81181d1d02/fixture.elf": "505caf68f1540471b12a945a140743869da9213549e647d6ea4364553a41d901",
+            "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T055927Z-3e81181d1d02/fixture.map": "810fa90ce7a409a155e13c1ac54070cf3f24f16ccefaa30bf92f91854392b638",
+            "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T055927Z-3e81181d1d02/fixture.bin": "0f5821b28cc95d357621a09decc5764a7ff67321210872bf3440dcbde6ef0632"
+          },
+          "assertion_failed": false,
+          "expected_observed": true,
+          "expected": "recorded fixture image loaded at 0x80000000; first instruction commits; NEMU good trap.",
+          "observed": "image loaded; first instruction committed; HIT GOOD TRAP",
+          "expected_good_trap_pc": "0x80000054",
+          "blocker": "",
+          "expected_marker": "HIT GOOD TRAP",
+          "resources": {
+            "disk_free_bytes": 860728070144,
+            "memory_available_bytes": 163653705728,
+            "logical_cpu_count": 64,
+            "build_command_timeout_seconds": 120,
+            "emulator_timeout_seconds": 120.0
+          },
+          "next_environment_change": "No environment change required; this smoke completed successfully."
+        },
+        {
+          "id": "kunminghu-fixture-20261014T055936Z-3e81181d1d02",
+          "snapshot_sha": "c098f996bf4d301b88693b20315486d31e93bc9d",
+          "input": "experiments/rva23s64-zifencei/rs1.S",
+          "input_sha256": "13b76c8668ee518f45aeae2ce0ab0794328093b8b359d7df706be0baf269d63a",
+          "linker_script": "experiments/rva23s64-zifencei/fixture.ld",
+          "linker_script_sha256": "ef98d55689874a6db2ff6e180c0df0372ae7324e67245c0b3846f18d71b89714",
+          "configuration": "KunminghuV2Config; NUM_CORES=1; Zifencei self-modifying fixture at 0x80000000; NEMU difftest.",
+          "topic": "zifencei",
+          "case": "rs1",
+          "fence_i_encoding": "0x0000900f",
+          "expected_values": {
+            "before_fence_i": 1,
+            "after_fence_i": 42
+          },
+          "observed_values": {
+            "before_fence_i": 1,
+            "after_fence_i": 42,
+            "evidence_method": "fixture equality checks for a0==1 before patch and a0==42 after FENCE.I; the successful NEMU marker is reachable only after both checks"
+          },
+          "reserved_field_trap": "not observed",
+          "command": "$ /home/richard/richard_opt/riscv/bin/riscv64-unknown-elf-gcc -march=rv64imac -mabi=lp64 -nostdlib -nostartfiles -Wl,--build-id=none -Wl,-T,/nvme_data1/richard/learning_rv64_cpu/experiments/rva23s64-zifencei/fixture.ld -Wl,-Map,/nvme_data1/richard/learning_rv64_cpu/notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T055936Z-3e81181d1d02/fixture.map -o /nvme_data1/richard/learning_rv64_cpu/notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T055936Z-3e81181d1d02/fixture.elf /nvme_data1/richard/learning_rv64_cpu/experiments/rva23s64-zifencei/rs1.S && $ /home/richard/richard_opt/riscv/bin/riscv64-unknown-elf-objcopy -O binary /nvme_data1/richard/learning_rv64_cpu/notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T055936Z-3e81181d1d02/fixture.elf /nvme_data1/richard/learning_rv64_cpu/notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T055936Z-3e81181d1d02/fixture.bin && $ /nvme_data1/richard/learning_rv64_cpu/sources/xiangshan/build/verilator-compile/emu -i /nvme_data1/richard/learning_rv64_cpu/notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T055936Z-3e81181d1d02/fixture.bin --diff /nvme_data1/richard/learning_rv64_cpu/sources/xiangshan/ready-to-run/riscv64-nemu-interpreter-so --max-cycles=10000 --max-instr=1000 --dump-commit-trace",
+          "working_directory": ".",
+          "tools": {
+            "cross_gcc": "riscv64-unknown-elf-gcc () 15.1.0",
+            "cross_objcopy": "GNU objcopy (GNU Binutils) 2.44",
+            "emulator": "emu compiled at Oct 14 2026, 10:53:44; binary sha256 21f0700203205870403df50eadf2afd182e33573afdeee9a264a49b328f9e897",
+            "nemu": "locked ready-to-run reference library; binary sha256 3e9d63c31d2cd68ec68d55fa9df56ec990ce9a9fd3a8e59709ecb92f21176c40",
+            "mill": "0.12.3; java -cp /tmp/mill-dist-0.12.3-assembly.jar mill.runner.MillMain (jar sha256 336346091edc69b248c306ca51aaccb73d888d8bf525ce45e02df89db449b41d)",
+            "java": "OpenJDK 17.0.20.1 (Ubuntu; /usr/lib/jvm/java-17-openjdk-amd64)",
+            "verilator": "5.050 2026-07-01; upstream tag v5.050, commit 0a24d49771fa57c36ff667272bf7b5c6705e4df0; binary sha256 fb2cc573b1055cf096c90e1efc9966fe56bdb4b265c83590cf2a49f7a0defcdf",
+            "cxx": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0; gcc same version",
+            "mill_launcher_sha256": "7f086728571afda31d433f7875a2df610f3c9f8e9c76e5bd13f97c3e564c53a4",
+            "verilator_build_cxx": "Ubuntu 22.04 GCC/G++ 11.4.0 in image sha256:829f6df217bcbae2b371026e81711d1a787c61b2967ad09d015063663ebafbf7"
+          },
+          "exit_code": 0,
+          "cpu_started": true,
+          "result": "run-pass",
+          "output": "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T055936Z-3e81181d1d02/output.log",
+          "output_sha256": "62341422fcdede23a2a7a39eead22c3c2e6b680898a7b131571c46db6ea54186",
+          "stdout": "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T055936Z-3e81181d1d02/stdout.log",
+          "stdout_sha256": "5f05b9833e9438c325bb7c8b9ff13ab80dd3a28252dc2b516a74ad38563e6bf3",
+          "stderr": "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T055936Z-3e81181d1d02/stderr.log",
+          "stderr_sha256": "835dd7f6f195ae044855e66bedc5f051b15b6c460c3db25f5fea9cea592cc3b0",
+          "artifacts": [
+            "experiments/rva23s64-zifencei/rs1.S",
+            "experiments/rva23s64-zifencei/fixture.ld",
+            "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T055936Z-3e81181d1d02/fixture.elf",
+            "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T055936Z-3e81181d1d02/fixture.map",
+            "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T055936Z-3e81181d1d02/fixture.bin"
+          ],
+          "expected_artifacts": [
+            "experiments/rva23s64-zifencei/rs1.S",
+            "experiments/rva23s64-zifencei/fixture.ld",
+            "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T055936Z-3e81181d1d02/fixture.elf",
+            "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T055936Z-3e81181d1d02/fixture.map",
+            "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T055936Z-3e81181d1d02/fixture.bin"
+          ],
+          "missing_artifacts": [],
+          "artifact_sha256": {
+            "experiments/rva23s64-zifencei/rs1.S": "13b76c8668ee518f45aeae2ce0ab0794328093b8b359d7df706be0baf269d63a",
+            "experiments/rva23s64-zifencei/fixture.ld": "ef98d55689874a6db2ff6e180c0df0372ae7324e67245c0b3846f18d71b89714",
+            "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T055936Z-3e81181d1d02/fixture.elf": "1e5ad369dc54baba6b602ce07ce3f1fd4b82cce19e6ab50a4d50330de5194446",
+            "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T055936Z-3e81181d1d02/fixture.map": "193eed5adc3f1025a7e88d1429853e2ce202ea62ddf9920d05995087793dfeb3",
+            "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T055936Z-3e81181d1d02/fixture.bin": "2b7e7e2fee50f929fdac9d043b09a726bfdff568d0e31a371f717812eeda0dc7"
+          },
+          "assertion_failed": false,
+          "expected_observed": true,
+          "expected": "recorded fixture image loaded at 0x80000000; first instruction commits; NEMU good trap.",
+          "observed": "image loaded; first instruction committed; HIT GOOD TRAP",
+          "expected_good_trap_pc": "0x80000054",
+          "blocker": "",
+          "expected_marker": "HIT GOOD TRAP",
+          "resources": {
+            "disk_free_bytes": 860718796800,
+            "memory_available_bytes": 161850101760,
+            "logical_cpu_count": 64,
+            "build_command_timeout_seconds": 120,
+            "emulator_timeout_seconds": 120.0
+          },
+          "next_environment_change": "No environment change required; this smoke completed successfully."
+        },
+        {
+          "id": "kunminghu-fixture-20261014T055944Z-3e81181d1d02",
+          "snapshot_sha": "c098f996bf4d301b88693b20315486d31e93bc9d",
+          "input": "experiments/rva23s64-zifencei/rd.S",
+          "input_sha256": "b14571531a136adf157657e825546831614c950193c9756f1ecc9b1745c46f58",
+          "linker_script": "experiments/rva23s64-zifencei/fixture.ld",
+          "linker_script_sha256": "ef98d55689874a6db2ff6e180c0df0372ae7324e67245c0b3846f18d71b89714",
+          "configuration": "KunminghuV2Config; NUM_CORES=1; Zifencei self-modifying fixture at 0x80000000; NEMU difftest.",
+          "topic": "zifencei",
+          "case": "rd",
+          "fence_i_encoding": "0x0000108f",
+          "expected_values": {
+            "before_fence_i": 1,
+            "after_fence_i": 42
+          },
+          "observed_values": {
+            "before_fence_i": 1,
+            "after_fence_i": 42,
+            "evidence_method": "fixture equality checks for a0==1 before patch and a0==42 after FENCE.I; the successful NEMU marker is reachable only after both checks"
+          },
+          "reserved_field_trap": "not observed",
+          "command": "$ /home/richard/richard_opt/riscv/bin/riscv64-unknown-elf-gcc -march=rv64imac -mabi=lp64 -nostdlib -nostartfiles -Wl,--build-id=none -Wl,-T,/nvme_data1/richard/learning_rv64_cpu/experiments/rva23s64-zifencei/fixture.ld -Wl,-Map,/nvme_data1/richard/learning_rv64_cpu/notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T055944Z-3e81181d1d02/fixture.map -o /nvme_data1/richard/learning_rv64_cpu/notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T055944Z-3e81181d1d02/fixture.elf /nvme_data1/richard/learning_rv64_cpu/experiments/rva23s64-zifencei/rd.S && $ /home/richard/richard_opt/riscv/bin/riscv64-unknown-elf-objcopy -O binary /nvme_data1/richard/learning_rv64_cpu/notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T055944Z-3e81181d1d02/fixture.elf /nvme_data1/richard/learning_rv64_cpu/notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T055944Z-3e81181d1d02/fixture.bin && $ /nvme_data1/richard/learning_rv64_cpu/sources/xiangshan/build/verilator-compile/emu -i /nvme_data1/richard/learning_rv64_cpu/notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T055944Z-3e81181d1d02/fixture.bin --diff /nvme_data1/richard/learning_rv64_cpu/sources/xiangshan/ready-to-run/riscv64-nemu-interpreter-so --max-cycles=10000 --max-instr=1000 --dump-commit-trace",
+          "working_directory": ".",
+          "tools": {
+            "cross_gcc": "riscv64-unknown-elf-gcc () 15.1.0",
+            "cross_objcopy": "GNU objcopy (GNU Binutils) 2.44",
+            "emulator": "emu compiled at Oct 14 2026, 10:53:44; binary sha256 21f0700203205870403df50eadf2afd182e33573afdeee9a264a49b328f9e897",
+            "nemu": "locked ready-to-run reference library; binary sha256 3e9d63c31d2cd68ec68d55fa9df56ec990ce9a9fd3a8e59709ecb92f21176c40",
+            "mill": "0.12.3; java -cp /tmp/mill-dist-0.12.3-assembly.jar mill.runner.MillMain (jar sha256 336346091edc69b248c306ca51aaccb73d888d8bf525ce45e02df89db449b41d)",
+            "java": "OpenJDK 17.0.20.1 (Ubuntu; /usr/lib/jvm/java-17-openjdk-amd64)",
+            "verilator": "5.050 2026-07-01; upstream tag v5.050, commit 0a24d49771fa57c36ff667272bf7b5c6705e4df0; binary sha256 fb2cc573b1055cf096c90e1efc9966fe56bdb4b265c83590cf2a49f7a0defcdf",
+            "cxx": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0; gcc same version",
+            "mill_launcher_sha256": "7f086728571afda31d433f7875a2df610f3c9f8e9c76e5bd13f97c3e564c53a4",
+            "verilator_build_cxx": "Ubuntu 22.04 GCC/G++ 11.4.0 in image sha256:829f6df217bcbae2b371026e81711d1a787c61b2967ad09d015063663ebafbf7"
+          },
+          "exit_code": 0,
+          "cpu_started": true,
+          "result": "run-pass",
+          "output": "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T055944Z-3e81181d1d02/output.log",
+          "output_sha256": "3e9392ba132e04c39efae1e93a8d4ef4c8c263e809eaced7292935e4a0431fc5",
+          "stdout": "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T055944Z-3e81181d1d02/stdout.log",
+          "stdout_sha256": "e06a4d1abaf3453f5d16668399e4549c55376affd6a8f89b34129796342d7d22",
+          "stderr": "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T055944Z-3e81181d1d02/stderr.log",
+          "stderr_sha256": "835dd7f6f195ae044855e66bedc5f051b15b6c460c3db25f5fea9cea592cc3b0",
+          "artifacts": [
+            "experiments/rva23s64-zifencei/rd.S",
+            "experiments/rva23s64-zifencei/fixture.ld",
+            "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T055944Z-3e81181d1d02/fixture.elf",
+            "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T055944Z-3e81181d1d02/fixture.map",
+            "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T055944Z-3e81181d1d02/fixture.bin"
+          ],
+          "expected_artifacts": [
+            "experiments/rva23s64-zifencei/rd.S",
+            "experiments/rva23s64-zifencei/fixture.ld",
+            "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T055944Z-3e81181d1d02/fixture.elf",
+            "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T055944Z-3e81181d1d02/fixture.map",
+            "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T055944Z-3e81181d1d02/fixture.bin"
+          ],
+          "missing_artifacts": [],
+          "artifact_sha256": {
+            "experiments/rva23s64-zifencei/rd.S": "b14571531a136adf157657e825546831614c950193c9756f1ecc9b1745c46f58",
+            "experiments/rva23s64-zifencei/fixture.ld": "ef98d55689874a6db2ff6e180c0df0372ae7324e67245c0b3846f18d71b89714",
+            "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T055944Z-3e81181d1d02/fixture.elf": "e740ce4c7c9a9f22cfbdb2406c3c78d4d582919b6b871f35fb4c84f244981b2e",
+            "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T055944Z-3e81181d1d02/fixture.map": "773e7e63bf798c0a2e6f656d4e88865eaafaaca7108e19c18b7842600cc0df2d",
+            "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T055944Z-3e81181d1d02/fixture.bin": "51d96ed3a455f14eec468fcd27774875e4ce4ebdacfd1a1ded0c7328c96f1dea"
+          },
+          "assertion_failed": false,
+          "expected_observed": true,
+          "expected": "recorded fixture image loaded at 0x80000000; first instruction commits; NEMU good trap.",
+          "observed": "image loaded; first instruction committed; HIT GOOD TRAP",
+          "expected_good_trap_pc": "0x80000054",
+          "blocker": "",
+          "expected_marker": "HIT GOOD TRAP",
+          "resources": {
+            "disk_free_bytes": 860709527552,
+            "memory_available_bytes": 161422053376,
+            "logical_cpu_count": 64,
+            "build_command_timeout_seconds": 120,
+            "emulator_timeout_seconds": 120.0
+          },
+          "next_environment_change": "No environment change required; this smoke completed successfully."
+        },
+        {
+          "id": "kunminghu-fixture-20261014T061155Z-3e81181d1d02",
+          "snapshot_sha": "c098f996bf4d301b88693b20315486d31e93bc9d",
+          "input": "experiments/rva23s64-zifencei/standard.S",
+          "input_sha256": "960d13173a27a6c2da0f26ac8e2332afbc8eddfa4abdfabc6a6475e7e3b17039",
+          "linker_script": "experiments/rva23s64-zifencei/fixture.ld",
+          "linker_script_sha256": "ef98d55689874a6db2ff6e180c0df0372ae7324e67245c0b3846f18d71b89714",
+          "configuration": "KunminghuV2Config; NUM_CORES=1; Zifencei self-modifying fixture at 0x80000000; NEMU difftest.",
+          "topic": "zifencei",
+          "case": "standard",
+          "fence_i_encoding": "0x0000100f",
+          "expected_values": {
+            "before_fence_i": 1,
+            "after_fence_i": 42
+          },
+          "observed_values": {
+            "before_fence_i": 1,
+            "after_fence_i": 42,
+            "evidence_method": "fixture equality checks for a0==1 before patch and a0==42 after FENCE.I; the successful NEMU marker is reachable only after both checks"
+          },
+          "reserved_field_trap": "not observed",
+          "command": "$ /home/richard/richard_opt/riscv/bin/riscv64-unknown-elf-gcc -march=rv64imac -mabi=lp64 -nostdlib -nostartfiles -Wl,--build-id=none -Wl,-T,/nvme_data1/richard/learning_rv64_cpu/experiments/rva23s64-zifencei/fixture.ld -Wl,-Map,/nvme_data1/richard/learning_rv64_cpu/notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T061155Z-3e81181d1d02/fixture.map -o /nvme_data1/richard/learning_rv64_cpu/notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T061155Z-3e81181d1d02/fixture.elf /nvme_data1/richard/learning_rv64_cpu/experiments/rva23s64-zifencei/standard.S && $ /home/richard/richard_opt/riscv/bin/riscv64-unknown-elf-objcopy -O binary /nvme_data1/richard/learning_rv64_cpu/notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T061155Z-3e81181d1d02/fixture.elf /nvme_data1/richard/learning_rv64_cpu/notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T061155Z-3e81181d1d02/fixture.bin && $ /nvme_data1/richard/learning_rv64_cpu/sources/xiangshan/build/verilator-compile/emu -i /nvme_data1/richard/learning_rv64_cpu/notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T061155Z-3e81181d1d02/fixture.bin --diff /nvme_data1/richard/learning_rv64_cpu/sources/xiangshan/ready-to-run/riscv64-nemu-interpreter-so --max-cycles=10000 --max-instr=1000 --dump-commit-trace",
+          "working_directory": ".",
+          "tools": {
+            "cross_gcc": "riscv64-unknown-elf-gcc () 15.1.0",
+            "cross_objcopy": "GNU objcopy (GNU Binutils) 2.44",
+            "emulator": "emu compiled at Oct 14 2026, 10:53:44; binary sha256 21f0700203205870403df50eadf2afd182e33573afdeee9a264a49b328f9e897",
+            "nemu": "locked ready-to-run reference library; binary sha256 3e9d63c31d2cd68ec68d55fa9df56ec990ce9a9fd3a8e59709ecb92f21176c40",
+            "mill": "0.12.3; java -cp /tmp/mill-dist-0.12.3-assembly.jar mill.runner.MillMain (jar sha256 336346091edc69b248c306ca51aaccb73d888d8bf525ce45e02df89db449b41d)",
+            "java": "OpenJDK 17.0.20.1 (Ubuntu; /usr/lib/jvm/java-17-openjdk-amd64)",
+            "verilator": "5.050 2026-07-01; upstream tag v5.050, commit 0a24d49771fa57c36ff667272bf7b5c6705e4df0; binary sha256 fb2cc573b1055cf096c90e1efc9966fe56bdb4b265c83590cf2a49f7a0defcdf",
+            "cxx": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0; gcc same version",
+            "mill_launcher_sha256": "7f086728571afda31d433f7875a2df610f3c9f8e9c76e5bd13f97c3e564c53a4",
+            "verilator_build_cxx": "Ubuntu 22.04 GCC/G++ 11.4.0 in image sha256:829f6df217bcbae2b371026e81711d1a787c61b2967ad09d015063663ebafbf7"
+          },
+          "exit_code": 0,
+          "cpu_started": true,
+          "result": "run-pass",
+          "output": "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T061155Z-3e81181d1d02/output.log",
+          "output_sha256": "26a7c511bb0ca71d59f70b7db4570edc4759f3010b5687fb1429ba094de026bb",
+          "stdout": "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T061155Z-3e81181d1d02/stdout.log",
+          "stdout_sha256": "d47288e45d34287fdc7e8c3129446f4a48c472f335165377cb453647c3344169",
+          "stderr": "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T061155Z-3e81181d1d02/stderr.log",
+          "stderr_sha256": "835dd7f6f195ae044855e66bedc5f051b15b6c460c3db25f5fea9cea592cc3b0",
+          "artifacts": [
+            "experiments/rva23s64-zifencei/standard.S",
+            "experiments/rva23s64-zifencei/fixture.ld",
+            "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T061155Z-3e81181d1d02/fixture.elf",
+            "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T061155Z-3e81181d1d02/fixture.map",
+            "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T061155Z-3e81181d1d02/fixture.bin"
+          ],
+          "expected_artifacts": [
+            "experiments/rva23s64-zifencei/standard.S",
+            "experiments/rva23s64-zifencei/fixture.ld",
+            "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T061155Z-3e81181d1d02/fixture.elf",
+            "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T061155Z-3e81181d1d02/fixture.map",
+            "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T061155Z-3e81181d1d02/fixture.bin"
+          ],
+          "missing_artifacts": [],
+          "artifact_sha256": {
+            "experiments/rva23s64-zifencei/standard.S": "960d13173a27a6c2da0f26ac8e2332afbc8eddfa4abdfabc6a6475e7e3b17039",
+            "experiments/rva23s64-zifencei/fixture.ld": "ef98d55689874a6db2ff6e180c0df0372ae7324e67245c0b3846f18d71b89714",
+            "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T061155Z-3e81181d1d02/fixture.elf": "5ea7cc726bce0e570215e04bccd66f5c69bffa63c258dbcb5c195b57f1841988",
+            "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T061155Z-3e81181d1d02/fixture.map": "3329738fd1bd637cb3ed69a7b3cd3c633dd95149ee2938948e4b5a89026db1ed",
+            "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T061155Z-3e81181d1d02/fixture.bin": "7e7a7bb2fe367df78139aad7af87add87569568012446cd0dcfccc56090eb158"
+          },
+          "assertion_failed": false,
+          "expected_observed": true,
+          "expected": "recorded fixture image loaded at 0x80000000; first instruction commits; NEMU good trap.",
+          "observed": "image loaded; first instruction committed; HIT GOOD TRAP",
+          "expected_good_trap_pc": "0x80000054",
+          "blocker": "",
+          "expected_marker": "HIT GOOD TRAP",
+          "resources": {
+            "disk_free_bytes": 860401287168,
+            "memory_available_bytes": 158242787328,
+            "logical_cpu_count": 64,
+            "build_command_timeout_seconds": 120,
+            "emulator_timeout_seconds": 120.0
+          },
+          "next_environment_change": "No environment change required; this smoke completed successfully."
+        },
+        {
+          "id": "kunminghu-fixture-20261014T061204Z-3e81181d1d02",
+          "snapshot_sha": "c098f996bf4d301b88693b20315486d31e93bc9d",
+          "input": "experiments/rva23s64-zifencei/funct12.S",
+          "input_sha256": "4a4766c287ca020a0242d15b945f33150425c626b55294c9e4210b96de27a07a",
+          "linker_script": "experiments/rva23s64-zifencei/fixture.ld",
+          "linker_script_sha256": "ef98d55689874a6db2ff6e180c0df0372ae7324e67245c0b3846f18d71b89714",
+          "configuration": "KunminghuV2Config; NUM_CORES=1; Zifencei self-modifying fixture at 0x80000000; NEMU difftest.",
+          "topic": "zifencei",
+          "case": "funct12",
+          "fence_i_encoding": "0x0010100f",
+          "expected_values": {
+            "before_fence_i": 1,
+            "after_fence_i": 42
+          },
+          "observed_values": {
+            "before_fence_i": 1,
+            "after_fence_i": 42,
+            "evidence_method": "fixture equality checks for a0==1 before patch and a0==42 after FENCE.I; the successful NEMU marker is reachable only after both checks"
+          },
+          "reserved_field_trap": "not observed",
+          "command": "$ /home/richard/richard_opt/riscv/bin/riscv64-unknown-elf-gcc -march=rv64imac -mabi=lp64 -nostdlib -nostartfiles -Wl,--build-id=none -Wl,-T,/nvme_data1/richard/learning_rv64_cpu/experiments/rva23s64-zifencei/fixture.ld -Wl,-Map,/nvme_data1/richard/learning_rv64_cpu/notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T061204Z-3e81181d1d02/fixture.map -o /nvme_data1/richard/learning_rv64_cpu/notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T061204Z-3e81181d1d02/fixture.elf /nvme_data1/richard/learning_rv64_cpu/experiments/rva23s64-zifencei/funct12.S && $ /home/richard/richard_opt/riscv/bin/riscv64-unknown-elf-objcopy -O binary /nvme_data1/richard/learning_rv64_cpu/notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T061204Z-3e81181d1d02/fixture.elf /nvme_data1/richard/learning_rv64_cpu/notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T061204Z-3e81181d1d02/fixture.bin && $ /nvme_data1/richard/learning_rv64_cpu/sources/xiangshan/build/verilator-compile/emu -i /nvme_data1/richard/learning_rv64_cpu/notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T061204Z-3e81181d1d02/fixture.bin --diff /nvme_data1/richard/learning_rv64_cpu/sources/xiangshan/ready-to-run/riscv64-nemu-interpreter-so --max-cycles=10000 --max-instr=1000 --dump-commit-trace",
+          "working_directory": ".",
+          "tools": {
+            "cross_gcc": "riscv64-unknown-elf-gcc () 15.1.0",
+            "cross_objcopy": "GNU objcopy (GNU Binutils) 2.44",
+            "emulator": "emu compiled at Oct 14 2026, 10:53:44; binary sha256 21f0700203205870403df50eadf2afd182e33573afdeee9a264a49b328f9e897",
+            "nemu": "locked ready-to-run reference library; binary sha256 3e9d63c31d2cd68ec68d55fa9df56ec990ce9a9fd3a8e59709ecb92f21176c40",
+            "mill": "0.12.3; java -cp /tmp/mill-dist-0.12.3-assembly.jar mill.runner.MillMain (jar sha256 336346091edc69b248c306ca51aaccb73d888d8bf525ce45e02df89db449b41d)",
+            "java": "OpenJDK 17.0.20.1 (Ubuntu; /usr/lib/jvm/java-17-openjdk-amd64)",
+            "verilator": "5.050 2026-07-01; upstream tag v5.050, commit 0a24d49771fa57c36ff667272bf7b5c6705e4df0; binary sha256 fb2cc573b1055cf096c90e1efc9966fe56bdb4b265c83590cf2a49f7a0defcdf",
+            "cxx": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0; gcc same version",
+            "mill_launcher_sha256": "7f086728571afda31d433f7875a2df610f3c9f8e9c76e5bd13f97c3e564c53a4",
+            "verilator_build_cxx": "Ubuntu 22.04 GCC/G++ 11.4.0 in image sha256:829f6df217bcbae2b371026e81711d1a787c61b2967ad09d015063663ebafbf7"
+          },
+          "exit_code": 0,
+          "cpu_started": true,
+          "result": "run-pass",
+          "output": "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T061204Z-3e81181d1d02/output.log",
+          "output_sha256": "fcc22f6b0ae08779b115cc4b5869a696c8d11db2645b82475104e927a9d2877e",
+          "stdout": "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T061204Z-3e81181d1d02/stdout.log",
+          "stdout_sha256": "ef1c60cc1c97e66309d33b23a6bc01ea90b77514c8772f07ab6ea50efe9fbbfb",
+          "stderr": "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T061204Z-3e81181d1d02/stderr.log",
+          "stderr_sha256": "835dd7f6f195ae044855e66bedc5f051b15b6c460c3db25f5fea9cea592cc3b0",
+          "artifacts": [
+            "experiments/rva23s64-zifencei/funct12.S",
+            "experiments/rva23s64-zifencei/fixture.ld",
+            "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T061204Z-3e81181d1d02/fixture.elf",
+            "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T061204Z-3e81181d1d02/fixture.map",
+            "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T061204Z-3e81181d1d02/fixture.bin"
+          ],
+          "expected_artifacts": [
+            "experiments/rva23s64-zifencei/funct12.S",
+            "experiments/rva23s64-zifencei/fixture.ld",
+            "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T061204Z-3e81181d1d02/fixture.elf",
+            "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T061204Z-3e81181d1d02/fixture.map",
+            "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T061204Z-3e81181d1d02/fixture.bin"
+          ],
+          "missing_artifacts": [],
+          "artifact_sha256": {
+            "experiments/rva23s64-zifencei/funct12.S": "4a4766c287ca020a0242d15b945f33150425c626b55294c9e4210b96de27a07a",
+            "experiments/rva23s64-zifencei/fixture.ld": "ef98d55689874a6db2ff6e180c0df0372ae7324e67245c0b3846f18d71b89714",
+            "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T061204Z-3e81181d1d02/fixture.elf": "908eae0c9c9b5d35c7c1a350c4a08200bbc0caca42619b9a76606a07225d4562",
+            "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T061204Z-3e81181d1d02/fixture.map": "f715fbd3992c71d2646dee60fd909e3b0d5cc8875b62137aa4014fce7c38932b",
+            "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T061204Z-3e81181d1d02/fixture.bin": "0f5821b28cc95d357621a09decc5764a7ff67321210872bf3440dcbde6ef0632"
+          },
+          "assertion_failed": false,
+          "expected_observed": true,
+          "expected": "recorded fixture image loaded at 0x80000000; first instruction commits; NEMU good trap.",
+          "observed": "image loaded; first instruction committed; HIT GOOD TRAP",
+          "expected_good_trap_pc": "0x80000054",
+          "blocker": "",
+          "expected_marker": "HIT GOOD TRAP",
+          "resources": {
+            "disk_free_bytes": 860391997440,
+            "memory_available_bytes": 156360392704,
+            "logical_cpu_count": 64,
+            "build_command_timeout_seconds": 120,
+            "emulator_timeout_seconds": 120.0
+          },
+          "next_environment_change": "No environment change required; this smoke completed successfully."
+        },
+        {
+          "id": "kunminghu-fixture-20261014T061212Z-3e81181d1d02",
+          "snapshot_sha": "c098f996bf4d301b88693b20315486d31e93bc9d",
+          "input": "experiments/rva23s64-zifencei/rs1.S",
+          "input_sha256": "13b76c8668ee518f45aeae2ce0ab0794328093b8b359d7df706be0baf269d63a",
+          "linker_script": "experiments/rva23s64-zifencei/fixture.ld",
+          "linker_script_sha256": "ef98d55689874a6db2ff6e180c0df0372ae7324e67245c0b3846f18d71b89714",
+          "configuration": "KunminghuV2Config; NUM_CORES=1; Zifencei self-modifying fixture at 0x80000000; NEMU difftest.",
+          "topic": "zifencei",
+          "case": "rs1",
+          "fence_i_encoding": "0x0000900f",
+          "expected_values": {
+            "before_fence_i": 1,
+            "after_fence_i": 42
+          },
+          "observed_values": {
+            "before_fence_i": 1,
+            "after_fence_i": 42,
+            "evidence_method": "fixture equality checks for a0==1 before patch and a0==42 after FENCE.I; the successful NEMU marker is reachable only after both checks"
+          },
+          "reserved_field_trap": "not observed",
+          "command": "$ /home/richard/richard_opt/riscv/bin/riscv64-unknown-elf-gcc -march=rv64imac -mabi=lp64 -nostdlib -nostartfiles -Wl,--build-id=none -Wl,-T,/nvme_data1/richard/learning_rv64_cpu/experiments/rva23s64-zifencei/fixture.ld -Wl,-Map,/nvme_data1/richard/learning_rv64_cpu/notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T061212Z-3e81181d1d02/fixture.map -o /nvme_data1/richard/learning_rv64_cpu/notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T061212Z-3e81181d1d02/fixture.elf /nvme_data1/richard/learning_rv64_cpu/experiments/rva23s64-zifencei/rs1.S && $ /home/richard/richard_opt/riscv/bin/riscv64-unknown-elf-objcopy -O binary /nvme_data1/richard/learning_rv64_cpu/notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T061212Z-3e81181d1d02/fixture.elf /nvme_data1/richard/learning_rv64_cpu/notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T061212Z-3e81181d1d02/fixture.bin && $ /nvme_data1/richard/learning_rv64_cpu/sources/xiangshan/build/verilator-compile/emu -i /nvme_data1/richard/learning_rv64_cpu/notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T061212Z-3e81181d1d02/fixture.bin --diff /nvme_data1/richard/learning_rv64_cpu/sources/xiangshan/ready-to-run/riscv64-nemu-interpreter-so --max-cycles=10000 --max-instr=1000 --dump-commit-trace",
+          "working_directory": ".",
+          "tools": {
+            "cross_gcc": "riscv64-unknown-elf-gcc () 15.1.0",
+            "cross_objcopy": "GNU objcopy (GNU Binutils) 2.44",
+            "emulator": "emu compiled at Oct 14 2026, 10:53:44; binary sha256 21f0700203205870403df50eadf2afd182e33573afdeee9a264a49b328f9e897",
+            "nemu": "locked ready-to-run reference library; binary sha256 3e9d63c31d2cd68ec68d55fa9df56ec990ce9a9fd3a8e59709ecb92f21176c40",
+            "mill": "0.12.3; java -cp /tmp/mill-dist-0.12.3-assembly.jar mill.runner.MillMain (jar sha256 336346091edc69b248c306ca51aaccb73d888d8bf525ce45e02df89db449b41d)",
+            "java": "OpenJDK 17.0.20.1 (Ubuntu; /usr/lib/jvm/java-17-openjdk-amd64)",
+            "verilator": "5.050 2026-07-01; upstream tag v5.050, commit 0a24d49771fa57c36ff667272bf7b5c6705e4df0; binary sha256 fb2cc573b1055cf096c90e1efc9966fe56bdb4b265c83590cf2a49f7a0defcdf",
+            "cxx": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0; gcc same version",
+            "mill_launcher_sha256": "7f086728571afda31d433f7875a2df610f3c9f8e9c76e5bd13f97c3e564c53a4",
+            "verilator_build_cxx": "Ubuntu 22.04 GCC/G++ 11.4.0 in image sha256:829f6df217bcbae2b371026e81711d1a787c61b2967ad09d015063663ebafbf7"
+          },
+          "exit_code": 0,
+          "cpu_started": true,
+          "result": "run-pass",
+          "output": "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T061212Z-3e81181d1d02/output.log",
+          "output_sha256": "a048504ff70d604eca62de25feef565a1e017c8a84ce92a3546b20feae6a8896",
+          "stdout": "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T061212Z-3e81181d1d02/stdout.log",
+          "stdout_sha256": "fe28638418121f5f303396460edb84b797b3a2572a7febab05ff21f877cd42e0",
+          "stderr": "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T061212Z-3e81181d1d02/stderr.log",
+          "stderr_sha256": "835dd7f6f195ae044855e66bedc5f051b15b6c460c3db25f5fea9cea592cc3b0",
+          "artifacts": [
+            "experiments/rva23s64-zifencei/rs1.S",
+            "experiments/rva23s64-zifencei/fixture.ld",
+            "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T061212Z-3e81181d1d02/fixture.elf",
+            "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T061212Z-3e81181d1d02/fixture.map",
+            "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T061212Z-3e81181d1d02/fixture.bin"
+          ],
+          "expected_artifacts": [
+            "experiments/rva23s64-zifencei/rs1.S",
+            "experiments/rva23s64-zifencei/fixture.ld",
+            "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T061212Z-3e81181d1d02/fixture.elf",
+            "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T061212Z-3e81181d1d02/fixture.map",
+            "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T061212Z-3e81181d1d02/fixture.bin"
+          ],
+          "missing_artifacts": [],
+          "artifact_sha256": {
+            "experiments/rva23s64-zifencei/rs1.S": "13b76c8668ee518f45aeae2ce0ab0794328093b8b359d7df706be0baf269d63a",
+            "experiments/rva23s64-zifencei/fixture.ld": "ef98d55689874a6db2ff6e180c0df0372ae7324e67245c0b3846f18d71b89714",
+            "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T061212Z-3e81181d1d02/fixture.elf": "c8dd6e3b2accf55bf8a47493a0642e736af09df04dfda3de0eda00523019d13e",
+            "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T061212Z-3e81181d1d02/fixture.map": "e41920435dbccff032a8428ea14757859925b20e9a46347c022aada4f07492c8",
+            "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T061212Z-3e81181d1d02/fixture.bin": "2b7e7e2fee50f929fdac9d043b09a726bfdff568d0e31a371f717812eeda0dc7"
+          },
+          "assertion_failed": false,
+          "expected_observed": true,
+          "expected": "recorded fixture image loaded at 0x80000000; first instruction commits; NEMU good trap.",
+          "observed": "image loaded; first instruction committed; HIT GOOD TRAP",
+          "expected_good_trap_pc": "0x80000054",
+          "blocker": "",
+          "expected_marker": "HIT GOOD TRAP",
+          "resources": {
+            "disk_free_bytes": 860383227904,
+            "memory_available_bytes": 154946908160,
+            "logical_cpu_count": 64,
+            "build_command_timeout_seconds": 120,
+            "emulator_timeout_seconds": 120.0
+          },
+          "next_environment_change": "No environment change required; this smoke completed successfully."
+        },
+        {
+          "id": "kunminghu-fixture-20261014T061220Z-3e81181d1d02",
+          "snapshot_sha": "c098f996bf4d301b88693b20315486d31e93bc9d",
+          "input": "experiments/rva23s64-zifencei/rd.S",
+          "input_sha256": "b14571531a136adf157657e825546831614c950193c9756f1ecc9b1745c46f58",
+          "linker_script": "experiments/rva23s64-zifencei/fixture.ld",
+          "linker_script_sha256": "ef98d55689874a6db2ff6e180c0df0372ae7324e67245c0b3846f18d71b89714",
+          "configuration": "KunminghuV2Config; NUM_CORES=1; Zifencei self-modifying fixture at 0x80000000; NEMU difftest.",
+          "topic": "zifencei",
+          "case": "rd",
+          "fence_i_encoding": "0x0000108f",
+          "expected_values": {
+            "before_fence_i": 1,
+            "after_fence_i": 42
+          },
+          "observed_values": {
+            "before_fence_i": 1,
+            "after_fence_i": 42,
+            "evidence_method": "fixture equality checks for a0==1 before patch and a0==42 after FENCE.I; the successful NEMU marker is reachable only after both checks"
+          },
+          "reserved_field_trap": "not observed",
+          "command": "$ /home/richard/richard_opt/riscv/bin/riscv64-unknown-elf-gcc -march=rv64imac -mabi=lp64 -nostdlib -nostartfiles -Wl,--build-id=none -Wl,-T,/nvme_data1/richard/learning_rv64_cpu/experiments/rva23s64-zifencei/fixture.ld -Wl,-Map,/nvme_data1/richard/learning_rv64_cpu/notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T061220Z-3e81181d1d02/fixture.map -o /nvme_data1/richard/learning_rv64_cpu/notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T061220Z-3e81181d1d02/fixture.elf /nvme_data1/richard/learning_rv64_cpu/experiments/rva23s64-zifencei/rd.S && $ /home/richard/richard_opt/riscv/bin/riscv64-unknown-elf-objcopy -O binary /nvme_data1/richard/learning_rv64_cpu/notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T061220Z-3e81181d1d02/fixture.elf /nvme_data1/richard/learning_rv64_cpu/notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T061220Z-3e81181d1d02/fixture.bin && $ /nvme_data1/richard/learning_rv64_cpu/sources/xiangshan/build/verilator-compile/emu -i /nvme_data1/richard/learning_rv64_cpu/notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T061220Z-3e81181d1d02/fixture.bin --diff /nvme_data1/richard/learning_rv64_cpu/sources/xiangshan/ready-to-run/riscv64-nemu-interpreter-so --max-cycles=10000 --max-instr=1000 --dump-commit-trace",
+          "working_directory": ".",
+          "tools": {
+            "cross_gcc": "riscv64-unknown-elf-gcc () 15.1.0",
+            "cross_objcopy": "GNU objcopy (GNU Binutils) 2.44",
+            "emulator": "emu compiled at Oct 14 2026, 10:53:44; binary sha256 21f0700203205870403df50eadf2afd182e33573afdeee9a264a49b328f9e897",
+            "nemu": "locked ready-to-run reference library; binary sha256 3e9d63c31d2cd68ec68d55fa9df56ec990ce9a9fd3a8e59709ecb92f21176c40",
+            "mill": "0.12.3; java -cp /tmp/mill-dist-0.12.3-assembly.jar mill.runner.MillMain (jar sha256 336346091edc69b248c306ca51aaccb73d888d8bf525ce45e02df89db449b41d)",
+            "java": "OpenJDK 17.0.20.1 (Ubuntu; /usr/lib/jvm/java-17-openjdk-amd64)",
+            "verilator": "5.050 2026-07-01; upstream tag v5.050, commit 0a24d49771fa57c36ff667272bf7b5c6705e4df0; binary sha256 fb2cc573b1055cf096c90e1efc9966fe56bdb4b265c83590cf2a49f7a0defcdf",
+            "cxx": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0; gcc same version",
+            "mill_launcher_sha256": "7f086728571afda31d433f7875a2df610f3c9f8e9c76e5bd13f97c3e564c53a4",
+            "verilator_build_cxx": "Ubuntu 22.04 GCC/G++ 11.4.0 in image sha256:829f6df217bcbae2b371026e81711d1a787c61b2967ad09d015063663ebafbf7"
+          },
+          "exit_code": 0,
+          "cpu_started": true,
+          "result": "run-pass",
+          "output": "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T061220Z-3e81181d1d02/output.log",
+          "output_sha256": "91158ac5438d0540a1857ed8e63b28838ebf7d5b2b1e10d7af4a211a19e5c1b1",
+          "stdout": "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T061220Z-3e81181d1d02/stdout.log",
+          "stdout_sha256": "14b6a4bd43f5c18927e7e4c8dee50179b5b594a759cf1717bce6b0f224b03644",
+          "stderr": "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T061220Z-3e81181d1d02/stderr.log",
+          "stderr_sha256": "835dd7f6f195ae044855e66bedc5f051b15b6c460c3db25f5fea9cea592cc3b0",
+          "artifacts": [
+            "experiments/rva23s64-zifencei/rd.S",
+            "experiments/rva23s64-zifencei/fixture.ld",
+            "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T061220Z-3e81181d1d02/fixture.elf",
+            "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T061220Z-3e81181d1d02/fixture.map",
+            "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T061220Z-3e81181d1d02/fixture.bin"
+          ],
+          "expected_artifacts": [
+            "experiments/rva23s64-zifencei/rd.S",
+            "experiments/rva23s64-zifencei/fixture.ld",
+            "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T061220Z-3e81181d1d02/fixture.elf",
+            "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T061220Z-3e81181d1d02/fixture.map",
+            "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T061220Z-3e81181d1d02/fixture.bin"
+          ],
+          "missing_artifacts": [],
+          "artifact_sha256": {
+            "experiments/rva23s64-zifencei/rd.S": "b14571531a136adf157657e825546831614c950193c9756f1ecc9b1745c46f58",
+            "experiments/rva23s64-zifencei/fixture.ld": "ef98d55689874a6db2ff6e180c0df0372ae7324e67245c0b3846f18d71b89714",
+            "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T061220Z-3e81181d1d02/fixture.elf": "08ce38bd7a1439b4566de24587d4d9c8f9508f80dde7f3f7c26dfded77bee249",
+            "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T061220Z-3e81181d1d02/fixture.map": "16745b81d0281cf9361c8899a14a47d1adbae623e9a643c8da96dcff9123a529",
+            "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T061220Z-3e81181d1d02/fixture.bin": "51d96ed3a455f14eec468fcd27774875e4ce4ebdacfd1a1ded0c7328c96f1dea"
+          },
+          "assertion_failed": false,
+          "expected_observed": true,
+          "expected": "recorded fixture image loaded at 0x80000000; first instruction commits; NEMU good trap.",
+          "observed": "image loaded; first instruction committed; HIT GOOD TRAP",
+          "expected_good_trap_pc": "0x80000054",
+          "blocker": "",
+          "expected_marker": "HIT GOOD TRAP",
+          "resources": {
+            "disk_free_bytes": 860373872640,
+            "memory_available_bytes": 156584267776,
+            "logical_cpu_count": 64,
+            "build_command_timeout_seconds": 120,
+            "emulator_timeout_seconds": 120.0
+          },
+          "next_environment_change": "No environment change required; this smoke completed successfully."
         }
       ]
     },
@@ -829,6 +1485,710 @@
           "fixture_sha256": "fadad9d6e8d0c890042d1128c8a71ed0b7a26ea674edc9f384b77c4b87766e33",
           "smoke_fixture_sha256": "2cf451e3cee19059d2dbc19c08cbe4af9b552ec842d6d2881d039f4bc1aaeeb1",
           "run_seconds": 23.254
+        },
+        {
+          "topic": "zifencei",
+          "case": "standard",
+          "fence_i_encoding": "0x0000100f",
+          "expected_values": {
+            "before_fence_i": 1,
+            "after_fence_i": 42
+          },
+          "observed_values": {
+            "before_fence_i": 1,
+            "after_fence_i": 42,
+            "evidence_method": "fixture equality checks for a0==1 before patch and a0==42 after FENCE.I; successful tohost/pass marker is reachable only after both checks"
+          },
+          "reserved_field_trap": "not observed",
+          "id": "heliodor-core-20261014T055956Z-2702248",
+          "snapshot_sha": "94e9c5821c24a8941c3ddc3b76daddc7124a855a",
+          "input": "experiments/rva23s64-zifencei/standard.hex",
+          "input_sha256": "8c38dc80b0ea216a14de36382d1d7374e2f2011b026a90b8df984d0a0472e669",
+          "inputs": [
+            {
+              "path": "sources/heliodor/test/v4_smoke.hex",
+              "sha256": "2cf451e3cee19059d2dbc19c08cbe4af9b552ec842d6d2881d039f4bc1aaeeb1"
+            },
+            {
+              "path": "experiments/rva23s64-zifencei/standard.hex",
+              "sha256": "8c38dc80b0ea216a14de36382d1d7374e2f2011b026a90b8df984d0a0472e669"
+            }
+          ],
+          "configuration": "Heliodor test_smoke plus test_arch_rv64ui_fence_i; one harness/DUT; 5000 smoke cycles and 300000 arch cycles; expected Zifencei old/new return 1/42 and tohost=1.",
+          "command": "[[\"/nvme_data1/richard/.local/share/veryl/toolchains/latest/veryl\", \"test\", \"--include-ignored\", \"--test\", \"test_smoke\"], [\"/nvme_data1/richard/.local/share/veryl/toolchains/latest/veryl\", \"test\", \"--include-ignored\", \"--test\", \"test_arch_rv64ui_fence_i\"]]",
+          "working_directory": "/tmp/heliodor-core-smoke-_jpvi4ln",
+          "tools": {
+            "veryl": "veryl 0.22.0 (967e477 2026-10-02); binary sha256 aa57dd31488410769ee61c367f03de6cbf11101be47b510b99bde4ac9155b4c1",
+            "verilator": "Verilator 5.020 2024-01-01 rev (Debian 5.020-1)",
+            "cxx": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0"
+          },
+          "exit_code": 0,
+          "cpu_started": true,
+          "result": "run-pass",
+          "assertion_failed": false,
+          "expected_observed": true,
+          "expected": "test_smoke registers pass; Zifencei fixture checks old return 1 then new return 42 and reports tohost=1/pass=1.",
+          "observed": "CPU-start=True; results={'x10': 7, 'x11': 11, 'x12': 77, 'x13': 11, 'arch_tohost': 1, 'arch_pass': 1}; smoke_marker=True; arch_marker=True",
+          "output": "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T055956Z-2702248/output.log",
+          "output_sha256": "34bdceef051100dd03fe6f8bd01b73b0626b0182540b982ef04ed522d3cc4d8f",
+          "stdout": "notes/units/evidence/smoke/heliodor-core-20261014T055956Z-2702248.stdout.log",
+          "stdout_sha256": "755161711de169b0703d55681050c9c07ef1888c24a71acb1dfad7de15e57b08",
+          "stderr": "notes/units/evidence/smoke/heliodor-core-20261014T055956Z-2702248.stderr.log",
+          "stderr_sha256": "194d6eb7f062c30fa540828e853c1018ec01433548d0673b9698c5cc6dc33b03",
+          "artifacts": [
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T055956Z-2702248/run.py",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T055956Z-2702248/test_smoke.veryl",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T055956Z-2702248/v4_smoke.hex",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T055956Z-2702248/test_arch_common.veryl",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T055956Z-2702248/zifencei-standard.hex"
+          ],
+          "artifact_sha256": {
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T055956Z-2702248/run.py": "a267a5963939d65c9595823d3d5d9be7b0817d94d541896be16a34bd2f426993",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T055956Z-2702248/test_smoke.veryl": "15bd6b192c2569d078e8d10e872c095a649a1f6848f54f030c7e4123d7d1daf3",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T055956Z-2702248/v4_smoke.hex": "2cf451e3cee19059d2dbc19c08cbe4af9b552ec842d6d2881d039f4bc1aaeeb1",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T055956Z-2702248/test_arch_common.veryl": "13a8e3988407a603f2d1ac6005c0e7f07c2f2a1cde02aa89ecf641f5d80cd2cc",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T055956Z-2702248/zifencei-standard.hex": "8c38dc80b0ea216a14de36382d1d7374e2f2011b026a90b8df984d0a0472e669"
+          },
+          "expected_marker": "v4 rv64ui-fence_i PASS",
+          "blocker": "",
+          "log_path_warnings": [],
+          "first_failed_stage": "",
+          "resources": {
+            "disk_free_bytes": 860717813760,
+            "memory_available_bytes": 160053915648,
+            "logical_cpu_count": 64,
+            "test_timeout_seconds": 180.0
+          },
+          "next_environment_change": "No environment change required; this smoke completed successfully.",
+          "source_tree_sha256": "4553612bb7ea7ac02259977213b5f8089c889bf2a65d07d23aa0634b9de0c4b9",
+          "source_commit": "94e9c5821c24a8941c3ddc3b76daddc7124a855a",
+          "isolated_tree_sha256": "64e3f77f2c3957533b628d26db4572ad6282b2ce1b70d8b1214f2fbb9685374d",
+          "isolated_inputs_sha256": "64e3f77f2c3957533b628d26db4572ad6282b2ce1b70d8b1214f2fbb9685374d",
+          "expected_markers": [
+            "[test_smoke] PASS",
+            "v4 rv64ui-fence_i PASS"
+          ],
+          "transformed_test_sha256": "15bd6b192c2569d078e8d10e872c095a649a1f6848f54f030c7e4123d7d1daf3",
+          "transformed_arch_harness_sha256": "13a8e3988407a603f2d1ac6005c0e7f07c2f2a1cde02aa89ecf641f5d80cd2cc",
+          "fixture_sha256": "8c38dc80b0ea216a14de36382d1d7374e2f2011b026a90b8df984d0a0472e669",
+          "smoke_fixture_sha256": "2cf451e3cee19059d2dbc19c08cbe4af9b552ec842d6d2881d039f4bc1aaeeb1",
+          "run_seconds": 23.22
+        },
+        {
+          "topic": "zifencei",
+          "case": "funct12",
+          "fence_i_encoding": "0x0010100f",
+          "expected_values": {
+            "before_fence_i": 1,
+            "after_fence_i": 42
+          },
+          "observed_values": {
+            "before_fence_i": 1,
+            "after_fence_i": 42,
+            "evidence_method": "fixture equality checks for a0==1 before patch and a0==42 after FENCE.I; successful tohost/pass marker is reachable only after both checks"
+          },
+          "reserved_field_trap": "not observed",
+          "id": "heliodor-core-20261014T060019Z-2702248",
+          "snapshot_sha": "94e9c5821c24a8941c3ddc3b76daddc7124a855a",
+          "input": "experiments/rva23s64-zifencei/funct12.hex",
+          "input_sha256": "f5773af3200b1efa03bf815e343eb9fb06ecf11d9850572e148a87f69ec043a8",
+          "inputs": [
+            {
+              "path": "sources/heliodor/test/v4_smoke.hex",
+              "sha256": "2cf451e3cee19059d2dbc19c08cbe4af9b552ec842d6d2881d039f4bc1aaeeb1"
+            },
+            {
+              "path": "experiments/rva23s64-zifencei/funct12.hex",
+              "sha256": "f5773af3200b1efa03bf815e343eb9fb06ecf11d9850572e148a87f69ec043a8"
+            }
+          ],
+          "configuration": "Heliodor test_smoke plus test_arch_rv64ui_fence_i; one harness/DUT; 5000 smoke cycles and 300000 arch cycles; expected Zifencei old/new return 1/42 and tohost=1.",
+          "command": "[[\"/nvme_data1/richard/.local/share/veryl/toolchains/latest/veryl\", \"test\", \"--include-ignored\", \"--test\", \"test_smoke\"], [\"/nvme_data1/richard/.local/share/veryl/toolchains/latest/veryl\", \"test\", \"--include-ignored\", \"--test\", \"test_arch_rv64ui_fence_i\"]]",
+          "working_directory": "/tmp/heliodor-core-smoke-jfsqnvqi",
+          "tools": {
+            "veryl": "veryl 0.22.0 (967e477 2026-10-02); binary sha256 aa57dd31488410769ee61c367f03de6cbf11101be47b510b99bde4ac9155b4c1",
+            "verilator": "Verilator 5.020 2024-01-01 rev (Debian 5.020-1)",
+            "cxx": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0"
+          },
+          "exit_code": 0,
+          "cpu_started": true,
+          "result": "run-pass",
+          "assertion_failed": false,
+          "expected_observed": true,
+          "expected": "test_smoke registers pass; Zifencei fixture checks old return 1 then new return 42 and reports tohost=1/pass=1.",
+          "observed": "CPU-start=True; results={'x10': 7, 'x11': 11, 'x12': 77, 'x13': 11, 'arch_tohost': 1, 'arch_pass': 1}; smoke_marker=True; arch_marker=True",
+          "output": "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T060019Z-2702248/output.log",
+          "output_sha256": "c47b20c6a12859b4001b177431f99d15417a0b0320fba2f85aa7a07623e8ece8",
+          "stdout": "notes/units/evidence/smoke/heliodor-core-20261014T060019Z-2702248.stdout.log",
+          "stdout_sha256": "755161711de169b0703d55681050c9c07ef1888c24a71acb1dfad7de15e57b08",
+          "stderr": "notes/units/evidence/smoke/heliodor-core-20261014T060019Z-2702248.stderr.log",
+          "stderr_sha256": "18cd54938042f506e00bc2eeb4a9a0357768941a99c4a55cef785eb06b9c3920",
+          "artifacts": [
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T060019Z-2702248/run.py",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T060019Z-2702248/test_smoke.veryl",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T060019Z-2702248/v4_smoke.hex",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T060019Z-2702248/test_arch_common.veryl",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T060019Z-2702248/zifencei-funct12.hex"
+          ],
+          "artifact_sha256": {
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T060019Z-2702248/run.py": "a267a5963939d65c9595823d3d5d9be7b0817d94d541896be16a34bd2f426993",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T060019Z-2702248/test_smoke.veryl": "15bd6b192c2569d078e8d10e872c095a649a1f6848f54f030c7e4123d7d1daf3",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T060019Z-2702248/v4_smoke.hex": "2cf451e3cee19059d2dbc19c08cbe4af9b552ec842d6d2881d039f4bc1aaeeb1",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T060019Z-2702248/test_arch_common.veryl": "0c0c19abc2dc1e229aee2e71e51ff742a02a30a804eac7a29db679fa954b3e79",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T060019Z-2702248/zifencei-funct12.hex": "f5773af3200b1efa03bf815e343eb9fb06ecf11d9850572e148a87f69ec043a8"
+          },
+          "expected_marker": "v4 rv64ui-fence_i PASS",
+          "blocker": "",
+          "log_path_warnings": [],
+          "first_failed_stage": "",
+          "resources": {
+            "disk_free_bytes": 860708167680,
+            "memory_available_bytes": 160453677056,
+            "logical_cpu_count": 64,
+            "test_timeout_seconds": 180.0
+          },
+          "next_environment_change": "No environment change required; this smoke completed successfully.",
+          "source_tree_sha256": "4553612bb7ea7ac02259977213b5f8089c889bf2a65d07d23aa0634b9de0c4b9",
+          "source_commit": "94e9c5821c24a8941c3ddc3b76daddc7124a855a",
+          "isolated_tree_sha256": "c12b86f26d04403e76e501e8d36288755940fffbc6922388dd0a22241e4ed672",
+          "isolated_inputs_sha256": "c12b86f26d04403e76e501e8d36288755940fffbc6922388dd0a22241e4ed672",
+          "expected_markers": [
+            "[test_smoke] PASS",
+            "v4 rv64ui-fence_i PASS"
+          ],
+          "transformed_test_sha256": "15bd6b192c2569d078e8d10e872c095a649a1f6848f54f030c7e4123d7d1daf3",
+          "transformed_arch_harness_sha256": "0c0c19abc2dc1e229aee2e71e51ff742a02a30a804eac7a29db679fa954b3e79",
+          "fixture_sha256": "f5773af3200b1efa03bf815e343eb9fb06ecf11d9850572e148a87f69ec043a8",
+          "smoke_fixture_sha256": "2cf451e3cee19059d2dbc19c08cbe4af9b552ec842d6d2881d039f4bc1aaeeb1",
+          "run_seconds": 24.184
+        },
+        {
+          "topic": "zifencei",
+          "case": "rs1",
+          "fence_i_encoding": "0x0000900f",
+          "expected_values": {
+            "before_fence_i": 1,
+            "after_fence_i": 42
+          },
+          "observed_values": {
+            "before_fence_i": 1,
+            "after_fence_i": 42,
+            "evidence_method": "fixture equality checks for a0==1 before patch and a0==42 after FENCE.I; successful tohost/pass marker is reachable only after both checks"
+          },
+          "reserved_field_trap": "not observed",
+          "id": "heliodor-core-20261014T060043Z-2702248",
+          "snapshot_sha": "94e9c5821c24a8941c3ddc3b76daddc7124a855a",
+          "input": "experiments/rva23s64-zifencei/rs1.hex",
+          "input_sha256": "5fa6b0cfe0f2377c54b8fe7ba4043156ec71b2ffdb46a7f07b2fe61da4384a12",
+          "inputs": [
+            {
+              "path": "sources/heliodor/test/v4_smoke.hex",
+              "sha256": "2cf451e3cee19059d2dbc19c08cbe4af9b552ec842d6d2881d039f4bc1aaeeb1"
+            },
+            {
+              "path": "experiments/rva23s64-zifencei/rs1.hex",
+              "sha256": "5fa6b0cfe0f2377c54b8fe7ba4043156ec71b2ffdb46a7f07b2fe61da4384a12"
+            }
+          ],
+          "configuration": "Heliodor test_smoke plus test_arch_rv64ui_fence_i; one harness/DUT; 5000 smoke cycles and 300000 arch cycles; expected Zifencei old/new return 1/42 and tohost=1.",
+          "command": "[[\"/nvme_data1/richard/.local/share/veryl/toolchains/latest/veryl\", \"test\", \"--include-ignored\", \"--test\", \"test_smoke\"], [\"/nvme_data1/richard/.local/share/veryl/toolchains/latest/veryl\", \"test\", \"--include-ignored\", \"--test\", \"test_arch_rv64ui_fence_i\"]]",
+          "working_directory": "/tmp/heliodor-core-smoke-m7ky33ei",
+          "tools": {
+            "veryl": "veryl 0.22.0 (967e477 2026-10-02); binary sha256 aa57dd31488410769ee61c367f03de6cbf11101be47b510b99bde4ac9155b4c1",
+            "verilator": "Verilator 5.020 2024-01-01 rev (Debian 5.020-1)",
+            "cxx": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0"
+          },
+          "exit_code": 0,
+          "cpu_started": true,
+          "result": "run-pass",
+          "assertion_failed": false,
+          "expected_observed": true,
+          "expected": "test_smoke registers pass; Zifencei fixture checks old return 1 then new return 42 and reports tohost=1/pass=1.",
+          "observed": "CPU-start=True; results={'x10': 7, 'x11': 11, 'x12': 77, 'x13': 11, 'arch_tohost': 1, 'arch_pass': 1}; smoke_marker=True; arch_marker=True",
+          "output": "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T060043Z-2702248/output.log",
+          "output_sha256": "9d8ac9167fd517976f81e611a331435000ec559772f85a3e815ab55a57c7e3d1",
+          "stdout": "notes/units/evidence/smoke/heliodor-core-20261014T060043Z-2702248.stdout.log",
+          "stdout_sha256": "755161711de169b0703d55681050c9c07ef1888c24a71acb1dfad7de15e57b08",
+          "stderr": "notes/units/evidence/smoke/heliodor-core-20261014T060043Z-2702248.stderr.log",
+          "stderr_sha256": "356cbdef9d884e90d13bf0a3ca8ef768e614fc91130de76c0a245952538d5ed1",
+          "artifacts": [
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T060043Z-2702248/run.py",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T060043Z-2702248/test_smoke.veryl",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T060043Z-2702248/v4_smoke.hex",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T060043Z-2702248/test_arch_common.veryl",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T060043Z-2702248/zifencei-rs1.hex"
+          ],
+          "artifact_sha256": {
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T060043Z-2702248/run.py": "a267a5963939d65c9595823d3d5d9be7b0817d94d541896be16a34bd2f426993",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T060043Z-2702248/test_smoke.veryl": "15bd6b192c2569d078e8d10e872c095a649a1f6848f54f030c7e4123d7d1daf3",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T060043Z-2702248/v4_smoke.hex": "2cf451e3cee19059d2dbc19c08cbe4af9b552ec842d6d2881d039f4bc1aaeeb1",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T060043Z-2702248/test_arch_common.veryl": "c60dee246af34fcab6c85cd1d014431a6fc2cdc9a2aba21096dac0d969b6de8b",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T060043Z-2702248/zifencei-rs1.hex": "5fa6b0cfe0f2377c54b8fe7ba4043156ec71b2ffdb46a7f07b2fe61da4384a12"
+          },
+          "expected_marker": "v4 rv64ui-fence_i PASS",
+          "blocker": "",
+          "log_path_warnings": [],
+          "first_failed_stage": "",
+          "resources": {
+            "disk_free_bytes": 860707323904,
+            "memory_available_bytes": 162035134464,
+            "logical_cpu_count": 64,
+            "test_timeout_seconds": 180.0
+          },
+          "next_environment_change": "No environment change required; this smoke completed successfully.",
+          "source_tree_sha256": "4553612bb7ea7ac02259977213b5f8089c889bf2a65d07d23aa0634b9de0c4b9",
+          "source_commit": "94e9c5821c24a8941c3ddc3b76daddc7124a855a",
+          "isolated_tree_sha256": "3e06d0de80dce56fa38ca9e7f6ea98ed05d5b9e288e623d22556ae3b4f42a294",
+          "isolated_inputs_sha256": "3e06d0de80dce56fa38ca9e7f6ea98ed05d5b9e288e623d22556ae3b4f42a294",
+          "expected_markers": [
+            "[test_smoke] PASS",
+            "v4 rv64ui-fence_i PASS"
+          ],
+          "transformed_test_sha256": "15bd6b192c2569d078e8d10e872c095a649a1f6848f54f030c7e4123d7d1daf3",
+          "transformed_arch_harness_sha256": "c60dee246af34fcab6c85cd1d014431a6fc2cdc9a2aba21096dac0d969b6de8b",
+          "fixture_sha256": "5fa6b0cfe0f2377c54b8fe7ba4043156ec71b2ffdb46a7f07b2fe61da4384a12",
+          "smoke_fixture_sha256": "2cf451e3cee19059d2dbc19c08cbe4af9b552ec842d6d2881d039f4bc1aaeeb1",
+          "run_seconds": 23.819
+        },
+        {
+          "topic": "zifencei",
+          "case": "rd",
+          "fence_i_encoding": "0x0000108f",
+          "expected_values": {
+            "before_fence_i": 1,
+            "after_fence_i": 42
+          },
+          "observed_values": {
+            "before_fence_i": 1,
+            "after_fence_i": 42,
+            "evidence_method": "fixture equality checks for a0==1 before patch and a0==42 after FENCE.I; successful tohost/pass marker is reachable only after both checks"
+          },
+          "reserved_field_trap": "not observed",
+          "id": "heliodor-core-20261014T060107Z-2702248",
+          "snapshot_sha": "94e9c5821c24a8941c3ddc3b76daddc7124a855a",
+          "input": "experiments/rva23s64-zifencei/rd.hex",
+          "input_sha256": "fbcca53c9fb04291cd1bef4400add7c526c4a6aba7f541751f318d8bdcfa73ad",
+          "inputs": [
+            {
+              "path": "sources/heliodor/test/v4_smoke.hex",
+              "sha256": "2cf451e3cee19059d2dbc19c08cbe4af9b552ec842d6d2881d039f4bc1aaeeb1"
+            },
+            {
+              "path": "experiments/rva23s64-zifencei/rd.hex",
+              "sha256": "fbcca53c9fb04291cd1bef4400add7c526c4a6aba7f541751f318d8bdcfa73ad"
+            }
+          ],
+          "configuration": "Heliodor test_smoke plus test_arch_rv64ui_fence_i; one harness/DUT; 5000 smoke cycles and 300000 arch cycles; expected Zifencei old/new return 1/42 and tohost=1.",
+          "command": "[[\"/nvme_data1/richard/.local/share/veryl/toolchains/latest/veryl\", \"test\", \"--include-ignored\", \"--test\", \"test_smoke\"], [\"/nvme_data1/richard/.local/share/veryl/toolchains/latest/veryl\", \"test\", \"--include-ignored\", \"--test\", \"test_arch_rv64ui_fence_i\"]]",
+          "working_directory": "/tmp/heliodor-core-smoke-3lva4lxy",
+          "tools": {
+            "veryl": "veryl 0.22.0 (967e477 2026-10-02); binary sha256 aa57dd31488410769ee61c367f03de6cbf11101be47b510b99bde4ac9155b4c1",
+            "verilator": "Verilator 5.020 2024-01-01 rev (Debian 5.020-1)",
+            "cxx": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0"
+          },
+          "exit_code": 0,
+          "cpu_started": true,
+          "result": "run-pass",
+          "assertion_failed": false,
+          "expected_observed": true,
+          "expected": "test_smoke registers pass; Zifencei fixture checks old return 1 then new return 42 and reports tohost=1/pass=1.",
+          "observed": "CPU-start=True; results={'x10': 7, 'x11': 11, 'x12': 77, 'x13': 11, 'arch_tohost': 1, 'arch_pass': 1}; smoke_marker=True; arch_marker=True",
+          "output": "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T060107Z-2702248/output.log",
+          "output_sha256": "245c182ba91c31e45284f29b8d6c4754375bf2f8c99e4e75a6e0edf2e851be39",
+          "stdout": "notes/units/evidence/smoke/heliodor-core-20261014T060107Z-2702248.stdout.log",
+          "stdout_sha256": "755161711de169b0703d55681050c9c07ef1888c24a71acb1dfad7de15e57b08",
+          "stderr": "notes/units/evidence/smoke/heliodor-core-20261014T060107Z-2702248.stderr.log",
+          "stderr_sha256": "7cfaac4b036864248685cc5cb0981f1d26a05a9e7d637607cfd3729797fb4dc1",
+          "artifacts": [
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T060107Z-2702248/run.py",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T060107Z-2702248/test_smoke.veryl",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T060107Z-2702248/v4_smoke.hex",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T060107Z-2702248/test_arch_common.veryl",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T060107Z-2702248/zifencei-rd.hex"
+          ],
+          "artifact_sha256": {
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T060107Z-2702248/run.py": "a267a5963939d65c9595823d3d5d9be7b0817d94d541896be16a34bd2f426993",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T060107Z-2702248/test_smoke.veryl": "15bd6b192c2569d078e8d10e872c095a649a1f6848f54f030c7e4123d7d1daf3",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T060107Z-2702248/v4_smoke.hex": "2cf451e3cee19059d2dbc19c08cbe4af9b552ec842d6d2881d039f4bc1aaeeb1",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T060107Z-2702248/test_arch_common.veryl": "76f713238a7bb50c3add6263a57ca8a9ea0ce5356cc3458c6e0777d4839bdf1b",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T060107Z-2702248/zifencei-rd.hex": "fbcca53c9fb04291cd1bef4400add7c526c4a6aba7f541751f318d8bdcfa73ad"
+          },
+          "expected_marker": "v4 rv64ui-fence_i PASS",
+          "blocker": "",
+          "log_path_warnings": [],
+          "first_failed_stage": "",
+          "resources": {
+            "disk_free_bytes": 860706803712,
+            "memory_available_bytes": 161751117824,
+            "logical_cpu_count": 64,
+            "test_timeout_seconds": 180.0
+          },
+          "next_environment_change": "No environment change required; this smoke completed successfully.",
+          "source_tree_sha256": "4553612bb7ea7ac02259977213b5f8089c889bf2a65d07d23aa0634b9de0c4b9",
+          "source_commit": "94e9c5821c24a8941c3ddc3b76daddc7124a855a",
+          "isolated_tree_sha256": "46184478d50151e03bde3488710998e2ada73c6cbe4569ff9649f92c0af5d182",
+          "isolated_inputs_sha256": "46184478d50151e03bde3488710998e2ada73c6cbe4569ff9649f92c0af5d182",
+          "expected_markers": [
+            "[test_smoke] PASS",
+            "v4 rv64ui-fence_i PASS"
+          ],
+          "transformed_test_sha256": "15bd6b192c2569d078e8d10e872c095a649a1f6848f54f030c7e4123d7d1daf3",
+          "transformed_arch_harness_sha256": "76f713238a7bb50c3add6263a57ca8a9ea0ce5356cc3458c6e0777d4839bdf1b",
+          "fixture_sha256": "fbcca53c9fb04291cd1bef4400add7c526c4a6aba7f541751f318d8bdcfa73ad",
+          "smoke_fixture_sha256": "2cf451e3cee19059d2dbc19c08cbe4af9b552ec842d6d2881d039f4bc1aaeeb1",
+          "run_seconds": 23.992
+        },
+        {
+          "topic": "zifencei",
+          "case": "standard",
+          "fence_i_encoding": "0x0000100f",
+          "expected_values": {
+            "before_fence_i": 1,
+            "after_fence_i": 42
+          },
+          "observed_values": {
+            "before_fence_i": 1,
+            "after_fence_i": 42,
+            "evidence_method": "fixture equality checks for a0==1 before patch and a0==42 after FENCE.I; successful tohost/pass marker is reachable only after both checks"
+          },
+          "reserved_field_trap": "not observed",
+          "id": "heliodor-core-20261014T061229Z-2934442",
+          "snapshot_sha": "94e9c5821c24a8941c3ddc3b76daddc7124a855a",
+          "input": "experiments/rva23s64-zifencei/standard.hex",
+          "input_sha256": "8c38dc80b0ea216a14de36382d1d7374e2f2011b026a90b8df984d0a0472e669",
+          "inputs": [
+            {
+              "path": "sources/heliodor/test/v4_smoke.hex",
+              "sha256": "2cf451e3cee19059d2dbc19c08cbe4af9b552ec842d6d2881d039f4bc1aaeeb1"
+            },
+            {
+              "path": "experiments/rva23s64-zifencei/standard.hex",
+              "sha256": "8c38dc80b0ea216a14de36382d1d7374e2f2011b026a90b8df984d0a0472e669"
+            }
+          ],
+          "configuration": "Heliodor test_smoke plus test_arch_rv64ui_fence_i; one harness/DUT; 5000 smoke cycles and 300000 arch cycles; expected Zifencei old/new return 1/42 and tohost=1.",
+          "command": "[[\"/nvme_data1/richard/.local/share/veryl/toolchains/latest/veryl\", \"test\", \"--include-ignored\", \"--test\", \"test_smoke\"], [\"/nvme_data1/richard/.local/share/veryl/toolchains/latest/veryl\", \"test\", \"--include-ignored\", \"--test\", \"test_arch_rv64ui_fence_i\"]]",
+          "working_directory": "/tmp/heliodor-core-smoke-ch6wdp0t",
+          "tools": {
+            "veryl": "veryl 0.22.0 (967e477 2026-10-02); binary sha256 aa57dd31488410769ee61c367f03de6cbf11101be47b510b99bde4ac9155b4c1",
+            "verilator": "Verilator 5.020 2024-01-01 rev (Debian 5.020-1)",
+            "cxx": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0"
+          },
+          "exit_code": 0,
+          "cpu_started": true,
+          "result": "run-pass",
+          "assertion_failed": false,
+          "expected_observed": true,
+          "expected": "test_smoke registers pass; Zifencei fixture checks old return 1 then new return 42 and reports tohost=1/pass=1.",
+          "observed": "CPU-start=True; results={'x10': 7, 'x11': 11, 'x12': 77, 'x13': 11, 'arch_tohost': 1, 'arch_pass': 1}; smoke_marker=True; arch_marker=True",
+          "output": "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T061229Z-2934442/output.log",
+          "output_sha256": "993c4cfa08028cfd0a96c5743084373d53a59738baed8456277b3ba7e699fd6b",
+          "stdout": "notes/units/evidence/smoke/heliodor-core-20261014T061229Z-2934442.stdout.log",
+          "stdout_sha256": "755161711de169b0703d55681050c9c07ef1888c24a71acb1dfad7de15e57b08",
+          "stderr": "notes/units/evidence/smoke/heliodor-core-20261014T061229Z-2934442.stderr.log",
+          "stderr_sha256": "44149321b6df6912171807e6780688275bf2415587d50685fb419dfd518aafd9",
+          "artifacts": [
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T061229Z-2934442/run.py",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T061229Z-2934442/test_smoke.veryl",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T061229Z-2934442/v4_smoke.hex",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T061229Z-2934442/test_arch_common.veryl",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T061229Z-2934442/zifencei-standard.hex"
+          ],
+          "artifact_sha256": {
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T061229Z-2934442/run.py": "c3a0ebe72df36ce6d4b6d4a12a9eb51ea615c80dae671de2b2f6628667e793bf",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T061229Z-2934442/test_smoke.veryl": "15bd6b192c2569d078e8d10e872c095a649a1f6848f54f030c7e4123d7d1daf3",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T061229Z-2934442/v4_smoke.hex": "2cf451e3cee19059d2dbc19c08cbe4af9b552ec842d6d2881d039f4bc1aaeeb1",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T061229Z-2934442/test_arch_common.veryl": "13a8e3988407a603f2d1ac6005c0e7f07c2f2a1cde02aa89ecf641f5d80cd2cc",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T061229Z-2934442/zifencei-standard.hex": "8c38dc80b0ea216a14de36382d1d7374e2f2011b026a90b8df984d0a0472e669"
+          },
+          "expected_marker": "v4 rv64ui-fence_i PASS",
+          "blocker": "",
+          "log_path_warnings": [],
+          "first_failed_stage": "",
+          "resources": {
+            "disk_free_bytes": 860300066816,
+            "memory_available_bytes": 157528793088,
+            "logical_cpu_count": 64,
+            "test_timeout_seconds": 180.0
+          },
+          "next_environment_change": "No environment change required; this smoke completed successfully.",
+          "source_tree_sha256": "4553612bb7ea7ac02259977213b5f8089c889bf2a65d07d23aa0634b9de0c4b9",
+          "source_commit": "94e9c5821c24a8941c3ddc3b76daddc7124a855a",
+          "isolated_tree_sha256": "64e3f77f2c3957533b628d26db4572ad6282b2ce1b70d8b1214f2fbb9685374d",
+          "isolated_inputs_sha256": "64e3f77f2c3957533b628d26db4572ad6282b2ce1b70d8b1214f2fbb9685374d",
+          "expected_markers": [
+            "[test_smoke] PASS",
+            "v4 rv64ui-fence_i PASS"
+          ],
+          "transformed_test_sha256": "15bd6b192c2569d078e8d10e872c095a649a1f6848f54f030c7e4123d7d1daf3",
+          "transformed_arch_harness_sha256": "13a8e3988407a603f2d1ac6005c0e7f07c2f2a1cde02aa89ecf641f5d80cd2cc",
+          "fixture_sha256": "8c38dc80b0ea216a14de36382d1d7374e2f2011b026a90b8df984d0a0472e669",
+          "smoke_fixture_sha256": "2cf451e3cee19059d2dbc19c08cbe4af9b552ec842d6d2881d039f4bc1aaeeb1",
+          "run_seconds": 24.816
+        },
+        {
+          "topic": "zifencei",
+          "case": "funct12",
+          "fence_i_encoding": "0x0010100f",
+          "expected_values": {
+            "before_fence_i": 1,
+            "after_fence_i": 42
+          },
+          "observed_values": {
+            "before_fence_i": 1,
+            "after_fence_i": 42,
+            "evidence_method": "fixture equality checks for a0==1 before patch and a0==42 after FENCE.I; successful tohost/pass marker is reachable only after both checks"
+          },
+          "reserved_field_trap": "not observed",
+          "id": "heliodor-core-20261014T061254Z-2934442",
+          "snapshot_sha": "94e9c5821c24a8941c3ddc3b76daddc7124a855a",
+          "input": "experiments/rva23s64-zifencei/funct12.hex",
+          "input_sha256": "f5773af3200b1efa03bf815e343eb9fb06ecf11d9850572e148a87f69ec043a8",
+          "inputs": [
+            {
+              "path": "sources/heliodor/test/v4_smoke.hex",
+              "sha256": "2cf451e3cee19059d2dbc19c08cbe4af9b552ec842d6d2881d039f4bc1aaeeb1"
+            },
+            {
+              "path": "experiments/rva23s64-zifencei/funct12.hex",
+              "sha256": "f5773af3200b1efa03bf815e343eb9fb06ecf11d9850572e148a87f69ec043a8"
+            }
+          ],
+          "configuration": "Heliodor test_smoke plus test_arch_rv64ui_fence_i; one harness/DUT; 5000 smoke cycles and 300000 arch cycles; expected Zifencei old/new return 1/42 and tohost=1.",
+          "command": "[[\"/nvme_data1/richard/.local/share/veryl/toolchains/latest/veryl\", \"test\", \"--include-ignored\", \"--test\", \"test_smoke\"], [\"/nvme_data1/richard/.local/share/veryl/toolchains/latest/veryl\", \"test\", \"--include-ignored\", \"--test\", \"test_arch_rv64ui_fence_i\"]]",
+          "working_directory": "/tmp/heliodor-core-smoke-zttamkws",
+          "tools": {
+            "veryl": "veryl 0.22.0 (967e477 2026-10-02); binary sha256 aa57dd31488410769ee61c367f03de6cbf11101be47b510b99bde4ac9155b4c1",
+            "verilator": "Verilator 5.020 2024-01-01 rev (Debian 5.020-1)",
+            "cxx": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0"
+          },
+          "exit_code": 0,
+          "cpu_started": true,
+          "result": "run-pass",
+          "assertion_failed": false,
+          "expected_observed": true,
+          "expected": "test_smoke registers pass; Zifencei fixture checks old return 1 then new return 42 and reports tohost=1/pass=1.",
+          "observed": "CPU-start=True; results={'x10': 7, 'x11': 11, 'x12': 77, 'x13': 11, 'arch_tohost': 1, 'arch_pass': 1}; smoke_marker=True; arch_marker=True",
+          "output": "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T061254Z-2934442/output.log",
+          "output_sha256": "8c250a91294ce10a9b359a6051bd966a1a3e100cfa5b4c0bfde2de26182f57d0",
+          "stdout": "notes/units/evidence/smoke/heliodor-core-20261014T061254Z-2934442.stdout.log",
+          "stdout_sha256": "755161711de169b0703d55681050c9c07ef1888c24a71acb1dfad7de15e57b08",
+          "stderr": "notes/units/evidence/smoke/heliodor-core-20261014T061254Z-2934442.stderr.log",
+          "stderr_sha256": "4db9cc759f287f849ce8ff2e2f716dbae389b8ca734cd80e6be17da2e5684df7",
+          "artifacts": [
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T061254Z-2934442/run.py",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T061254Z-2934442/test_smoke.veryl",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T061254Z-2934442/v4_smoke.hex",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T061254Z-2934442/test_arch_common.veryl",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T061254Z-2934442/zifencei-funct12.hex"
+          ],
+          "artifact_sha256": {
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T061254Z-2934442/run.py": "c3a0ebe72df36ce6d4b6d4a12a9eb51ea615c80dae671de2b2f6628667e793bf",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T061254Z-2934442/test_smoke.veryl": "15bd6b192c2569d078e8d10e872c095a649a1f6848f54f030c7e4123d7d1daf3",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T061254Z-2934442/v4_smoke.hex": "2cf451e3cee19059d2dbc19c08cbe4af9b552ec842d6d2881d039f4bc1aaeeb1",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T061254Z-2934442/test_arch_common.veryl": "0c0c19abc2dc1e229aee2e71e51ff742a02a30a804eac7a29db679fa954b3e79",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T061254Z-2934442/zifencei-funct12.hex": "f5773af3200b1efa03bf815e343eb9fb06ecf11d9850572e148a87f69ec043a8"
+          },
+          "expected_marker": "v4 rv64ui-fence_i PASS",
+          "blocker": "",
+          "log_path_warnings": [],
+          "first_failed_stage": "",
+          "resources": {
+            "disk_free_bytes": 860212760576,
+            "memory_available_bytes": 158326300672,
+            "logical_cpu_count": 64,
+            "test_timeout_seconds": 180.0
+          },
+          "next_environment_change": "No environment change required; this smoke completed successfully.",
+          "source_tree_sha256": "4553612bb7ea7ac02259977213b5f8089c889bf2a65d07d23aa0634b9de0c4b9",
+          "source_commit": "94e9c5821c24a8941c3ddc3b76daddc7124a855a",
+          "isolated_tree_sha256": "c12b86f26d04403e76e501e8d36288755940fffbc6922388dd0a22241e4ed672",
+          "isolated_inputs_sha256": "c12b86f26d04403e76e501e8d36288755940fffbc6922388dd0a22241e4ed672",
+          "expected_markers": [
+            "[test_smoke] PASS",
+            "v4 rv64ui-fence_i PASS"
+          ],
+          "transformed_test_sha256": "15bd6b192c2569d078e8d10e872c095a649a1f6848f54f030c7e4123d7d1daf3",
+          "transformed_arch_harness_sha256": "0c0c19abc2dc1e229aee2e71e51ff742a02a30a804eac7a29db679fa954b3e79",
+          "fixture_sha256": "f5773af3200b1efa03bf815e343eb9fb06ecf11d9850572e148a87f69ec043a8",
+          "smoke_fixture_sha256": "2cf451e3cee19059d2dbc19c08cbe4af9b552ec842d6d2881d039f4bc1aaeeb1",
+          "run_seconds": 24.379
+        },
+        {
+          "topic": "zifencei",
+          "case": "rs1",
+          "fence_i_encoding": "0x0000900f",
+          "expected_values": {
+            "before_fence_i": 1,
+            "after_fence_i": 42
+          },
+          "observed_values": {
+            "before_fence_i": 1,
+            "after_fence_i": 42,
+            "evidence_method": "fixture equality checks for a0==1 before patch and a0==42 after FENCE.I; successful tohost/pass marker is reachable only after both checks"
+          },
+          "reserved_field_trap": "not observed",
+          "id": "heliodor-core-20261014T061318Z-2934442",
+          "snapshot_sha": "94e9c5821c24a8941c3ddc3b76daddc7124a855a",
+          "input": "experiments/rva23s64-zifencei/rs1.hex",
+          "input_sha256": "5fa6b0cfe0f2377c54b8fe7ba4043156ec71b2ffdb46a7f07b2fe61da4384a12",
+          "inputs": [
+            {
+              "path": "sources/heliodor/test/v4_smoke.hex",
+              "sha256": "2cf451e3cee19059d2dbc19c08cbe4af9b552ec842d6d2881d039f4bc1aaeeb1"
+            },
+            {
+              "path": "experiments/rva23s64-zifencei/rs1.hex",
+              "sha256": "5fa6b0cfe0f2377c54b8fe7ba4043156ec71b2ffdb46a7f07b2fe61da4384a12"
+            }
+          ],
+          "configuration": "Heliodor test_smoke plus test_arch_rv64ui_fence_i; one harness/DUT; 5000 smoke cycles and 300000 arch cycles; expected Zifencei old/new return 1/42 and tohost=1.",
+          "command": "[[\"/nvme_data1/richard/.local/share/veryl/toolchains/latest/veryl\", \"test\", \"--include-ignored\", \"--test\", \"test_smoke\"], [\"/nvme_data1/richard/.local/share/veryl/toolchains/latest/veryl\", \"test\", \"--include-ignored\", \"--test\", \"test_arch_rv64ui_fence_i\"]]",
+          "working_directory": "/tmp/heliodor-core-smoke-20mwuh21",
+          "tools": {
+            "veryl": "veryl 0.22.0 (967e477 2026-10-02); binary sha256 aa57dd31488410769ee61c367f03de6cbf11101be47b510b99bde4ac9155b4c1",
+            "verilator": "Verilator 5.020 2024-01-01 rev (Debian 5.020-1)",
+            "cxx": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0"
+          },
+          "exit_code": 0,
+          "cpu_started": true,
+          "result": "run-pass",
+          "assertion_failed": false,
+          "expected_observed": true,
+          "expected": "test_smoke registers pass; Zifencei fixture checks old return 1 then new return 42 and reports tohost=1/pass=1.",
+          "observed": "CPU-start=True; results={'x10': 7, 'x11': 11, 'x12': 77, 'x13': 11, 'arch_tohost': 1, 'arch_pass': 1}; smoke_marker=True; arch_marker=True",
+          "output": "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T061318Z-2934442/output.log",
+          "output_sha256": "f86ca898bc7e10e8630c48f3d5a0238a449570c130c8336605a3f4466a1fbc46",
+          "stdout": "notes/units/evidence/smoke/heliodor-core-20261014T061318Z-2934442.stdout.log",
+          "stdout_sha256": "755161711de169b0703d55681050c9c07ef1888c24a71acb1dfad7de15e57b08",
+          "stderr": "notes/units/evidence/smoke/heliodor-core-20261014T061318Z-2934442.stderr.log",
+          "stderr_sha256": "6062c4a10f595c269d7139b4eaae04a2fdc7ae630b5c80191a3afeca8cb11793",
+          "artifacts": [
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T061318Z-2934442/run.py",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T061318Z-2934442/test_smoke.veryl",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T061318Z-2934442/v4_smoke.hex",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T061318Z-2934442/test_arch_common.veryl",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T061318Z-2934442/zifencei-rs1.hex"
+          ],
+          "artifact_sha256": {
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T061318Z-2934442/run.py": "c3a0ebe72df36ce6d4b6d4a12a9eb51ea615c80dae671de2b2f6628667e793bf",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T061318Z-2934442/test_smoke.veryl": "15bd6b192c2569d078e8d10e872c095a649a1f6848f54f030c7e4123d7d1daf3",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T061318Z-2934442/v4_smoke.hex": "2cf451e3cee19059d2dbc19c08cbe4af9b552ec842d6d2881d039f4bc1aaeeb1",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T061318Z-2934442/test_arch_common.veryl": "c60dee246af34fcab6c85cd1d014431a6fc2cdc9a2aba21096dac0d969b6de8b",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T061318Z-2934442/zifencei-rs1.hex": "5fa6b0cfe0f2377c54b8fe7ba4043156ec71b2ffdb46a7f07b2fe61da4384a12"
+          },
+          "expected_marker": "v4 rv64ui-fence_i PASS",
+          "blocker": "",
+          "log_path_warnings": [],
+          "first_failed_stage": "",
+          "resources": {
+            "disk_free_bytes": 860211556352,
+            "memory_available_bytes": 158240956416,
+            "logical_cpu_count": 64,
+            "test_timeout_seconds": 180.0
+          },
+          "next_environment_change": "No environment change required; this smoke completed successfully.",
+          "source_tree_sha256": "4553612bb7ea7ac02259977213b5f8089c889bf2a65d07d23aa0634b9de0c4b9",
+          "source_commit": "94e9c5821c24a8941c3ddc3b76daddc7124a855a",
+          "isolated_tree_sha256": "3e06d0de80dce56fa38ca9e7f6ea98ed05d5b9e288e623d22556ae3b4f42a294",
+          "isolated_inputs_sha256": "3e06d0de80dce56fa38ca9e7f6ea98ed05d5b9e288e623d22556ae3b4f42a294",
+          "expected_markers": [
+            "[test_smoke] PASS",
+            "v4 rv64ui-fence_i PASS"
+          ],
+          "transformed_test_sha256": "15bd6b192c2569d078e8d10e872c095a649a1f6848f54f030c7e4123d7d1daf3",
+          "transformed_arch_harness_sha256": "c60dee246af34fcab6c85cd1d014431a6fc2cdc9a2aba21096dac0d969b6de8b",
+          "fixture_sha256": "5fa6b0cfe0f2377c54b8fe7ba4043156ec71b2ffdb46a7f07b2fe61da4384a12",
+          "smoke_fixture_sha256": "2cf451e3cee19059d2dbc19c08cbe4af9b552ec842d6d2881d039f4bc1aaeeb1",
+          "run_seconds": 24.199
+        },
+        {
+          "topic": "zifencei",
+          "case": "rd",
+          "fence_i_encoding": "0x0000108f",
+          "expected_values": {
+            "before_fence_i": 1,
+            "after_fence_i": 42
+          },
+          "observed_values": {
+            "before_fence_i": 1,
+            "after_fence_i": 42,
+            "evidence_method": "fixture equality checks for a0==1 before patch and a0==42 after FENCE.I; successful tohost/pass marker is reachable only after both checks"
+          },
+          "reserved_field_trap": "not observed",
+          "id": "heliodor-core-20261014T061342Z-2934442",
+          "snapshot_sha": "94e9c5821c24a8941c3ddc3b76daddc7124a855a",
+          "input": "experiments/rva23s64-zifencei/rd.hex",
+          "input_sha256": "fbcca53c9fb04291cd1bef4400add7c526c4a6aba7f541751f318d8bdcfa73ad",
+          "inputs": [
+            {
+              "path": "sources/heliodor/test/v4_smoke.hex",
+              "sha256": "2cf451e3cee19059d2dbc19c08cbe4af9b552ec842d6d2881d039f4bc1aaeeb1"
+            },
+            {
+              "path": "experiments/rva23s64-zifencei/rd.hex",
+              "sha256": "fbcca53c9fb04291cd1bef4400add7c526c4a6aba7f541751f318d8bdcfa73ad"
+            }
+          ],
+          "configuration": "Heliodor test_smoke plus test_arch_rv64ui_fence_i; one harness/DUT; 5000 smoke cycles and 300000 arch cycles; expected Zifencei old/new return 1/42 and tohost=1.",
+          "command": "[[\"/nvme_data1/richard/.local/share/veryl/toolchains/latest/veryl\", \"test\", \"--include-ignored\", \"--test\", \"test_smoke\"], [\"/nvme_data1/richard/.local/share/veryl/toolchains/latest/veryl\", \"test\", \"--include-ignored\", \"--test\", \"test_arch_rv64ui_fence_i\"]]",
+          "working_directory": "/tmp/heliodor-core-smoke-v6xbkjy1",
+          "tools": {
+            "veryl": "veryl 0.22.0 (967e477 2026-10-02); binary sha256 aa57dd31488410769ee61c367f03de6cbf11101be47b510b99bde4ac9155b4c1",
+            "verilator": "Verilator 5.020 2024-01-01 rev (Debian 5.020-1)",
+            "cxx": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0"
+          },
+          "exit_code": 0,
+          "cpu_started": true,
+          "result": "run-pass",
+          "assertion_failed": false,
+          "expected_observed": true,
+          "expected": "test_smoke registers pass; Zifencei fixture checks old return 1 then new return 42 and reports tohost=1/pass=1.",
+          "observed": "CPU-start=True; results={'x10': 7, 'x11': 11, 'x12': 77, 'x13': 11, 'arch_tohost': 1, 'arch_pass': 1}; smoke_marker=True; arch_marker=True",
+          "output": "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T061342Z-2934442/output.log",
+          "output_sha256": "cdadea7bf5b2ea00a2128b1f7af64bdcd50326b06fac5d95fa851238c409adb9",
+          "stdout": "notes/units/evidence/smoke/heliodor-core-20261014T061342Z-2934442.stdout.log",
+          "stdout_sha256": "755161711de169b0703d55681050c9c07ef1888c24a71acb1dfad7de15e57b08",
+          "stderr": "notes/units/evidence/smoke/heliodor-core-20261014T061342Z-2934442.stderr.log",
+          "stderr_sha256": "f494c2b4f4876d0af4d09e03f24f296787e8e5a7c2f9faef996645caa6195fcc",
+          "artifacts": [
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T061342Z-2934442/run.py",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T061342Z-2934442/test_smoke.veryl",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T061342Z-2934442/v4_smoke.hex",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T061342Z-2934442/test_arch_common.veryl",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T061342Z-2934442/zifencei-rd.hex"
+          ],
+          "artifact_sha256": {
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T061342Z-2934442/run.py": "c3a0ebe72df36ce6d4b6d4a12a9eb51ea615c80dae671de2b2f6628667e793bf",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T061342Z-2934442/test_smoke.veryl": "15bd6b192c2569d078e8d10e872c095a649a1f6848f54f030c7e4123d7d1daf3",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T061342Z-2934442/v4_smoke.hex": "2cf451e3cee19059d2dbc19c08cbe4af9b552ec842d6d2881d039f4bc1aaeeb1",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T061342Z-2934442/test_arch_common.veryl": "76f713238a7bb50c3add6263a57ca8a9ea0ce5356cc3458c6e0777d4839bdf1b",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T061342Z-2934442/zifencei-rd.hex": "fbcca53c9fb04291cd1bef4400add7c526c4a6aba7f541751f318d8bdcfa73ad"
+          },
+          "expected_marker": "v4 rv64ui-fence_i PASS",
+          "blocker": "",
+          "log_path_warnings": [],
+          "first_failed_stage": "",
+          "resources": {
+            "disk_free_bytes": 860189569024,
+            "memory_available_bytes": 158611263488,
+            "logical_cpu_count": 64,
+            "test_timeout_seconds": 180.0
+          },
+          "next_environment_change": "No environment change required; this smoke completed successfully.",
+          "source_tree_sha256": "4553612bb7ea7ac02259977213b5f8089c889bf2a65d07d23aa0634b9de0c4b9",
+          "source_commit": "94e9c5821c24a8941c3ddc3b76daddc7124a855a",
+          "isolated_tree_sha256": "46184478d50151e03bde3488710998e2ada73c6cbe4569ff9649f92c0af5d182",
+          "isolated_inputs_sha256": "46184478d50151e03bde3488710998e2ada73c6cbe4569ff9649f92c0af5d182",
+          "expected_markers": [
+            "[test_smoke] PASS",
+            "v4 rv64ui-fence_i PASS"
+          ],
+          "transformed_test_sha256": "15bd6b192c2569d078e8d10e872c095a649a1f6848f54f030c7e4123d7d1daf3",
+          "transformed_arch_harness_sha256": "76f713238a7bb50c3add6263a57ca8a9ea0ce5356cc3458c6e0777d4839bdf1b",
+          "fixture_sha256": "fbcca53c9fb04291cd1bef4400add7c526c4a6aba7f541751f318d8bdcfa73ad",
+          "smoke_fixture_sha256": "2cf451e3cee19059d2dbc19c08cbe4af9b552ec842d6d2881d039f4bc1aaeeb1",
+          "run_seconds": 24.708
         }
       ]
     }
