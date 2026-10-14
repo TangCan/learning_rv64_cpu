@@ -31,6 +31,7 @@ ARCH_FIXTURE = "test/riscv-arch-test/build/rv64ui/add.hex"
 SSTC_CASES = ("s-lt", "s-eq", "s-gt", "s-stce-off", "s-tm-off",
               "vs-lt", "vs-eq", "vs-gt", "vs-mstce-off", "vs-hstce-off",
               "vs-mtm-off", "vs-htm-off", "vs-route", "vs-hs-route")
+SSCOFPMF_FIXTURE = "test/sscofpmf/sscofpmf_test.hex"
 
 SSTC_CONTROLS = {
     "s-lt": {"menvcfg.STCE": 1, "mcounteren.TM": 1, "relation": "time < stimecmp", "delta": 8},
@@ -176,8 +177,8 @@ def observe(output: str, exit_code: int, arch_label: str = "v4 rv64ui-add") -> t
     # cannot prove that this separate target began execution. Without an arch
     # result marker, report startup as unobserved (blocked) rather than assert
     # either that the target ran or that it did not.
-    zifencei_case = arch_label == "v4 rv64ui-fence_i"
-    cpu_started = arch_started if zifencei_case else (smoke_started or arch_started)
+    target_only_case = arch_label in {"v4 rv64ui-fence_i", "sscofpmf"}
+    cpu_started = arch_started if target_only_case else (smoke_started or arch_started)
     values: dict[str, int] = {}
     for reg in (10, 11, 12, 13):
         match = re.search(rf"\bx{reg}=([0-9a-fA-F]+)", output)
@@ -193,6 +194,12 @@ def observe(output: str, exit_code: int, arch_label: str = "v4 rv64ui-add") -> t
               f"{arch_label} PASS" in output and exit_code == 0)
     failed = cpu_started and not passed
     return cpu_started, values, passed, failed
+
+
+def expected_arch_marker(arch_label: str, *, zifencei_case: bool = False,
+                         sscofpmf: bool = False) -> str:
+    """Return the marker that identifies the selected arch target."""
+    return f"{arch_label} PASS" if zifencei_case or sscofpmf else "[test_smoke] PASS"
 
 
 def transform_testbench(original: str) -> str:
@@ -330,6 +337,7 @@ def next_environment_change(stage: str, blocker: str) -> str:
 def run(args: argparse.Namespace) -> dict:
     zifencei_case = getattr(args, "zifencei_case", None)
     sstc_case = getattr(args, "sstc_case", None)
+    sscofpmf = getattr(args, "topic", "smoke") == "sscofpmf"
     arch_target = "test_arch_rv64ui_add"
     arch_label = "v4 rv64ui-add"
     fixture_rel = ARCH_FIXTURE
@@ -341,6 +349,10 @@ def run(args: argparse.Namespace) -> dict:
         fixture_rel = f"experiments/sstc/heliodor/{sstc_case}.hex"
         arch_target = "test_arch_rv64ui_sstc"
         arch_label = f"sstc {sstc_case}"
+    elif sscofpmf:
+        fixture_rel = SSCOFPMF_FIXTURE
+        arch_target = "test_arch_sscofpmf"
+        arch_label = "sscofpmf"
     started_at = time.time()
     run_base = time.strftime("heliodor-core-%Y%m%dT%H%M%SZ", time.gmtime()) + f"-{os.getpid()}"
     run_id = run_base
@@ -361,7 +373,7 @@ def run(args: argparse.Namespace) -> dict:
     out = bytearray(); err = bytearray(); exit_code = 1; cpu_started = False
     assertion_failed = False; expected_observed = False; first_stage = "locked-source-preflight"; blocker = ""
     snapshot_sha = LOCKED_SHA; input_path = ((ROOT / "experiments/rva23s64-zifencei" / f"{zifencei_case}.hex") if zifencei_case else (ROOT / "experiments/sstc/heliodor" / f"{sstc_case}.hex") if sstc_case else SOURCE / fixture_rel)
-    archived_arch_fixture = archive / (f"zifencei-{zifencei_case}.hex" if zifencei_case else f"sstc-{sstc_case}.hex" if sstc_case else "rv64ui-add.hex")
+    archived_arch_fixture = archive / (f"zifencei-{zifencei_case}.hex" if zifencei_case else f"sstc-{sstc_case}.hex" if sstc_case else "sscofpmf.hex" if sscofpmf else "rv64ui-add.hex")
     # Snapshot the exact arch input before source preflight so even blocked runs
     # retain a stable, hash-verifiable input artifact.
     if input_path.is_file():
@@ -495,6 +507,13 @@ def run(args: argparse.Namespace) -> dict:
                 sstc_observed["time_after_write"] = int(marker.group(5), 16)
     record = {
         **({"topic": "zifencei", "case": zifencei_case, "fence_i_encoding": {"standard": "0x0000100f", "funct12": "0x0010100f", "rs1": "0x0000900f", "rd": "0x0000108f"}[zifencei_case], "expected_values": {"before_fence_i": 1, "after_fence_i": 42}, "observed_values": {"before_fence_i": 1, "after_fence_i": 42, "evidence_method": "fixture equality checks for a0==1 before patch and a0==42 after FENCE.I; successful tohost/pass marker is reachable only after both checks"} if expected_observed else None, "reserved_field_trap": "no trap prevented the pass marker; trap-cause telemetry unavailable" if expected_observed else "startup/result not established or see run log; harness does not expose trap cause"} if zifencei_case else {}),
+        **({"topic": "sscofpmf", "case": "hardware-overflow-event5-counter3",
+            "expected_controls": {"event_selector": 5, "counter": 3, "counter_width": 64,
+                                  "counter_preload": "0xffffffffffffffff", "privilege": "M",
+                                  "filter_phase": "MINH=1 then MINH=0", "expected_trap_cause": 13},
+            "observed_values": {"tohost": 1, "pass": True,
+                                "fixture_assertions": "counter stays zero under MINH, advances after clearing MINH, then hardware event wrap checks cause 13, OF, and scountovf[3]"} if expected_observed else None,
+            "evidence_method": "existing assembly fixture assertions; overflow phase uses hardware mem-port-busy events after counter preload, not software counter wrap"} if sscofpmf else {}),
         **({"topic": "sstc", "case": sstc_case,
             "expected_controls": {**SSTC_CONTROLS.get(sstc_case, {}), "mtime_enabled": True, "mtime_observation": "harness counter increments each cycle; CSR time is mtime_ctr >> 8"},
             "observed_values": sstc_observed,
@@ -505,6 +524,7 @@ def run(args: argparse.Namespace) -> dict:
         "inputs": [{"path": "sources/heliodor/test/v4_smoke.hex", "sha256": smoke_input_hash},
                    {"path": str(archived_arch_fixture.relative_to(ROOT)) if archived_arch_fixture.is_file() else str(input_path.relative_to(ROOT)), "sha256": input_hash}],
         "configuration": (f"Heliodor test_smoke plus {arch_target}; one harness/DUT; 5000 smoke cycles and 300000 arch cycles; expected Zifencei old/new return 1/42 and tohost=1." if zifencei_case else
+                          f"Heliodor test_smoke plus {arch_target}; one harness/DUT; 5000 smoke cycles and 200000 Sscofpmf arch cycles; event5 mem-port-busy, counter3 64-bit preload all ones; expected tohost=1 after MINH filtering and hardware overflow/cause/OF/scountovf assertions." if sscofpmf else
                           f"Heliodor test_smoke plus {arch_target}; one harness/DUT; 5000 smoke cycles and 300000 arch cycles; mtime counter increments each cycle and CSR time is mtime_ctr >> 8; controls={SSTC_CONTROLS.get(sstc_case, {})}; expected tohost=1." if sstc_case else
                           "Heliodor test_smoke plus test_arch_rv64ui_add; one harness/DUT; 5000 smoke cycles and 300000 arch cycles; expected x10=7, x11=11, x12=77, x13=11 and tohost=1."),
         "command": json.dumps(commands, ensure_ascii=False) if command else "preflight not reached",
@@ -513,6 +533,7 @@ def run(args: argparse.Namespace) -> dict:
         "result": "run-pass" if expected_observed else ("run-fail" if cpu_started and assertion_failed else "blocked"),
         "assertion_failed": assertion_failed, "expected_observed": expected_observed,
         "expected": ("test_smoke registers pass; Zifencei fixture checks old return 1 then new return 42 and reports tohost=1/pass=1." if zifencei_case else
+                     "Heliodor Sscofpmf fixture checks MINH filtering, hardware event5 counter3 wrap, cause 13, OF, and scountovf[3] before tohost=1." if sscofpmf else
                      f"Heliodor fixture {sstc_case} asserts its named Sstc condition and reports tohost=1." if sstc_case else
                      "Both CPU tests pass: test_smoke reports x10=7, x11=11, x12=77, x13=11; test_arch_rv64ui_add reports tohost=1/pass=1 and its PASS marker."),
         "observed": f"CPU-start={cpu_started}; results={values if 'values' in locals() else {}}; smoke_marker={'[test_smoke] PASS' in (out + err).decode('utf-8','replace')}; arch_marker={f'{arch_label} PASS' in (out + err).decode('utf-8','replace')}",
@@ -523,7 +544,8 @@ def run(args: argparse.Namespace) -> dict:
         "stderr_sha256": sha256(stderr_path),
         "artifacts": [str(p.relative_to(ROOT)) for p in
                       [archive / "run.py", archive / "test_smoke.veryl", archive / "v4_smoke.hex"] if p.is_file()],
-        "artifact_sha256": {}, "expected_marker": (f"{arch_label} PASS" if zifencei_case else "[test_smoke] PASS"), "blocker": blocker,
+        "artifact_sha256": {}, "expected_marker": expected_arch_marker(
+            arch_label, zifencei_case=bool(zifencei_case), sscofpmf=sscofpmf), "blocker": blocker,
         "log_path_warnings": log_persistence_errors,
         "first_failed_stage": first_stage if not expected_observed else "",
         "resources": resource_snapshot(args.timeout),
@@ -586,7 +608,7 @@ def main() -> int:
     parser.add_argument("--archive-dir", type=pathlib.Path, default=ROOT / "notes/units/evidence/smoke/heliodor-core-smoke-inputs")
     parser.add_argument("--work-dir", type=pathlib.Path)
     parser.add_argument("--timeout", type=float, default=180.0)
-    parser.add_argument("--topic", choices=("smoke", "zifencei", "sstc"), default="smoke")
+    parser.add_argument("--topic", choices=("smoke", "zifencei", "sstc", "sscofpmf"), default="smoke")
     parser.add_argument("--case", choices=("standard", "funct12", "rs1", "rd"))
     parser.add_argument("--sstc-case", choices=SSTC_CASES)
     args = parser.parse_args()
@@ -630,6 +652,9 @@ def main() -> int:
             record = run(args)
             status |= 0 if record["result"] == "run-pass" else 1
         return status
+    if args.topic == "sscofpmf":
+        record = run(args)
+        return 0 if record["result"] == "run-pass" else 1
     try:
         record = run(args)
         return 0 if record["result"] == "run-pass" else 1

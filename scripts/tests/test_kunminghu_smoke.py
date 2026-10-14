@@ -1,6 +1,7 @@
 import hashlib
 import importlib.util
 import json
+import os
 import pathlib
 import shutil
 import sys
@@ -158,6 +159,86 @@ def test_sstc_matrix_sources_cover_all_supported_cases_and_permission_macros():
     assert "csrw mcounteren, zero" in source
     assert "csrw 0x14d, t1" in source
     assert "bne t0, t1, fail" in source
+
+
+def test_sscofpmf_fixture_covers_all_five_filters_and_hardware_overflow():
+    source = runner.SSCOFPMF_SOURCE.read_text(encoding="utf-8")
+    assert runner.SSCOFPMF_SOURCE.is_file()
+    for field in ("MINH", "SINH", "UINH", "VSINH", "VUINH"):
+        assert field in source
+    assert "FILTER_CASE s_filter" in source
+    assert "FILTER_CASE u_filter" in source
+    assert "FILTER_CASE vs_filter" in source
+    assert "FILTER_CASE vu_filter" in source
+    assert "csrw    mhpmcounter3, t0" in source
+    assert "mcause" in source and "0x800000000000000d" in source
+    assert "mhpmevent3" in source and "scountovf" in source
+    assert "srli    t0, t0, 63" in source  # read mhpmevent3.OF in the trap
+    assert "clear_and_rearm:" in source
+    assert "csrr    t0, mip" in source
+    assert "csrw    mhpmcounter3, t0           /* next OF must come from a hardware event */" in source
+
+
+def test_sscofpmf_access_route_fixture_checks_scounter_gates_and_delegation():
+    source = runner.SSCOFPMF_ACCESS_SOURCE.read_text(encoding="utf-8")
+    assert "csrr    t0, scountovf" in source
+    assert "csrw    mcounteren, zero" in source
+    assert "csrw    hcounteren, zero" in source
+    assert "csrw    mideleg, t0" in source
+    assert "csrw    sie, t0" in source
+    assert "csrr    t0, sstatus" in source
+    assert "csrr    t1, sie" in source
+    assert "csrr    t2, sip" in source
+    assert "csrw    mcounteren, t0              /* keep scountovf[3] visible in S trap */" in source
+    assert "csrs    sstatus, t0" in source
+    assert "0x800000000000000d" in source
+
+
+def test_sscofpmf_fixtures_repeatable_without_official_evidence_writes():
+    if os.environ.get("RUN_KUNMINGHU_SSCOFPMF_REGRESSION") != "1":
+        pytest.skip("set RUN_KUNMINGHU_SSCOFPMF_REGRESSION=1 to run the locked CPU fixture")
+    temp_root = pathlib.Path(tempfile.mkdtemp(prefix=".sscofpmf-regression-", dir=ROOT))
+    try:
+        manifest = temp_root / "manifest.json"
+        shutil.copy2(ROOT / "notes/units/evidence/cpu-validation-toolchain-v1.yaml", manifest)
+        expected_cases = {
+            "hardware-filter": "five-mode-filter-hardware-wrap-counter3",
+            "access-route": "scountovf-access-matrix-and-s-delegation",
+        }
+        for fixture_case, expected_record_case in expected_cases.items():
+            evidence_dir = temp_root / "evidence" / fixture_case
+            completed = subprocess.run(
+                [sys.executable, str(RUNNER_PATH), "--topic", "sscofpmf",
+                 "--sscofpmf-case", fixture_case, "--manifest", str(manifest),
+                 "--evidence-dir", str(evidence_dir)],
+                cwd=ROOT, capture_output=True, text=True, timeout=180, check=False)
+            assert completed.returncode == 0, completed.stdout + completed.stderr
+            run_id = next(line.split("=", 1)[1] for line in completed.stdout.splitlines()
+                          if line.startswith("run_id="))
+            recorded = json.loads(manifest.read_text(encoding="utf-8"))
+            runs = [run for snapshot in recorded["snapshots"] for run in snapshot.get("runs", [])
+                    if run.get("id") == run_id]
+            assert len(runs) == 1
+            assert runs[0]["result"] == "run-pass"
+            assert runs[0]["expected_observed"] is True
+            assert runs[0]["case"] == expected_record_case
+    finally:
+        shutil.rmtree(temp_root, ignore_errors=True)
+
+
+def test_sscofpmf_act4_sail_blockers_are_explicit():
+    act_dir = ROOT / "sources/heliodor/test/act/config/heliodor"
+    sail = (act_dir / "sail.json").read_text(encoding="utf-8")
+    assert '"Sscofpmf": {\n      "supported": false' in sail
+    act = (act_dir / "heliodor.yaml").read_text(encoding="utf-8")
+    assert "name: Sscofpmf" not in act
+
+
+def test_sscofpmf_topic_is_available_and_misplaced_sstc_controls_are_rejected(monkeypatch):
+    monkeypatch.setattr(sys, "argv", [str(RUNNER_PATH), "--topic", "sscofpmf", "--sstc-case", "s-eq"])
+    with pytest.raises(SystemExit) as exc:
+        runner.main()
+    assert exc.value.code == 2
 
 
 def test_sstc_cli_requires_a_supported_case_and_topic(monkeypatch):

@@ -1,0 +1,2 @@
+# Simulator logs are byte-preserved run evidence and may contain trailing spaces.
+notes/units/evidence/smoke/kunminghu-fixture-runs/**/*.log -whitespace

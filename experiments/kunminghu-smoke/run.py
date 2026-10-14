@@ -22,6 +22,8 @@ ROOT = pathlib.Path(__file__).resolve().parents[2]
 SOURCE = ROOT / "experiments/kunminghu-smoke/fixture.S"
 LINKER = ROOT / "experiments/kunminghu-smoke/fixture.ld"
 SSTC_SOURCE = ROOT / "experiments/sstc/kunminghu-full-matrix.S"
+SSCOFPMF_SOURCE = ROOT / "experiments/sscofpmf/kunminghu-sscofpmf-complete-v4.S"
+SSCOFPMF_ACCESS_SOURCE = ROOT / "experiments/sscofpmf/kunminghu-sscofpmf-access-route-diagnostic-v4.S"
 SSTC_CASES = ("s-lt", "s-eq", "s-gt", "s-stce-off", "s-tm-off")
 CHECKOUT = ROOT / "sources/xiangshan"
 EMULATOR = CHECKOUT / "build/verilator-compile/emu"
@@ -319,13 +321,15 @@ def missing_dependencies(gcc: str | None, objcopy: str | None,
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--topic", choices=("fixture", "zifencei", "sstc"), default="fixture")
+    parser.add_argument("--topic", choices=("fixture", "zifencei", "sstc", "sscofpmf"), default="fixture")
     parser.add_argument("--manifest", type=pathlib.Path,
                         default=ROOT / "notes/units/evidence/cpu-validation-toolchain-v1.yaml")
     parser.add_argument("--evidence-dir", type=pathlib.Path,
                         default=ROOT / "notes/units/evidence/smoke/kunminghu-fixture-runs")
     parser.add_argument("--case", choices=("standard", "funct12", "rs1", "rd"))
     parser.add_argument("--sstc-case", choices=SSTC_CASES)
+    parser.add_argument("--sscofpmf-case", choices=("hardware-filter", "access-route"),
+                        default="hardware-filter")
     parser.add_argument("--timeout", type=float, default=120.0,
                         help="maximum emulator wall time in seconds")
     parser.add_argument("--input", type=pathlib.Path, help=argparse.SUPPRESS)
@@ -334,11 +338,15 @@ def main() -> int:
         parser.error("--case requires --topic zifencei")
     if args.sstc_case and args.topic != "sstc":
         parser.error("--sstc-case requires --topic sstc")
+    if args.sscofpmf_case != "hardware-filter" and args.topic != "sscofpmf":
+        parser.error("--sscofpmf-case requires --topic sscofpmf")
     if args.topic == "sstc" and not args.sstc_case:
         parser.error("--topic sstc requires --sstc-case")
     if args.topic == "sstc":
         global SOURCE, LINKER
         SOURCE = SSTC_SOURCE
+    elif args.topic == "sscofpmf":
+        SOURCE = SSCOFPMF_ACCESS_SOURCE if args.sscofpmf_case == "access-route" else SSCOFPMF_SOURCE
     if args.topic == "zifencei" and args.input is None:
         cases = (args.case,) if args.case else ("standard", "funct12", "rs1", "rd")
         status = 0
@@ -463,7 +471,7 @@ def main() -> int:
 
     if not failed_stage:
         assert gcc and objcopy
-        compile_cmd = [gcc, f"-march={'rv64ima_zicsr' if args.topic == 'sstc' else 'rv64imac'}", "-mabi=lp64", "-nostdlib", "-nostartfiles",
+        compile_cmd = [gcc, f"-march={'rv64ima_zicsr' if args.topic in {'sstc', 'sscofpmf'} else 'rv64imac'}", "-mabi=lp64", "-nostdlib", "-nostartfiles",
                        "-Wl,--build-id=none", f"-Wl,-T,{LINKER}", f"-Wl,-Map,{link_map}",
                        *([f"-DCASE_{args.sstc_case.upper().replace('-', '_')}=1"] if args.topic == "sstc" else []),
                        "-o", str(elf), str(source_snapshot if args.topic == "sstc" else SOURCE)]
@@ -471,8 +479,8 @@ def main() -> int:
         copy_cmd = [objcopy, "-O", "binary", str(elf), str(raw)]
         stages.append(("raw image generation", copy_cmd))
         sim_cmd = [str(EMULATOR), "-i", str(raw), "--diff", str(NEMU),
-                   "--max-cycles=100000" if args.topic == "sstc" else "--max-cycles=10000",
-                   "--max-instr=10000" if args.topic == "sstc" else "--max-instr=1000",
+                   "--max-cycles=100000" if args.topic in {"sstc", "sscofpmf"} else "--max-cycles=10000",
+                   "--max-instr=10000" if args.topic in {"sstc", "sscofpmf"} else "--max-instr=1000",
                    "--dump-commit-trace"]
         stages.append(("emulator CPU run", sim_cmd))
         for stage, command in stages:
@@ -593,6 +601,10 @@ def main() -> int:
         "linker_script_sha256": linker_sha256 or "unavailable",
         "configuration": ("KunminghuV2Config; NUM_CORES=1; RV64IMA_Zicsr Sstc S-mode fixture at 0x80000000 (C extension disabled to keep traceable 32-bit fixture instructions); PMP NAPOT grants S-mode access; NEMU difftest."
                            if args.topic == "sstc" else
+                           "KunminghuV2Config; NUM_CORES=1; RV64IMA_Zicsr Sscofpmf counter3/event2 access matrix and delegated LCOFI probe; NEMU difftest."
+                           if args.topic == "sscofpmf" and args.sscofpmf_case == "access-route" else
+                           "KunminghuV2Config; NUM_CORES=1; RV64IMA_Zicsr M-mode Sscofpmf fixture at 0x80000000; event selector 2 (Frontend ifu_req), counter 3, 64-bit hardware event wrap; NEMU difftest."
+                           if args.topic == "sscofpmf" else
                            "KunminghuV2Config; NUM_CORES=1; Zifencei self-modifying fixture at 0x80000000; NEMU difftest."
                            if args.topic == "zifencei" else
                            "KunminghuV2Config; NUM_CORES=1; RV64I arithmetic fixture at 0x80000000; NEMU difftest."),
@@ -613,7 +625,41 @@ def main() -> int:
                                    "s-tm-off": {"menvcfg.STCE": 1, "mcounteren.TM": 0, "expected_exception": 2}}[args.sstc_case],
              "observed_values": {**parse_sstc_trace(stdout_text + "\n" + stderr_text, args.sstc_case),
                                  **({"verified_trap_cause": 2} if args.sstc_case.endswith("off") and observed["expected_observed"] else {})}}
-            if args.topic == "sstc" else {})),
+            if args.topic == "sstc" else
+            ({"topic": "sscofpmf",
+              "case": ("scountovf-access-matrix-and-s-delegation" if args.sscofpmf_case == "access-route"
+                       else "five-mode-filter-hardware-wrap-counter3"),
+              "expected_controls": ({"event_source": "Frontend perfEvents Set index 2: ifu_req",
+                                    "event_selector": 2, "counter": 3, "counter_width": 64,
+                                    "counter_preload": "0xffffffffffffffff",
+                                    "scountovf_access": {"M": "always visible", "S": "mcounteren[3]",
+                                                         "VS": "mcounteren[3] && hcounteren[3]"},
+                                    "delegation": "mideleg[13]=1; SIE/LCOFIE enabled; expect S-mode scause interrupt 13 and sip.LCOFIP",
+                                    "expected_trap_cause": 13}
+                                   if args.sscofpmf_case == "access-route" else
+                                   {"event_source": "Frontend perfEvents Set index 2: ifu_req",
+                                    "event_selector": 2, "counter": 3, "counter_width": 64,
+                                    "counter_preload": "0xffffffffffffffff", "privilege": "M",
+                                    "filters": {"MINH": "M filtered/unfiltered pair",
+                                                "SINH": "S filtered/unfiltered pair",
+                                                "UINH": "U filtered/unfiltered pair",
+                                                "VSINH": "VS filtered/unfiltered pair",
+                                                "VUINH": "VU filtered/unfiltered pair"},
+                                    "filter_pairs": "64 nops per phase; M MINH suppresses setup/trap-handler event noise; M reads counter after each lower/virtual phase",
+                                    "overflow_rearm": "clear OF with mhpmevent3 write; expect OF/scountovf[3]/mip.LCOFIP clear; reload counter=all-ones; verify second hardware-event OF/scountovf re-arm",
+                                    "expected_trap_cause": 13}),
+              "observed_values": ({"fixture_assertions": "M always-visible; S mcounteren[3] off/on; VS hcounteren[3] off, mcounteren[3] off, both on; all access assertions reached delegation probe",
+                                   "delegation_probe": "fixture explicitly sets sstatus.SIE in S; expected cause-13 trap, with sie.LCOFIE and sip.LCOFIP set",
+                                   "pass_marker_observed": observed["expected_observed"]}
+                                  if args.sscofpmf_case == "access-route" and observed["cpu_started"] else
+                                  {"fixture_assertions": "M/S/U/VS/VU filter suppression and unfiltered event counting; first mcause=interrupt 13; OF/scountovf[3] set; OF/scountovf[3] cleared; second hardware wrap re-set OF/scountovf[3]",
+                                   "lcofip_after_first_wrap": "set",
+                                   "lcofip_after_software_clear": "clear",
+                                   "second_interrupt_delivery": "second cause-13 trap observed after hardware re-wrap",
+                                   "pass_marker_observed": observed["expected_observed"]}
+                                  if observed["cpu_started"] else None),
+              "evidence_method": "self-checking assembly reaches NEMU good-trap only after CSR assertions; overflow is caused by frontend ifu_req hardware increments"}
+             if args.topic == "sscofpmf" else {}))),
         "command": " && ".join(commands) if commands else "preflight only; no build or simulator command executed",
         "working_directory": ".",
         "tools": tools,
@@ -633,7 +679,9 @@ def main() -> int:
                                  else sha256(ROOT / a)) for a in artifacts},
         "assertion_failed": observed["assertion_failed"],
         "expected_observed": observed["expected_observed"],
-        "expected": "recorded fixture image loaded at 0x80000000; first instruction commits; NEMU good trap.",
+        "expected": ("recorded fixture image loaded at 0x80000000; first instruction commits; NEMU good trap."
+                     if args.topic != "sscofpmf" or args.sscofpmf_case == "hardware-filter" else
+                     "scountovf access assertions pass and delegated hardware cause 13 reaches S-mode before NEMU good trap."),
         "observed": observed["observed"],
         "expected_good_trap_pc": f"0x{expected_trap_pc:x}" if expected_trap_pc is not None else "unknown",
         "blocker": observed["blocker"],

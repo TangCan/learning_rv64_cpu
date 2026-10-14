@@ -11,7 +11,8 @@ from types import SimpleNamespace
 
 import pytest
 
-RUNNER_PATH = pathlib.Path(__file__).resolve().parents[2] / "experiments/heliodor-smoke/run.py"
+ROOT = pathlib.Path(__file__).resolve().parents[2]
+RUNNER_PATH = ROOT / "experiments/heliodor-smoke/run.py"
 SPEC = importlib.util.spec_from_file_location("heliodor_smoke_runner", RUNNER_PATH)
 assert SPEC and SPEC.loader
 runner = importlib.util.module_from_spec(SPEC)
@@ -26,6 +27,38 @@ def test_success_requires_cpu_start_exact_registers_pass_and_zero_exit() -> None
     assert runner.observe(output, 0) == (
         True, {"x10": 7, "x11": 11, "x12": 77, "x13": 11,
                "arch_tohost": 1, "arch_pass": 1}, True, False)
+
+
+def test_sscofpmf_success_requires_arch_cpu_marker_and_pass_output() -> None:
+    smoke = ("[test_smoke] cy=5000 x10=7 x11=b commit=1651\n"
+             "[test_smoke] x12=4d x13=b\n[test_smoke] PASS\n")
+    assert runner.observe(smoke + "sscofpmf tohost=00000001 pass=1\nsscofpmf PASS\n",
+                          0, "sscofpmf") == (
+                              True, {"x10": 7, "x11": 11, "x12": 77, "x13": 11,
+                                     "arch_tohost": 1, "arch_pass": 1}, True, False)
+    assert runner.observe(smoke, 0, "sscofpmf") == (
+        False, {"x10": 7, "x11": 11, "x12": 77, "x13": 11}, False, False)
+    assert runner.observe(smoke + "sscofpmf tohost=00000220 pass=0\n",
+                          1, "sscofpmf") == (
+                              True, {"x10": 7, "x11": 11, "x12": 77, "x13": 11,
+                                     "arch_tohost": 0x220, "arch_pass": 0}, False, True)
+
+
+def test_sscofpmf_run_metadata_expects_arch_marker() -> None:
+    assert runner.expected_arch_marker("sscofpmf", sscofpmf=True) == "sscofpmf PASS"
+    assert runner.expected_arch_marker("v4 rv64ui-fence_i", zifencei_case=True) == "v4 rv64ui-fence_i PASS"
+    assert runner.expected_arch_marker("v4 rv64ui-add") == "[test_smoke] PASS"
+
+
+def test_sscofpmf_fixture_does_not_software_set_of_and_bounds_unsupported_filters() -> None:
+    fixture = (ROOT / "sources/heliodor/test/sscofpmf/sscofpmf_test.S").read_text(encoding="utf-8")
+    csr = (ROOT / "sources/heliodor/src/core/csr.veryl").read_text(encoding="utf-8")
+    assert "event 5, OF clear" in fixture
+    assert "csrw    MHPMEVENT3, t0" in fixture
+    assert "slli    t5, t5, 63" not in fixture.split("# ===== B. overflow", 1)[0]
+    filter_logic = csr.split("let inhibit", 1)[1].split("let ev_hit", 1)[0]
+    assert "ev_sel[62]" in filter_logic and "ev_sel[61]" in filter_logic and "ev_sel[60]" in filter_logic
+    assert "ev_sel[59]" not in filter_logic and "ev_sel[58]" not in filter_logic
 
 
 @pytest.mark.parametrize("output,code", [
