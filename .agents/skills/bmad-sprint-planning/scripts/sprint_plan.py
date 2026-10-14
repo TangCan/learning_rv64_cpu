@@ -650,6 +650,8 @@ def cmd_gate(args):
     if parsed is None or parsed[0] != "story":
         _fail(f"'{args.story_key}' is not a recognized story key", allowed=False)
     current, _ = _normalize(dev[args.story_key])
+    if current not in STORY_RANK:
+        _fail(f"story {args.story_key} has missing or unknown status {current!r}", allowed=False)
     if current in STORY_RANK and STORY_RANK[current] >= STORY_RANK["in-progress"]:
         print(json.dumps({"ok": True, "allowed": True, "reason": "story already started; resume allowed"}))
         return

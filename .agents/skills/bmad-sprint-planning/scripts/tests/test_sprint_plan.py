@@ -596,6 +596,18 @@ def test_gate_rejects_existing_non_story_key_even_if_done(tmp_path, capsys):
     assert "not a recognized story key" in json.loads(capsys.readouterr().out)["error"]
 
 
+def test_gate_rejects_story_with_unknown_status_even_if_previous_retro_done(tmp_path, capsys):
+    status_file = tmp_path / "sprint-status.yaml"
+    content = STATUS_FIXTURE.replace("epic-1-retrospective: optional", "epic-1-retrospective: done")
+    content = content.replace("2-1-personality-system: backlog", "2-1-personality-system: mystery")
+    status_file.write_text(content, encoding="utf-8")
+
+    with pytest.raises(SystemExit):
+        mod.main(["gate", "--status-file", str(status_file), "--story-key", "2-1-personality-system"])
+
+    assert "unknown status" in json.loads(capsys.readouterr().out)["error"]
+
+
 def test_status_surfaces_gate_when_previous_retro_is_missing_or_invalid(tmp_path, capsys):
     complete_epic = (STATUS_FIXTURE.replace("epic-1: in-progress", "epic-1: done")
                      .replace("1-2-account-management: drafted", "1-2-account-management: done"))

@@ -2,7 +2,7 @@
 title: '关闭所有 sprint retrospective action items'
 type: 'maintenance'
 created: '2026-10-13'
-status: 'in-review'
+status: 'done'
 route: 'dispatch'
 review_loop_iteration: 0
 baseline_commit: 'e3a5474bbe867a83da21b8fb7c8c8ced48f9f1dc'
@@ -73,3 +73,4 @@ context:
 | Epic 1 exemption was unclear in the gate documentation | Patch | Sprint template, workflow instructions, and current sprint notes clarify there is no predecessor gate for Epic 1. |
 | Existing non-story keys could pass the already-started gate path | Patch | Story-key validation now precedes resume logic; regression test covers non-story key rejection. |
 | Edge review repeated the evidence-anchor alias inconsistency | Patch | Same anchor validation fix; underscore-alias regression test passes. |
+| Story with an unknown status could pass the start gate when its previous Epic retrospective was done | Medium | The gate now rejects missing or unknown story statuses before resume or predecessor checks; a regression test covers unknown status with a satisfied predecessor gate. |
