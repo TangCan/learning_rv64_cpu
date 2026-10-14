@@ -80,7 +80,7 @@ development_status:
   6-1-固定-cpu-验证工具链与结果归档: done
   6-2-建立-kunminghu-fixture-加载与模拟器入口: done
   6-3-建立-heliodor-arch-harness-隔离运行入口: done
-  6-4-运行-zifencei-自修改代码对照: review
+  6-4-运行-zifencei-自修改代码对照: done
   6-5-运行-sstc-s-vs-comparator-与陷阱对照: backlog
   6-6-运行-sscofpmf-硬件计数器溢出与过滤对照: backlog
   6-7-运行-ssnpm-pmlen-与访问族对照: backlog

@@ -95,9 +95,27 @@ RISC-V Zifencei 2.0 规定 funct12、rs1、rd 保留给未来更细粒度 fence�
 
 **Commands:**
 - `python3 experiments/rva23s64-zifencei/build_images.py` -- 重建并验证四种编码。
-- `PATH="/nvme_data1/richard/.local/share/veryl/toolchains/latest:$PATH" uv run --no-cache pytest -q scripts/tests/test_heliodor_smoke.py scripts/tests/test_run_cpu_smoke.py scripts/tests/test_kunminghu_smoke.py scripts/tests/test_zifencei_self_modifying.py` -- 95 项通过。
+- `PATH="/nvme_data1/richard/.local/share/veryl/toolchains/latest:$PATH" uv run --no-cache pytest -q scripts/tests/test_zifencei_self_modifying.py scripts/tests/test_heliodor_smoke.py scripts/tests/test_run_cpu_smoke.py scripts/tests/test_kunminghu_smoke.py` -- 99 项通过（包含本次独立审查修复）。
 - `python3 experiments/kunminghu-smoke/run.py --topic zifencei --timeout 120` -- 四例均 run-pass，CPU 启动并到达正确 PC 的 NEMU good trap。
 - `PATH="/nvme_data1/richard/.local/share/veryl/toolchains/latest:$PATH" python3 experiments/heliodor-smoke/run.py --topic zifencei --timeout 180` -- 四例均 run-pass，CPU 启动，tohost=1/pass=1。
 - `python3 scripts/run_cpu_smoke.py validate --manifest notes/units/evidence/cpu-validation-toolchain-v1.yaml` -- manifest 有效。
 
 运行 ID、输入与日志 SHA-256 在 manifest 与 `notes/units/rva23s64-zifencei-v1.md` 中列出。之前的 Heliodor standard 探跑使用的是还未修正失败终止分支的镜像；该记录未保留在 manifest，最终标准记录来自与另外三例相同的最终四例批次。
+
+## Review Findings
+
+| Finding | Triage | Evidence |
+|---|---|---|
+| Cross GCC/binutils were selected from `PATH` without confirming the captured versions or binary identity. | **patch** | `build_images.py` now requires the manifest-captured GCC 15.1.0 and objcopy 2.44 version strings and checks SHA-256 for GCC, objcopy, and nm before building. |
+| `zip` comparison could ignore trailing bytes when image lengths differed. | **patch** | The builder requires exactly `0x1008` bytes for each image and explicitly compares lengths before byte differences. Existing test also rejects unequal image lengths. |
+| A correct word at offset `0x20` did not prove `_start` and the fixture layout were correct. | **patch** | Builder invokes pinned `nm`, requires `_start == 0x80000000` and `fence_i_instruction == 0x80000020`; linker script declares `ENTRY(_start)`. |
+| Heliodor changed module-global `ARCH_FIXTURE`, so later same-process runs depended on call order. | **patch** | Fixture path is local to `run()` and is passed to input hashing, transformation, and copy operations. |
+| Harness transformation did not require a unique `HEX_FILE` path anchor. | **patch** | Transformation now rejects zero or multiple matches. Regression cases cover missing and duplicate anchors. |
+| A generic smoke marker could be mistaken for startup of the separately invoked Zifencei target; a missing target result marker left target startup unobserved. | **patch** | Zifencei classification now uses its own arch result marker. Without it, startup is explicitly unobserved and the run remains `blocked`; an observed failing tohost marker is `run-fail`. |
+| `reserved_field_trap: not observed` did not state whether the harness exposes trap cause. | **patch** | Passing records say no trap prevented the pass marker and that trap-cause telemetry is unavailable; non-passing records direct readers to the log and state the telemetry limit. |
+| Old/new values were described as observed although they were inferred from the fixture reaching its pass marker. | **patch** | Report now says the values are established by successful in-program equality checks and are not printed register observations. Manifest records name this evidence method. |
+| “双核” could imply a dual-hart run. | **patch** | Report title and opening specify a comparison of two core implementations, one hart per run; scope limits remain explicit. |
+| Results table did not itself list all per-run startup, exit, and marker fields. | **patch** | Table run IDs are explicitly identified as keys for manifest records containing startup, exit code, marker, and full-log path. |
+| Blind review emitted an isolated `kB`/`N` calculation without a code or acceptance-criteria location. | **reject** | No finding or proposed guard maps to Story 6.4 artifacts or behavior; it is unrelated reviewer output. |
+
+Acceptance Auditor found no acceptance-criteria violations. Verification-gap review found no additional gaps. Edge Case review's startup-classification concern is resolved by the Zifencei-specific classification above.

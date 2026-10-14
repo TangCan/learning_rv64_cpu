@@ -23,6 +23,7 @@ def load(name: str, path: pathlib.Path):
 
 kunming = load("kunminghu_topic_runner", ROOT / "experiments/kunminghu-smoke/run.py")
 heliodor = load("heliodor_topic_runner", ROOT / "experiments/heliodor-smoke/run.py")
+image_builder = load("zifencei_image_builder", ROOT / "experiments/rva23s64-zifencei/build_images.py")
 
 
 def assert_equal_image_lengths(images: dict[str, bytes]) -> None:
@@ -53,6 +54,34 @@ def test_four_images_change_only_one_reserved_fence_i_field() -> None:
 def test_image_difference_rejects_mismatched_lengths() -> None:
     with pytest.raises(AssertionError, match="image lengths differ"):
         assert_equal_image_lengths({"standard": b"\0" * 8, "truncated": b"\0" * 4})
+
+
+def test_image_builder_checks_cross_tool_versions_and_symbols(monkeypatch: pytest.MonkeyPatch,
+                                                              tmp_path: pathlib.Path) -> None:
+    def completed(stdout: str):
+        return type("Completed", (), {"stdout": stdout, "stderr": "", "returncode": 0})()
+
+    monkeypatch.setattr(image_builder.subprocess, "run", lambda *_args, **_kwargs:
+                        completed(image_builder.EXPECTED_GCC + "\n"))
+    image_builder.tool_version("gcc", image_builder.EXPECTED_GCC)
+    monkeypatch.setattr(image_builder.subprocess, "run", lambda *_args, **_kwargs:
+                        completed("unexpected compiler version\n"))
+    with pytest.raises(SystemExit, match="expected"):
+        image_builder.tool_version("gcc", image_builder.EXPECTED_GCC)
+    tool = tmp_path / "cross-tool"
+    tool.write_bytes(b"pinned tool bytes")
+    import hashlib
+    digest = hashlib.sha256(tool.read_bytes()).hexdigest()
+    image_builder.verify_tool_hash(str(tool), digest)
+    with pytest.raises(SystemExit, match="SHA-256"):
+        image_builder.verify_tool_hash(str(tool), "0" * 64)
+
+    elf = tmp_path / "fixture.elf"
+    elf.write_bytes(b"fixture")
+    monkeypatch.setattr(image_builder.subprocess, "run", lambda *_args, **_kwargs:
+                        completed("0000000080000000 T _start\n0000000080000020 T fence_i_instruction\n"))
+    assert image_builder.symbol_addresses("nm", elf) == {
+        "_start": 0x80000000, "fence_i_instruction": 0x80000020}
 
 
 def test_reserved_field_encodings_are_independent() -> None:
@@ -88,6 +117,12 @@ def test_heliodor_classifies_unstarted_blocked_and_started_failure() -> None:
     assert started_fail[0] is True and started_fail[2] is False and started_fail[3] is True
 
 
+def test_heliodor_zifencei_does_not_infer_target_start_from_prior_smoke() -> None:
+    prior_smoke_only = "[test_smoke] cy=5000 x10=0007 commit=1651\n[test_smoke] PASS\n"
+    result = heliodor.observe(prior_smoke_only, 1, "v4 rv64ui-fence_i")
+    assert result[0] is False and result[2] is False and result[3] is False
+
+
 def test_heliodor_transforms_the_pinned_fence_i_arch_target() -> None:
     source = (ROOT / "sources/heliodor/tb/test_arch_common.veryl").read_text()
     result = heliodor.transform_arch_harness(
@@ -97,6 +132,20 @@ def test_heliodor_transforms_the_pinned_fence_i_arch_target() -> None:
     assert "v4 rv64ui-fence_i PASS" in result
     assert "module test_arch_rv64ui_fence_i" in result
     assert "test_arch_rv64ui_add" not in result
+
+
+@pytest.mark.parametrize("replacement", ["", 'HEX_FILE  : "a.hex",\n        HEX_FILE: "b.hex",'])
+def test_heliodor_rejects_missing_or_duplicate_fixture_anchor(replacement: str) -> None:
+    source = (ROOT / "sources/heliodor/tb/test_arch_common.veryl").read_text()
+    target = source.split("#[test(test_arch_rv64ui_fence_i)]", 1)[1].split("#[test(", 1)[0]
+    target = "#[test(test_arch_rv64ui_fence_i)]" + target
+    target = __import__("re").sub(r'HEX_FILE\s*:\s*"[^"]+"', replacement, target, count=1)
+    source = source.replace(
+        "#[test(test_arch_rv64ui_fence_i)]" + source.split("#[test(test_arch_rv64ui_fence_i)]", 1)[1].split("#[test(", 1)[0],
+        target)
+    with pytest.raises(ValueError, match="HEX_FILE anchor drifted"):
+        heliodor.transform_arch_harness(source, target="test_arch_rv64ui_fence_i",
+                                        fixture="test/zifencei/standard.hex")
 
 
 def test_kunminghu_rejects_case_without_zifencei_topic(monkeypatch: pytest.MonkeyPatch) -> None:

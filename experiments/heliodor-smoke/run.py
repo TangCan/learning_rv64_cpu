@@ -47,12 +47,12 @@ def tree_sha256(path: pathlib.Path) -> str:
     return h.hexdigest()
 
 
-def isolated_inputs_sha256(path: pathlib.Path) -> str:
+def isolated_inputs_sha256(path: pathlib.Path, arch_fixture: str = ARCH_FIXTURE) -> str:
     """Hash copied build inputs while excluding files Veryl generates during a run."""
     h = hashlib.sha256()
     roots = [path / "src", path / "Veryl.toml", path / "Veryl.lock",
              path / "tb/test_smoke.veryl", path / "tb/test_arch_common.veryl",
-             path / "test/v4_smoke.hex", path / ARCH_FIXTURE]
+             path / "test/v4_smoke.hex", path / arch_fixture]
     files = []
     for root in roots:
         if root.is_dir():
@@ -147,7 +147,12 @@ def observe(output: str, exit_code: int, arch_label: str = "v4 rv64ui-add") -> t
     smoke_started = bool(re.search(r"\[test_smoke\]\s+cy=\d+.*\bcommit=\d+", output))
     arch_result = re.search(re.escape(arch_label) + r" tohost=([0-9a-fA-F]+) pass=([01])", output)
     arch_started = arch_result is not None
-    cpu_started = smoke_started or arch_started
+    # For the Zifencei arch-only invocation, the earlier generic smoke marker
+    # cannot prove that this separate target began execution. Without an arch
+    # result marker, report startup as unobserved (blocked) rather than assert
+    # either that the target ran or that it did not.
+    zifencei_case = arch_label == "v4 rv64ui-fence_i"
+    cpu_started = arch_started if zifencei_case else (smoke_started or arch_started)
     values: dict[str, int] = {}
     for reg in (10, 11, 12, 13):
         match = re.search(rf"\bx{reg}=([0-9a-fA-F]+)", output)
@@ -190,7 +195,10 @@ def transform_arch_harness(original: str, *, target: str = "test_arch_rv64ui_add
     selected_target = original[target_start:next_target].strip() + "\n"
     if target != "test_arch_rv64ui_add":
         selected_target = selected_target.replace("test_arch_rv64ui_add", target)
-        selected_target = re.sub(r'HEX_FILE\s*:\s*"[^"]+"', f'HEX_FILE  : "{fixture}"', selected_target)
+        hex_path_pattern = r'HEX_FILE\s*:\s*"[^"]+"'
+        if len(re.findall(hex_path_pattern, selected_target)) != 1:
+            raise ValueError(f"pinned {target} HEX_FILE anchor drifted; expected exactly one path")
+        selected_target = re.sub(hex_path_pattern, f'HEX_FILE  : "{fixture}"', selected_target, count=1)
         selected_target = selected_target.replace("v4 rv64ui-add", label)
     return normal_harness.rstrip() + "\n\n" + selected_target
 
@@ -240,12 +248,12 @@ def next_environment_change(stage: str, blocker: str) -> str:
 
 
 def run(args: argparse.Namespace) -> dict:
-    global ARCH_FIXTURE
     zifencei_case = getattr(args, "zifencei_case", None)
     arch_target = "test_arch_rv64ui_add"
     arch_label = "v4 rv64ui-add"
+    fixture_rel = ARCH_FIXTURE
     if zifencei_case:
-        ARCH_FIXTURE = f"test/zifencei/{zifencei_case}.hex"
+        fixture_rel = f"test/zifencei/{zifencei_case}.hex"
         arch_target = "test_arch_rv64ui_fence_i"
         arch_label = "v4 rv64ui-fence_i"
     started_at = time.time()
@@ -267,7 +275,7 @@ def run(args: argparse.Namespace) -> dict:
     archive.mkdir(parents=True, exist_ok=True)
     out = bytearray(); err = bytearray(); exit_code = 1; cpu_started = False
     assertion_failed = False; expected_observed = False; first_stage = "locked-source-preflight"; blocker = ""
-    snapshot_sha = LOCKED_SHA; input_path = (ROOT / "experiments/rva23s64-zifencei" / f"{zifencei_case}.hex") if zifencei_case else SOURCE / ARCH_FIXTURE
+    snapshot_sha = LOCKED_SHA; input_path = (ROOT / "experiments/rva23s64-zifencei" / f"{zifencei_case}.hex") if zifencei_case else SOURCE / fixture_rel
     archived_arch_fixture = archive / (f"zifencei-{zifencei_case}.hex" if zifencei_case else "rv64ui-add.hex")
     smoke_input_path = SOURCE / "test/v4_smoke.hex"
     input_hash = sha256(input_path) if input_path.is_file() else "0" * 64
@@ -306,14 +314,14 @@ def run(args: argparse.Namespace) -> dict:
         transformed = transform_testbench(original)
         (work / "tb/test_smoke.veryl").write_text(transformed, encoding="utf-8")
         arch_source = SOURCE / "tb/test_arch_common.veryl"
-        transformed_arch = transform_arch_harness(arch_source.read_text(encoding="utf-8"), target=arch_target, fixture=ARCH_FIXTURE, label=arch_label)
+        transformed_arch = transform_arch_harness(arch_source.read_text(encoding="utf-8"), target=arch_target, fixture=fixture_rel, label=arch_label)
         (work / "tb/test_arch_common.veryl").write_text(transformed_arch, encoding="utf-8")
         shutil.copy2(smoke_input_path, work / "test/v4_smoke.hex")
-        arch_fixture = work / ARCH_FIXTURE
+        arch_fixture = work / fixture_rel
         arch_fixture.parent.mkdir(parents=True)
         shutil.copy2(input_path, arch_fixture)
         isolated_tree_hash = tree_sha256(work)
-        isolated_inputs_hash = isolated_inputs_sha256(work)
+        isolated_inputs_hash = isolated_inputs_sha256(work, fixture_rel)
         transformed_hash = sha256(work / "tb/test_smoke.veryl")
         transformed_arch_hash = sha256(work / "tb/test_arch_common.veryl")
         fixture_hash = sha256(arch_fixture)
@@ -346,7 +354,7 @@ def run(args: argparse.Namespace) -> dict:
         if tree_sha256(SOURCE) != source_tree_hash:
             raise ValueError("Heliodor source tree changed during run")
         # Confirm the copied source/test inputs stayed stable through execution.
-        if isolated_inputs_sha256(work) != isolated_inputs_hash:
+        if isolated_inputs_sha256(work, fixture_rel) != isolated_inputs_hash:
             raise ValueError("isolated source, configuration, testbench, or fixture changed during the run")
     except (OSError, ValueError, subprocess.SubprocessError, KeyError) as exc:
         blocker = blocker or str(exc)
@@ -371,7 +379,7 @@ def run(args: argparse.Namespace) -> dict:
     combined_path = archive / "output.log"
     combined_path.write_bytes(bytes(out) + b"\n--- STDERR ---\n" + bytes(err))
     record = {
-        **({"topic": "zifencei", "case": zifencei_case, "fence_i_encoding": {"standard": "0x0000100f", "funct12": "0x0010100f", "rs1": "0x0000900f", "rd": "0x0000108f"}[zifencei_case], "expected_values": {"before_fence_i": 1, "after_fence_i": 42}, "observed_values": {"before_fence_i": 1, "after_fence_i": 42, "evidence_method": "fixture equality checks for a0==1 before patch and a0==42 after FENCE.I; successful tohost/pass marker is reachable only after both checks"} if expected_observed else None, "reserved_field_trap": "not observed" if expected_observed else "see run log"} if zifencei_case else {}),
+        **({"topic": "zifencei", "case": zifencei_case, "fence_i_encoding": {"standard": "0x0000100f", "funct12": "0x0010100f", "rs1": "0x0000900f", "rd": "0x0000108f"}[zifencei_case], "expected_values": {"before_fence_i": 1, "after_fence_i": 42}, "observed_values": {"before_fence_i": 1, "after_fence_i": 42, "evidence_method": "fixture equality checks for a0==1 before patch and a0==42 after FENCE.I; successful tohost/pass marker is reachable only after both checks"} if expected_observed else None, "reserved_field_trap": "no trap prevented the pass marker; trap-cause telemetry unavailable" if expected_observed else "startup/result not established or see run log; harness does not expose trap cause"} if zifencei_case else {}),
         "id": run_id, "snapshot_sha": snapshot_sha, "input": str(input_path.relative_to(ROOT)) if input_path.is_relative_to(ROOT) else str(input_path),
         "input_sha256": input_hash,
         "inputs": [{"path": "sources/heliodor/test/v4_smoke.hex", "sha256": smoke_input_hash},
