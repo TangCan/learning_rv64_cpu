@@ -13,7 +13,8 @@ COVERAGE = ROOT / "notes/rva23-coverage.md"
 AUDIT = ROOT / "notes/units/rva23-mandatory-coverage-audit-v1.md"
 IMPLEMENTATIONS = ("Kunminghu", "Heliodor")
 STATUS_COLUMNS = ("partially-studied", "studied-unverified", "not-studied", "evidence-observed", "not-present", "out-of-scope")
-# Requirement IDs transcribed from RVA23 Profile v1.0 §§3.1.1–3.1.2.
+# Versioned source: RISC-V RVA23 Profile v1.0, §§3.1.1–3.1.2, pinned source
+# revision e030b70992447784ad9081045d47ce6e278f381e (see notes/rva23-profile-id-manifest.md).
 U64_IDS = set("""RV64I M A F D C B Zicsr Zicntr Zihpm Ziccif Ziccrse Ziccamoa Zicclsm Za64rs Zihintpause Zic64b Zicbom Zicbop Zicboz Zfhmin Zkt V Zvfhmin Zvbb Zvkt Zihintntl Zicond Zimop Zcmop Zcb Zfa Zawrs Supm""".split())
 S64_IDS = set("""RV64I M A F D C B Zicsr Zicntr Zihpm Ziccif Ziccrse Ziccamoa Zicclsm Za64rs Zihintpause Zic64b Zicbom Zicbop Zicboz Zfhmin Zkt V Zvfhmin Zvbb Zvkt Zihintntl Zicond Zimop Zcmop Zcb Zfa Zawrs Supm Zifencei Ss1p13 Svbare Sv39 Svade Ssccptr Sstvecd Sstvala Sscounterenw Svpbmt Svinval Svnapot Sstc Sscofpmf Ssnpm Ssu64xl H Ssstateen Shcounterenw Shvstvala Shtvala Shvstvecd Shvsatpa Shgatpa""".split())
 ALLOWED = {"not-studied", "partially-studied", "studied-unverified", "evidence-observed", "not-present", "out-of-scope"}
@@ -124,7 +125,7 @@ def evidence_ids(label: str) -> set[str]:
             result.add(f"E{lo}{start_suffix}")
             continue
         hi = int(end)
-        if hi < lo or hi - lo > 1000:
+        if hi < lo or hi - lo > 1000 or (hi == lo and end_suffix and start_suffix and end_suffix < start_suffix):
             fail(f"invalid or excessive evidence ID range: E{start}{start_suffix}–E{end}{end_suffix}")
         for number in range(lo, hi + 1):
             low_rank = (ord(start_suffix) - 96) if number == lo and start_suffix else 0

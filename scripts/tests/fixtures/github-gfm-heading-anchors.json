@@ -1,0 +1,16 @@
+{
+  "renderer": "GitHub.com repository GFM",
+  "rendered_at_commit": "9ef6b5ab25eee00febb76a6b7c5d946f260217bf",
+  "source_document": "notes/units/add-v1.md",
+  "rendered_heading_ids": [
+    "单元自检",
+    "架构行为与子案例",
+    "kunminghu-路径",
+    "heliodor-路径",
+    "比较结论",
+    "证据表",
+    "学习者总结",
+    "未解问题"
+  ],
+  "capture_method": "GitHub rendered HTML heading IDs retrieved from the repository page; fixture is checked in so validation does not require network access."
+}

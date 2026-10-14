@@ -622,3 +622,137 @@ So that I can confirm conclusions are traceable, unverified boundaries are clear
 **Given** the audit results, **When** I review the project learning objectives, **Then** I record which objectives have evidence, which remain blocked or unverified, and whether those residual limits are accepted; the completion statement covers only this project's learning scope and does not claim RVA23 conformance certification for Kunminghu, Heliodor, or this project.
 
 **Given** the audit record, **When** I complete this story, **Then** I provide a reviewable evidence index, checker results, self-check conclusions, and remaining items, and confirm the delivery status of Epic 5.
+
+## Epic 6: 验证 RVA23S64 五专题的 CPU 行为
+
+本 Epic 是 Epic 5 学习结项之后新增的动态验证 backlog。目标是在固定 Kunminghu/Heliodor 快照上，先建立可复现的 CPU 仿真入口，再逐专题运行代表性架构案例；仿真构建失败、testbench 阻塞和 CPU 行为失败必须分开记录。本 Epic 不修改 `sources/` 固定快照，也不将有限测试结果表述为整个 RVA23 Profile 符合性或认证。
+
+**依赖门：** Story 6.1 的工具链、fixture 输入和结果归档约定完成前，不开始专题 CPU 行为故事。Story 6.2/6.3 分别验证两边 simulator/harness 的加载与观察能力；依赖某侧的专题案例必须先有该侧可用的入口。所有运行记录均遵守 `notes/units/rva23s64-cpu-validation-preflight-v1.md` 的版本、输入哈希、命令、工具版本、完整日志和 `cpu_started` 字段。
+
+### Story 6.1: 固定 CPU 验证工具链与结果归档
+
+**FRs covered:** FR-2–FR-11; NFR-1–NFR-6
+
+As a learner,
+I want to make both simulators reproducible and capture the inputs and outputs of each run,
+So that CPU observations can be compared without confusing tool failures with DUT behavior.
+
+**Acceptance Criteria:**
+
+**Given** the locked Kunminghu and Heliodor revisions, **When** I prepare their toolchains, **Then** I record exact Mill/Java/Verilator/compiler and Veryl versions, required environment variables, pinned submodule revisions, and supported target configurations without changing either source snapshot.
+
+**Given** a target-side smoke entry exists, **When** I build and run a minimal known input on each core, **Then** I record the exact command, cwd, configuration, source revision, input SHA-256, tool versions, exit code, whether CPU execution began, output path/hash, and generated artifact paths.
+
+**Given** a build, harness, or test fails before CPU execution, **When** I classify its result, **Then** it is recorded as `blocked` with the first failing tool/phase and is never labeled a CPU `run-fail`.
+
+### Story 6.2: 建立 Kunminghu fixture 加载与模拟器入口
+
+**FRs covered:** FR-2–FR-11; NFR-1–NFR-6
+
+As a learner,
+I want a repeatable Kunminghu simulator entry that loads a small directed program and exposes its result,
+So that the five architecture topics can use controlled inputs and observable pass/fail markers.
+
+**Acceptance Criteria:**
+
+**Given** Story 6.1's pinned toolchain, **When** I initialize only dependencies required by the selected target, **Then** every submodule resolves to its parent gitlink SHA and the locked top-level snapshot SHA remains unchanged.
+
+**Given** the simulator build, **When** I load a minimal fixture, **Then** the harness confirms program load, CPU start, instruction retirement or equivalent progress, and a result marker; a simulator build alone does not satisfy this criterion.
+
+**Given** the Makefile, Chisel, Verilator, or C++ toolchain stops before execution, **When** I report the outcome, **Then** the exact first blocker, output excerpt/hash, resources, and next environment change are recorded without modifying upstream files.
+
+### Story 6.3: 建立 Heliodor arch harness 隔离运行入口
+
+**FRs covered:** FR-2–FR-11; NFR-1–NFR-6
+
+As a learner,
+I want to run the pinned Heliodor architecture harness despite the shared debug-testbench check issue,
+So that ordinary architecture tests can produce isolated CPU observations without changing the source checkout.
+
+**Acceptance Criteria:**
+
+**Given** the pinned Heliodor source and Veryl version, **When** I build the isolated runner, **Then** it creates a fresh temporary copy, removes only the uninstantiated debug harness that causes check failure, applies the minimum documented local `allow(initial_assign)`, and copies the exact fixture by recorded SHA.
+
+**Given** the transformed harness, **When** I run one small known test, **Then** the log proves compile/check passed, CPU simulation started, the expected output channel was observed, and the source checkout remained clean.
+
+**Given** a topic uses memory, address translation, interrupt, or timing behavior, **When** I reuse the workaround, **Then** I review and record whether the local harness transformation can affect that case's semantics before treating its result as evidence.
+
+### Story 6.4: 运行 Zifencei 自修改代码对照
+
+**FRs covered:** FR-2–FR-11; NFR-1–NFR-6
+
+As a learner,
+I want to execute self-modifying instruction cases around `FENCE.I` on both cores,
+So that I can distinguish instruction-fetch synchronization from data-store visibility and reserved-field handling.
+
+**Acceptance Criteria:**
+
+**Given** a fixed program image and cache/hart configuration, **When** each core runs the case, **Then** the result distinguishes the old instruction result before synchronization from the newly written instruction result after `FENCE.I`, with exact expected and observed values.
+
+**Given** Zifencei ignored/reserved fields, **When** I execute nonzero `funct12`, `rs1`, and `rd` encodings independently, **Then** each encoding's expected architectural treatment and observed trap/result are recorded per implementation.
+
+**Given** a multi-hart test is unavailable, **When** I close the story, **Then** the conclusion is restricted to the tested hart count and remote-hart publication/synchronization remains an explicit uncovered case.
+
+### Story 6.5: 运行 Sstc S/VS comparator 与陷阱对照
+
+**FRs covered:** FR-2–FR-11; NFR-1–NFR-6
+
+As a learner,
+I want to exercise supervisor and virtual-supervisor timer comparators and gates,
+So that I can explain timer interrupt generation, delegation, and delivery from observed behavior.
+
+**Acceptance Criteria:**
+
+**Given** a runnable S-mode timer fixture, **When** I test `stimecmp < time`, `== time`, and `> time` with STCE/TM enabled and disabled, **Then** pending-bit transitions, trap delivery, cause, privilege and expected cycle relationship are recorded.
+
+**Given** a runnable VS fixture, **When** I test `vstimecmp`, nonzero `htimedelta`, both applicable STCE levels, delegation and VSTIP delivery, **Then** each stage's control state and observed result are reported independently.
+
+**Given** an interrupt cannot be injected or the harness cannot observe virtual time, **When** a case cannot run, **Then** it is `blocked` with the missing capability named; no result is inferred from static CSR paths.
+
+### Story 6.6: 运行 Sscofpmf 硬件计数器溢出与过滤对照
+
+**FRs covered:** FR-2–FR-11; NFR-1–NFR-6
+
+As a learner,
+I want to cause a hardware performance-counter overflow and observe its filtering and interrupt path,
+So that software writes to counter state are not mistaken for hardware event behavior.
+
+**Acceptance Criteria:**
+
+**Given** a selected hardware event and implemented counter, **When** the counter overflows, **Then** the test observes `mhpmevent.OF`, `scountovf`, pending/interrupt state and cause 13, and records the event selector, counter value, privilege and observed sequence.
+
+**Given** implemented privilege filters and access/delegation controls, **When** I vary MINH/SINH/UINH/VSINH/VUINH and clear/re-arm state, **Then** each supported combination has an observed result and unsupported combinations name the exact implementation or harness blocker.
+
+**Given** ACT4 or Sail does not support the requirement, **When** I report directed testing, **Then** model/tool support is recorded separately and software-forced OF is not claimed as hardware-overflow evidence.
+
+### Story 6.7: 运行 Ssnpm PMLEN 与访问族对照
+
+**FRs covered:** FR-2–FR-11; NFR-1–NFR-6
+
+As a learner,
+I want to test supervisor pointer masking at its required PMLEN settings and applicable privilege levels,
+So that I can observe tagged-address transformation and the access families affected by it.
+
+**Acceptance Criteria:**
+
+**Given** PMLEN=0 and PMLEN=7 configurations, **When** I test masking enabled/disabled and canonical/tagged boundary addresses, **Then** each case records the transformed effective address or architectural trap and the controlling `senvcfg`/`henvcfg` state.
+
+**Given** S/U and virtualized modes supported by a target, **When** I execute representative load/store and applicable atomic, FP, compressed, cache, vector and hypervisor explicit-memory accesses, **Then** results are listed by family and mode rather than inferred from one scalar case.
+
+**Given** an access family cannot be built or observed, **When** the story closes, **Then** it has a specific `blocked` reason or an explicit out-of-scope decision; M-mode Supm is not used as Ssnpm evidence.
+
+### Story 6.8: 运行 Ssstateen 八 CSR 与层级访问门对照
+
+**FRs covered:** FR-2–FR-11; NFR-1–NFR-6
+
+As a learner,
+I want to check state-enable CSR reset/readback and hierarchical access traps on both cores,
+So that I can confirm the existing Heliodor failure and determine Kunminghu's observed behavior.
+
+**Acceptance Criteria:**
+
+**Given** `sstateen0–3` and `hstateen0–3`, **When** I test defined reset/readback/WARL bits and M/H/S/VS/VU access paths with gates clear/set, **Then** every executed CSR operation records its operation ID, expected/observed value, trap cause and mode.
+
+**Given** the existing Heliodor fixture, **When** I rerun it with the isolated harness, **Then** the run is compared against the durable baseline log by fixture SHA and remains `run-fail` unless a new run produces the expected behavior.
+
+**Given** the fixed Kunminghu snapshot and preflight runner, **When** I run the matching matrix, **Then** I report its behavior independently; a missing implementation is a CPU `run-fail` only after the CPU starts and the assertion observes the mismatch.

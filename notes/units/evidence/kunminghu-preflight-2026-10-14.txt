@@ -1,0 +1,27 @@
+Kunminghu make emu preflight (captured 2026-10-14 Asia/Shanghai)
+
+Snapshot: c098f996bf4d301b88693b20315486d31e93bc9d
+Submodule gitlinks after checkout: matched the parent tree's pinned gitlink SHAs; source worktree clean.
+Mill: 0.12.3 (temporary assembly-jar launcher)
+Java: OpenJDK 17.0.20.1
+Verilator: 5.020 (2024-01-01, Debian build)
+GCC: 13.3.0
+
+Command 1:
+MILL_WORKSPACE_ROOT="$PWD" PATH=/tmp:$PATH make emu CONFIG=KunminghuV2Config NUM_CORES=1
+Observed: Mill runMain stopped in build.sc while reading missing environment key NOOP_HOME; exit 2. CPU not started.
+
+Command 2:
+NOOP_HOME="$PWD" MILL_WORKSPACE_ROOT="$PWD" PATH=/tmp:$PATH make emu CONFIG=KunminghuV2Config NUM_CORES=1
+Observed: runMain generated SimTop FIR/SystemVerilog; simulator compilation stopped because GCC rejected -fno-slp-vectorize; exit 2. CPU not started.
+runMain log SHA-256: fa86b85e2ba3e1f34bb555852225319b4ce8f09d24fb5f1f0bcfb4911237dd57
+
+Command 3:
+NOOP_HOME="$PWD" MILL_WORKSPACE_ROOT="$PWD" PATH=/tmp:$PATH make emu CONFIG=KunminghuV2Config NUM_CORES=1 OPT_FAST='-O3 -fno-tree-slp-vectorize'
+Observed: GCC got past the compiler-option mismatch; compile then failed at waveform.h:26 because Verilator 5.020 does not declare VerilatedTraceBaseC; exit 2. CPU not started.
+Relevant captured compiler output:
+  waveform.h:26:42: error: ‘VerilatedTraceBaseC’ was not declared in this scope
+  make[4]: *** [.../VSimTop.mk:222: emu.o] Error 1
+  make: *** [Makefile:355: emu] Error 2
+
+The generated RTL is ignored under sources/xiangshan/build/ and is not a CPU test result.

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Check local Markdown links and anchors in the project's learning documents."""
+"""Check a documented subset of local links in GitHub.com repository GFM documents."""
 from __future__ import annotations
 
 import argparse
@@ -22,10 +22,10 @@ DEFAULT_DOCS = (
     ROOT / "_agile-output/implementation-artifacts/spec-5-6-compare-ssstateen.md",
     ROOT / "_agile-output/implementation-artifacts/spec-5-7-audit-rva23s64-closeout.md",
 )
-LINK_RE = re.compile(r"(?<!!)\[([^\]]*)\]\(\s*(?:<([^>]+)>|([^\s)]+))(?:\s+['\"].*?['\"])?\s*\)")
 REF_RE = re.compile(r"(?<!!)\[([^\]]+)\]\[([^\]]*)\]")
 DEF_RE = re.compile(r"^\s*\[([^\]]+)\]:\s*(?:<([^>]+)>|(\S+))", re.MULTILINE)
-HTML_LINK_RE = re.compile(r"\b(?:href|src)\s*=\s*(?:['\"]([^'\"]+)['\"]|([^\s>]+))", re.IGNORECASE)
+HTML_TAG_RE = re.compile(r"<(?:a|img)\b[^>]*>", re.IGNORECASE)
+HTML_ATTR_RE = re.compile(r"\b(href|src)\s*=\s*(?:['\"]([^'\"]*)['\"]|([^\s>]+))", re.IGNORECASE)
 FENCE_RE = re.compile(r"^ {0,3}(`{3,}|~{3,})(.*)$")
 EXPLICIT_ID_RE = re.compile(r"<a\s+(?:[^>]*\s)?id=['\"]([^'\"]+)['\"]\s*[^>]*>|<[^>]+\s+id=['\"]([^'\"]+)['\"]\s*[^>]*>", re.IGNORECASE)
 
@@ -53,7 +53,7 @@ def visible_markdown(text: str, *, strip_inline_code: bool = False) -> str:
         chars = list(visible)
         i = 0
         while i < len(visible):
-            if visible[i] != "`":
+            if visible[i] != "`" or _is_escaped(visible, i):
                 i += 1
                 continue
             end = i + 1
@@ -85,6 +85,68 @@ def visible_markdown(text: str, *, strip_inline_code: bool = False) -> str:
     return visible
 
 
+def _is_escaped(text: str, position: int) -> bool:
+    slashes = 0
+    position -= 1
+    while position >= 0 and text[position] == "\\":
+        slashes += 1
+        position -= 1
+    return slashes % 2 == 1
+
+
+def _markdown_links(text: str):
+    """Yield simple inline links, balancing parentheses in bare destinations."""
+    i = 0
+    while i < len(text):
+        if text[i] != "[" or _is_escaped(text, i) or (i > 0 and text[i - 1] == "!"):
+            i += 1
+            continue
+        label_end = text.find("]", i + 1)
+        if label_end < 0 or label_end + 1 >= len(text) or text[label_end + 1] != "(":
+            i += 1
+            continue
+        start = label_end + 2
+        while start < len(text) and text[start].isspace():
+            start += 1
+        if start < len(text) and text[start] == "<":
+            end = text.find(">", start + 1)
+            if end < 0:
+                i = label_end + 1
+                continue
+            target = text[start + 1:end]
+            close = end + 1
+            while close < len(text) and text[close].isspace():
+                close += 1
+            if close < len(text) and text[close] not in ")'\"":
+                i = label_end + 1
+                continue
+            close = text.find(")", close)
+        else:
+            end = start
+            depth = 0
+            while end < len(text):
+                char = text[end]
+                if char == "\\" and end + 1 < len(text):
+                    end += 2
+                    continue
+                if char == "(" :
+                    depth += 1
+                elif char == ")":
+                    if depth == 0:
+                        break
+                    depth -= 1
+                elif char.isspace() and depth == 0:
+                    break
+                end += 1
+            target = text[start:end]
+            close = end if end < len(text) and text[end] == ")" else text.find(")", end)
+        if close < 0:
+            i = label_end + 1
+            continue
+        yield text[i + 1:label_end], target, i
+        i = close + 1
+
+
 def anchor_slug(heading: str) -> str:
     heading = re.sub(r"`([^`]*)`", r"\1", heading)
     heading = re.sub(r"\[([^]]+)\]\([^)]*\)", r"\1", heading)
@@ -114,10 +176,12 @@ def document_anchors(text: str) -> set[str]:
 
 def links_in_document(text: str):
     text = visible_markdown(text, strip_inline_code=True)
+    # HTML comments are invisible in repository rendering and must not create targets.
+    text = re.sub(r"<!--[\s\S]*?-->", lambda m: re.sub(r"[^\n]", " ", m.group()), text)
     definitions = {key.strip().lower(): target for key, angle, bare in DEF_RE.findall(text) for target in [angle or bare]}
     found = []
-    for match in LINK_RE.finditer(text):
-        found.append((match.group(1), match.group(2) or match.group(3), text.count("\n", 0, match.start()) + 1))
+    for label, target, position in _markdown_links(text):
+        found.append((label, target, text.count("\n", 0, position) + 1))
     for match in REF_RE.finditer(text):
         ref = (match.group(2) or match.group(1)).strip().lower()
         found.append((match.group(1), definitions.get(ref, f"__undefined_reference__:{ref}"), text.count("\n", 0, match.start()) + 1))
@@ -126,9 +190,10 @@ def links_in_document(text: str):
         label = match.group(1).strip().lower()
         if label in definitions:
             found.append((match.group(1), definitions[label], text.count("\n", 0, match.start()) + 1))
-    for match in HTML_LINK_RE.finditer(text):
-        target = match.group(1) or match.group(2)
-        found.append((target, target, text.count("\n", 0, match.start()) + 1))
+    for tag in HTML_TAG_RE.finditer(text):
+        for match in HTML_ATTR_RE.finditer(tag.group()):
+            target = match.group(2) if match.group(2) is not None else match.group(3)
+            found.append((target, target, text.count("\n", 0, tag.start()) + 1))
     for match in DEF_RE.finditer(text):
         target = match.group(2) or match.group(3)
         found.append((target, target, text.count("\n", 0, match.start()) + 1))

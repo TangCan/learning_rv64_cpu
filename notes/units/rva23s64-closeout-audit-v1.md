@@ -17,6 +17,14 @@ source_snapshots:
 
 # RVA23S64 深度单元结项证据审计（Story 5.7）
 
+## 学习结项决定与自检
+
+**结项决定：接受本项目的 Epic 5 学习交付，但不接受为 CPU 行为验证完成。** 五个主题均有固定快照、精确 profile 键与规范版本、双边路径或受限的缺失结论、学习者自检问答和案例状态；局部静态证据及一项 Heliodor M/HS 运行失败均能追溯。Stories 5.2–5.6 的受计划 CPU 案例不是全覆盖：多数在 CPU 启动前受阻，Ssstateen 隔离测试实际 run-fail，其他列出的边界未验证。将这些缺口明确保留，是本项目“理解证据与边界”的学习目标交付；它们仍是若未来需要验证实现行为时的未完成事项。
+
+1. **五项规范映射是否覆盖整个 RVA23S64？** 否。它们只映射 S64 的五项深度主题；Epic 4 的 58 行/59 个去重键目录才承载必选项全图谱，目录中其他状态也保留其各自范围。
+2. **哪些案例有 CPU 观察？** 只有 Story 5.6 的 Heliodor M/HS 隔离 fixture 实际启动；观察结果为功能 `run-fail`。Zifencei、Sstc、Sscofpmf、Ssnpm 候选测试均未到 CPU 行为结果，Kunminghu 五个专题均无本轮 CPU 运行结果。
+3. **结项结论意味着 RVA23 合规吗？** 不意味着。项目学习交付完成不构成两个 CPU 的整体 RVA23 行为验证、符合性声明或认证。
+
 ## 审计边界
 
 本审计对照 `sources.lock`、Epic 4 覆盖目录和 Stories 5.1–5.6 学习记录。两份 checkout 的实际 HEAD 与锁定值一致；工作区中的 `sources/` 保持只读。本次不修改上游源码，也不复核全部上游实现或认证 RVA23。
@@ -52,21 +60,13 @@ Epic 4 目录当前为 U64 34 行、S64 58 行，共 92 profile 行、184 个实
 | 检查 | 实际命令与版本 | 实际输出 / 结果 |
 |---|---|---|
 | RVA23 inventory | `python3 scripts/check_rva23_coverage.py`；Python 3.12.3 | `valid: true`; `profile_rows: U64=34 S64=58 total=92`; `implementation_status_cells: 184`; `deduplicated_requirements: 59`。S64 Heliodor：partially-studied=26、studied-unverified=29、evidence-observed=2、not-present=1；S64 Kunminghu：36、22；U64 Heliodor：14、20；U64 Kunminghu：21、13。 |
-| 本地文档目标/锚点 | `python3 scripts/check_doc_links.py`；Python 3.12.3 | `valid: 36 document(s); all supported local targets and anchors exist`。检查 notes 文档、Epic 5 context/start-gate 和 Story 5.1–5.7；支持常规 Markdown inline、full/shortcut reference 与 HTML href/src（含无引号属性）、相对文件、heading/显式锚点以及已有的 `file:line` / `#Lnn` 源码引用。不是完整 CommonMark 解析器；自动链接、转义定界符及带未转义嵌套括号的 inline destination 不在支持范围。 |
+| 本地文档目标/锚点 | `python3 scripts/check_doc_links.py`；Python 3.12.3 | 检查 notes 文档、Epic 5 context/start-gate 和 Story 5.1–5.7；以 GitHub.com 仓库 GFM 渲染为目标，支持简单 inline/full/shortcut reference links、定义式链接、`<a href>`/`<img src>` 属性、HTML 显式 ID、heading anchors、相对目标及 `file:line`/`#Lnn` 源码引用。HTML comments 不参与链接扫描；转义 backtick 不打开 code span；裸目标中的平衡嵌套括号受支持。不是完整 CommonMark/GFM parser；自动链接、复杂 inline label 和任意 HTML 均不承诺检查。 |
 | sprint YAML | `uv run --no-cache --with ruamel.yaml python .agents/skills/bmad-sprint-planning/scripts/sprint_plan.py validate --status-file _agile-output/implementation-artifacts/sprint-status.yaml`；uv 0.12.5，Python 3.12.3 | `{"ok": true, "action": "validate", "status_file": "_agile-output/implementation-artifacts/sprint-status.yaml", "valid": true, "problems": [], "legacy_mapped": []}`。故事键为 `5-7-审计-rva23s64-覆盖与学习结项证据`。 |
 | checker 回归测试 | `python3 -m pytest -q scripts/tests/test_check_doc_links.py`；pytest 9.1.1 | `13 passed`。涵盖相对链接和 heading anchor、缺目标/缺锚点及行号、explicit/重复/CJK anchor、外链与 inline/fenced code 排除、full/shortcut/undefined reference 与 quoted/unquoted HTML 链接、CLI 成功/错误退出、非法 UTF-8 和无效 URL。 |
 | 全脚本测试 | `python3 -m pytest -q scripts/tests`；pytest 9.1.1 | `31 passed`（覆盖目录、链接解析及结项分类检查；Story 5.7 review fixes 后复跑）。 |
 | whitespace 检查 | `git diff --check` | 检查通过，无 whitespace error。 |
 
 Story 5.7 开始实施时由 `backlog` 切换为 `in-progress`，交付审查后按 review 结果完成；本审计记录完成时，Epic 5 retrospective 状态为 `optional`。其后已完成正式回顾，见 [Epic 5 retrospective](../../_agile-output/implementation-artifacts/epic-5-retro-2026-10-14.md)；当前 Epic 5 与 Stories 5.1–5.7 均为 `done`。
-
-## 学习结项决定与自检
-
-**结项决定：接受本项目的 Epic 5 学习交付，但不接受为 CPU 行为验证完成。** 五个主题均有固定快照、精确 profile 键与规范版本、双边路径或受限的缺失结论、学习者自检问答和案例状态；局部静态证据及一项 Heliodor M/HS 运行失败均能追溯。Stories 5.2–5.6 的受计划 CPU 案例不是全覆盖：多数在 CPU 启动前受阻，Ssstateen 隔离测试实际 run-fail，其他列出的边界未验证。将这些缺口明确保留，是本项目“理解证据与边界”的学习目标交付；它们仍是若未来需要验证实现行为时的未完成事项。
-
-1. **五项规范映射是否覆盖整个 RVA23S64？** 否。它们只映射 S64 的五项深度主题；Epic 4 的 58 行/59 个去重键目录才承载必选项全图谱，目录中其他状态也保留其各自范围。
-2. **哪些案例有 CPU 观察？** 只有 Story 5.6 的 Heliodor M/HS 隔离 fixture 实际启动；观察结果为功能 `run-fail`。Zifencei、Sstc、Sscofpmf、Ssnpm 候选测试均未到 CPU 行为结果，Kunminghu 五个专题均无本轮 CPU 运行结果。
-3. **结项结论意味着 RVA23 合规吗？** 不意味着。项目学习交付完成不构成两个 CPU 的整体 RVA23 行为验证、符合性声明或认证。
 
 ## 未决项
 

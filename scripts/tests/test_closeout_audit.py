@@ -1,8 +1,13 @@
 """Acceptance checks for the Story 5.7 evidence summary."""
 from pathlib import Path
+import importlib.util
 
 ROOT = Path(__file__).resolve().parents[2]
 AUDIT = ROOT / "notes/units/rva23s64-closeout-audit-v1.md"
+COVERAGE = ROOT / "notes/rva23-coverage.md"
+CHECKER_SPEC = importlib.util.spec_from_file_location("coverage_checker", ROOT / "scripts/check_rva23_coverage.py")
+coverage_checker = importlib.util.module_from_spec(CHECKER_SPEC)
+CHECKER_SPEC.loader.exec_module(coverage_checker)
 
 
 def test_five_topics_map_to_exact_profile_keys_and_both_units():
@@ -22,6 +27,18 @@ def test_five_topics_map_to_exact_profile_keys_and_both_units():
         assert unit in cells[5]
         assert cells[3].startswith("`studied-unverified`")
         assert f"`{heliodor_status}`" in cells[4]
+    inventory = coverage_checker.validate_inventory(COVERAGE.read_text(encoding="utf-8"))
+    expected_states = {
+        "Zifencei": ("studied-unverified", "studied-unverified"),
+        "Sstc": ("studied-unverified", "studied-unverified"),
+        "Sscofpmf": ("studied-unverified", "studied-unverified"),
+        "Ssnpm": ("studied-unverified", "studied-unverified"),
+        "Ssstateen": ("studied-unverified", "not-present"),
+    }
+    for topic, statuses in expected_states.items():
+        key = ("S64", topic)
+        assert key in inventory
+        assert tuple(inventory[key][0]) == statuses
     assert "c098f996bf4d301b88693b20315486d31e93bc9d" in text
     assert "94e9c5821c24a8941c3ddc3b76daddc7124a855a" in text
 
@@ -47,3 +64,8 @@ def test_learning_closeout_does_not_claim_cpu_validation_or_conformance():
     assert "接受本项目的 Epic 5 学习交付，但不接受为 CPU 行为验证完成" in conclusion
     assert "不意味着" in conclusion
     assert "认证" in conclusion
+
+
+def test_learning_decision_precedes_audit_details():
+    text = AUDIT.read_text(encoding="utf-8")
+    assert text.index("## 学习结项决定") < text.index("## 审计边界")

@@ -114,6 +114,23 @@ def test_suffixed_ranges_expand_every_intermediate_evidence_id(tmp_path):
     assert checker.evidence_ids("E1a–E2b") == set(ids)
 
 
+def test_evidence_id_ranges_reject_descending_and_excessive_bounds():
+    with pytest.raises(SystemExit, match="invalid or excessive evidence ID range"):
+        checker.evidence_ids("E2–E1")
+    with pytest.raises(SystemExit, match="invalid or excessive evidence ID range"):
+        checker.evidence_ids("E1b–E1a")
+    with pytest.raises(SystemExit, match="invalid or excessive evidence ID range"):
+        checker.evidence_ids("E1–E1002")
+
+
+def test_evidence_link_rejects_id_outside_existing_table(tmp_path):
+    unit = tmp_path / "unit.md"
+    unit.write_text('<a id="evidence-table"></a>\n| E1 | claim |\n', encoding="utf-8")
+    source = tmp_path / "coverage.md"
+    with pytest.raises(SystemExit, match="absent evidence IDs"):
+        checker.validate_evidence_links("[E0–E2](unit.md#evidence-table)", source)
+
+
 def test_evidence_table_anchor_alias_matches_its_declared_id(tmp_path):
     unit = tmp_path / "unit.md"
     unit.write_text('<a id="evidence_table"></a>\n| E1 | claim |\n', encoding="utf-8")
