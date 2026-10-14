@@ -30,7 +30,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 # - Retrospective appends its action items to action_items; the status view surfaces open ones
 generated: 10-12-2026 14:04
-last_updated: 10-14-2026 09:51
+last_updated: 10-14-2026 10:02
 project: learning_rv64_cpu
 project_key: NOKEY
 tracking_system: file-system
@@ -74,7 +74,7 @@ development_status:
   5-5-比较-ssnpm-指针屏蔽: done
   5-6-比较-ssstateen-状态访问门控: done
   5-7-审计-rva23s64-覆盖与学习结项证据: done
-  epic-5-retrospective: optional
+  epic-5-retrospective: done
 action_items:
   - id: "epic-1-retro-item-1-修订-add-记录的证据可追溯性和测试表述-自检答案补充-heliodor-写回"
     epic: 1
@@ -129,3 +129,30 @@ action_items:
     owner: "Tang Can"
     status: done
     ref: "_agile-output/implementation-artifacts/epic-4-retro-2026-10-12.md"
+  - id: "epic-5-retro-item-9-扩展-test_closeout_audit-py-逐个比较五主题精确-key"
+    epic: 5
+    action: "扩展 test_closeout_audit.py，逐个比较五主题精确 key 和双侧状态与 notes/rva23-coverage.md；为
+      checker 内嵌的 profile ID 清单记录版本化来源，并为 evidence link/ID 解析加入边界测试。"
+    owner: "Tang Can"
+    status: open
+    ref: "_agile-output/implementation-artifacts/epic-5-retro-2026-10-14.md"
+  - id: "epic-5-retro-item-10-说明-check_doc_links-py-面向的-markdown-rende"
+    epic: 5
+    action: "说明 check_doc_links.py 面向的 Markdown renderer 和支持的 HTML/link 子集；用 renderer
+      结果校验 heading anchors，并为转义反引号、HTML comments、嵌套括号链接增加测试或明确拒绝规则。"
+    owner: "Tang Can"
+    status: open
+    ref: "_agile-output/implementation-artifacts/epic-5-retro-2026-10-14.md"
+  - id: "epic-5-retro-item-11-若后续需要-cpu-行为验证-先定义环境和-harness-preflight"
+    epic: 5
+    action: "若后续需要 CPU 行为验证，先定义环境和 harness preflight，处理 Kunminghu mill 与 Heliodor
+      testbench 阻塞，调查 Ssstateen 当前 run-fail，再为五专题未运行案例建立可执行故事；每次结果保留 revision、输入摘要、命令、工具版本和可复查输出。"
+    owner: "Tang Can"
+    status: open
+    ref: "_agile-output/implementation-artifacts/epic-5-retro-2026-10-14.md"
+  - id: "epic-5-retro-item-12-调整-closeout-audit-结构-将学习结项决定放到开篇-后续章节保留逐"
+    epic: 5
+    action: "调整 closeout audit 结构，将学习结项决定放到开篇；后续章节保留逐项证据和自检以支持核查。"
+    owner: "Tang Can"
+    status: open
+    ref: "_agile-output/implementation-artifacts/epic-5-retro-2026-10-14.md"

@@ -58,7 +58,7 @@ Epic 4 目录当前为 U64 34 行、S64 58 行，共 92 profile 行、184 个实
 | 全脚本测试 | `python3 -m pytest -q scripts/tests`；pytest 9.1.1 | `31 passed`（覆盖目录、链接解析及结项分类检查；Story 5.7 review fixes 后复跑）。 |
 | whitespace 检查 | `git diff --check` | 检查通过，无 whitespace error。 |
 
-Story 5.7 开始实施时由 `backlog` 切换为 `in-progress`，交付审查后按 review 结果完成；Epic 5 及 Stories 5.1–5.7 当前均为 `done`。Epic 5 retrospective 仍是 `optional`。
+Story 5.7 开始实施时由 `backlog` 切换为 `in-progress`，交付审查后按 review 结果完成；本审计记录完成时，Epic 5 retrospective 状态为 `optional`。其后已完成正式回顾，见 [Epic 5 retrospective](../../_agile-output/implementation-artifacts/epic-5-retro-2026-10-14.md)；当前 Epic 5 与 Stories 5.1–5.7 均为 `done`。
 
 ## 学习结项决定与自检
 

@@ -75,7 +75,7 @@ context: ['{project-root}/_agile-output/implementation-artifacts/epic-5-context.
 - 新增 `scripts/tests/test_check_doc_links.py`，测试本地目标、heading/CJK/重复/显式 anchor、缺失目标、行号、外链/inline/fenced code、reference/HTML 链接、CLI 成功/错误退出、非法 UTF-8 和无效 URL。
 - 交叉核验五个单元、覆盖目录和锁定 checkout：实际 SHA 均匹配 `sources.lock`。五项 exact key/版本及案例结果汇总于 [结项审计](../../notes/units/rva23s64-closeout-audit-v1.md)；仅 Ssstateen Heliodor M/HS fixture 有 CPU 运行观察，结果 `run-fail`。其他被计划的 CPU 案例分别为启动前阻塞或静态/未验证，不记通过。
 - 检查结果：`python3 scripts/check_rva23_coverage.py` 输出 92 profile rows、184 状态格、59 去重要求，valid；`python3 scripts/check_doc_links.py` 输出受支持语法的本地目标和锚点全部存在；指定 sprint validator 输出 valid=true、problems=[]；`python3 -m pytest -q scripts/tests` 最终为 31 passed；`git diff --check` 通过。工具版本和完整边界见结项审计。
-- 学习结项接受范围仅为本项目的对照记录与证据边界；Stories 5.1–5.7 和 Epic 5 完成，Epic 5 retrospective 保持 optional。无 RVA23 整体符合性/认证结论。
+- 学习结项接受范围仅为本项目的对照记录与证据边界；Stories 5.1–5.7 和 Epic 5 完成。Story 5.7 完成时 retrospective 为 optional，后续复盘见 [Epic 5 retrospective](epic-5-retro-2026-10-14.md)。无 RVA23 整体符合性/认证结论。
 
 ## Spec Change Log
 
