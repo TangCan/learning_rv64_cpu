@@ -1,0 +1,25 @@
+[compile and link]
+[raw image generation]
+[emulator CPU run]
+emu compiled at Oct 14 2026, 10:53:44
+[INFO] init for constantin: loaded from init.
+Using simulated 1048576B flash
+Core  0's Commit SHA is: c098f996bf, dirty: 0
+Using simulated 8386560MB RAM
+The image is /nvme_data1/richard/learning_rv64_cpu/notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T044927Z/fixture.bin
+The reference model is /nvme_data1/richard/learning_rv64_cpu/sources/xiangshan/ready-to-run/riscv64-nemu-interpreter-so
+The first instruction of core 0 has commited. Difftest enabled. 
+[00] commit pc 0000000010000000 inst 74446073 wen 0 dst 00 data 0000000000000000 idx 000
+[01] commit pc 0000000010000004 inst 0010029b wen 1 dst 05 data 0000000000000001 idx 001
+[02] commit pc 0000000010000008 inst 02a29313 wen 1 dst 06 data 0000040000000000 idx 002
+[03] commit pc 000000001000000c inst 30033073 wen 0 dst 00 data 0000040000000000 idx 003
+[04] commit pc 0000000010000010 inst 01f29293 wen 1 dst 05 data 0000000080000000 idx 004
+[05] commit pc 0000000010000014 inst 00028067 wen 0 dst 00 data 0000000080000000 idx 005
+[06] commit pc 0000000080000000 inst 00700293 wen 1 dst 05 data 0000000000000007 idx 006
+[07] commit pc 000000008000000a inst 01c39563 wen 0 dst 10 data 0000000000000007 idx 007
+[08] commit pc 000000008000000e inst 00000513 wen 1 dst 10 data 0000000000000000 idx 008
+Core 0: [32mHIT GOOD TRAP at pc = 0x80000010
+[0m[35mCore-0 instrCnt = 12, cycleCnt = 4,180, IPC = 0.002871
+[0m[34mSeed=0 Guest cycle spent: 4,186 (this will be different from cycleCnt if emu loads a snapshot)
+[0m[34mHost time spent: 3,477ms
+[0m

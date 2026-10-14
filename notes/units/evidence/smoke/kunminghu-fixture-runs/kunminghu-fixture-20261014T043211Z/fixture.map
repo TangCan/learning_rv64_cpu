@@ -1,0 +1,42 @@
+
+There are no discarded input sections
+
+Memory Configuration
+
+Name             Origin             Length             Attributes
+*default*        0x0000000000000000 0xffffffffffffffff
+
+Linker script and memory map
+
+                0x0000000080000000                . = 0x80000000
+
+.text           0x0000000080000000       0x1a
+ *(.text.init)
+ .text.init     0x0000000080000000       0x1a /tmp/ccMT67y6.o
+                0x0000000080000000                _start
+                0x0000000080000010                good_trap
+ *(.text .text.*)
+ .text          0x000000008000001a        0x0 /tmp/ccMT67y6.o
+
+.rodata
+ *(.rodata .rodata.*)
+
+.data           0x0000000080000020        0x0
+ *(.data .data.*)
+ .data          0x0000000080000020        0x0 /tmp/ccMT67y6.o
+
+.bss            0x0000000080000020        0x0
+ *(.bss .bss.*)
+ .bss           0x0000000080000020        0x0 /tmp/ccMT67y6.o
+ *(COMMON)
+
+/DISCARD/
+ *(.comment)
+ *(.eh_frame*)
+LOAD /tmp/ccMT67y6.o
+OUTPUT(/nvme_data1/richard/learning_rv64_cpu/notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T043211Z/fixture.elf elf64-littleriscv)
+
+.riscv.attributes
+                0x0000000000000000       0x4c
+ .riscv.attributes
+                0x0000000000000000       0x4c /tmp/ccMT67y6.o

@@ -91,6 +91,20 @@ Heliodor 固定为 Veryl 0.22.0（`967e477`）、Verilator 5.020 和 G++ 13.3.0�
 
 Story 6.1 两侧 CPU-start/marker 验收已通过；Kunminghu 的可重建 Verilator 5.050 环境与 Heliodor 的隔离 Veryl runner 可供后续故事复用。专题级 Ssstateen 的 `run-fail` 是独立的硬件行为发现，必须由 Story 6.8 处理，不改变本 smoke 的基础入口结论。
 
+## Story 6.2 Kunminghu fixture 加载与模拟器入口（2026-10-14）
+
+`experiments/kunminghu-smoke/` 提供 RV64I 算术自检 fixture、链接脚本和复现说明；`run.py` 复用 Story 6.1 锁定的单 hart emulator/NEMU，不会构建或写入 `sources/`。fixture 的 `_start` 位于 `0x80000000`，并以 `7 + 11 == 18` 决定 NEMU custom trap 的 `a0` 成功/失败值。runner 要求仿真器报告预期 raw image 路径、首条提交、提交轨迹中的链接入口 PC、与 map 中 `good_trap` 地址一致的 good-trap PC、无 BADTRAP/ABORT/critical-error、退出码为零；未达到这些条件不分类为 `run-pass`。它在执行后再次验证锁定源码、gitlink 和既有 manifest，并以加锁的原子替换方式写入并发运行记录。
+
+复现命令：
+
+```sh
+python3 experiments/kunminghu-smoke/run.py --manifest notes/units/evidence/cpu-validation-toolchain-v1.yaml
+```
+
+运行 `kunminghu-fixture-20261014T043211Z` 在 `KunminghuV2Config`、`NUM_CORES=1` 下通过；仿真器 flash reset stub 的提交轨迹从 `0x10000000` 跳转到 fixture `_start=0x80000000`，`good_trap` 映射和观察 PC 均为 `0x80000010`。完整 stdout/stderr、合并校验 transcript、ELF、map、raw image、命令、工具版本和 SHA-256 保存在 [运行证据目录](evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T043211Z/)。对应的机器可校验记录追加在工具链 manifest 的 Kunminghu `runs` 列表中。回归测试为 [`test_kunminghu_smoke.py`](../../scripts/tests/test_kunminghu_smoke.py)。本 smoke 只证明该 fixture 在固定快照和单 hart 配置下正确加载、提交并退出，不构成任何 RVA23 专题或 profile 符合性结论。
+
+之后保留的 `kunminghu-fixture-20261014T043935Z`、`kunminghu-fixture-20261014T044428Z`、`kunminghu-fixture-20261014T044458Z`、`kunminghu-fixture-20261014T044927Z` 和 `kunminghu-fixture-20261014T045142Z` 是实现审查后的复跑。第十轮审查补充了 linker script 的运行前后 SHA-256 校验和加锁追加前复核、模拟器文件在 hash 期间消失时的结构化失败记录，以及错误 image-path 的 runner 级测试。最终复跑 `kunminghu-fixture-20261014T051436Z-3e81181d1d02` 同样从 `0x80000000` 提交，在 `0x80000010` 命中 good trap，退出码为零；源码 SHA-256 为 `55de02149639dc04d311b153d30ee8082f480d608472488863f9e36b85fcd2ed`，链接脚本 SHA-256 为 `1a09d98e3c1ba4c22c1ecd2c16e5f4d8cad65fc6944efe0a0ccd8b3149d4a412`。manifest 还保存模拟器/NEMU 二进制摘要、资源快照和日志/工件摘要。此前各轮六条成功记录仍保留，最终回归真实运行了正确与错误算术 fixture，分别命中 good trap 和 bad trap。
+
 ## 范围决定
 
 Epic 5 的学习交付继续保持其原验收边界；本记录和 Epic 6 不表示两个实现符合 RVA23。Epic 6 是新增的动态验证 backlog，而不是把五专题未运行/失败案例追认为 Epic 5 的通过项。所有故事在各自实现前都要维持 fixed SHA 和可复查元数据。
