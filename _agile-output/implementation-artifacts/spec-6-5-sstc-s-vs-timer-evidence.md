@@ -66,13 +66,13 @@ context:
 
 ## Implementation Notes
 
-本 spec 曾有一轮不完整实现；其代码已在 BMAD bad-spec loopback 中撤回。以下运行记录只作为诊断历史，不作为当前实现或验收证据。旧运行日志临时保存在 `/tmp/learning-rv64-6-5-loopback-evidence/`，重做时必须重新生成并更新 manifest。
+本 spec 曾有一轮不完整实现；其代码已在 BMAD bad-spec loopback 中撤回。以下项目符号是该轮的诊断记录，不是当前待办；当前实现与验收结论以本 spec 的执行任务、Review Triage 和 Implementation Progress 为准。
 
 - 历史实现曾尝试 Heliodor Sstc target 和项目自有 S/VS fixture；不完整代码已撤回，版本化输入快照的做法可保留。
 - 历史 Kunminghu fixture 未设置 PMP；锁定单核 emulator 因 PMP 拒绝 S-mode PC `0x8000006c` 而报 instruction access fault cause 1/BADTRAP。新实现应先配置有效 PMP，再复验；若仍无法到达目标断言，完整记录观察到的 PMP/异常状态。
 - 历史运行曾出现 S boundary、TM gate 与 VS cause 5 的 pass marker；审查发现等值时序、VS 目标 CSR 先后顺序、TM 控制值和 cause 元数据存在问题，因此不得复用作验收结论。
 - VS successful delivery fixture checks cause 5 in VS `scause`/`vscause` and only emits pass after guest timer handling and M-mode completion. S successful delivery checks cause 5 in S `scause`; the negative `<` pending check is sampled in M-mode before S entry.
-- 新实现必须完成 S/VS 的完整验收矩阵；VS `<`/`==`/`>`、独立 M/H STCE 与 TM 门控、两种可观察路由均不可删减。
+- 当时的修订计划要求完成完整矩阵；此项已由后续执行落实，最终证据位于 `notes/units/rva23s64-sstc-v1.md` 的动态复验表。
 - 早期 manifest 中 `kunminghu-fixture-20261014T064944Z-3e81181d1d02` 的 common source 原快照缺失，SHA 差异未被覆盖；旧结果保留来源缺口说明，不作为验收结果。复验使用版本化输入和不可变副本。
 
 ## Spec Change Log
