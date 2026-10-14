@@ -24,6 +24,7 @@ LINKER = ROOT / "experiments/kunminghu-smoke/fixture.ld"
 SSTC_SOURCE = ROOT / "experiments/sstc/kunminghu-full-matrix.S"
 SSCOFPMF_SOURCE = ROOT / "experiments/sscofpmf/kunminghu-sscofpmf-complete-v4.S"
 SSCOFPMF_ACCESS_SOURCE = ROOT / "experiments/sscofpmf/kunminghu-sscofpmf-access-route-diagnostic-v4.S"
+SSNPM_SOURCE = ROOT / "experiments/kunminghu-smoke/ssnpm.S"
 SSTC_CASES = ("s-lt", "s-eq", "s-gt", "s-stce-off", "s-tm-off")
 CHECKOUT = ROOT / "sources/xiangshan"
 EMULATOR = CHECKOUT / "build/verilator-compile/emu"
@@ -321,7 +322,7 @@ def missing_dependencies(gcc: str | None, objcopy: str | None,
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--topic", choices=("fixture", "zifencei", "sstc", "sscofpmf"), default="fixture")
+    parser.add_argument("--topic", choices=("fixture", "zifencei", "sstc", "sscofpmf", "ssnpm"), default="fixture")
     parser.add_argument("--manifest", type=pathlib.Path,
                         default=ROOT / "notes/units/evidence/cpu-validation-toolchain-v1.yaml")
     parser.add_argument("--evidence-dir", type=pathlib.Path,
@@ -330,6 +331,7 @@ def main() -> int:
     parser.add_argument("--sstc-case", choices=SSTC_CASES)
     parser.add_argument("--sscofpmf-case", choices=("hardware-filter", "access-route"),
                         default="hardware-filter")
+    parser.add_argument("--ssnpm-case", choices=("pmlen0-canonical", "pmlen0-tagged", "pmlen7-canonical", "pmlen7-tagged", "pmlen7-bit56"))
     parser.add_argument("--timeout", type=float, default=120.0,
                         help="maximum emulator wall time in seconds")
     parser.add_argument("--input", type=pathlib.Path, help=argparse.SUPPRESS)
@@ -340,6 +342,10 @@ def main() -> int:
         parser.error("--sstc-case requires --topic sstc")
     if args.sscofpmf_case != "hardware-filter" and args.topic != "sscofpmf":
         parser.error("--sscofpmf-case requires --topic sscofpmf")
+    if args.ssnpm_case and args.topic != "ssnpm":
+        parser.error("--ssnpm-case requires --topic ssnpm")
+    if args.topic == "ssnpm" and not args.ssnpm_case:
+        parser.error("--topic ssnpm requires --ssnpm-case")
     if args.topic == "sstc" and not args.sstc_case:
         parser.error("--topic sstc requires --sstc-case")
     if args.topic == "sstc":
@@ -347,6 +353,8 @@ def main() -> int:
         SOURCE = SSTC_SOURCE
     elif args.topic == "sscofpmf":
         SOURCE = SSCOFPMF_ACCESS_SOURCE if args.sscofpmf_case == "access-route" else SSCOFPMF_SOURCE
+    elif args.topic == "ssnpm":
+        SOURCE = SSNPM_SOURCE
     if args.topic == "zifencei" and args.input is None:
         cases = (args.case,) if args.case else ("standard", "funct12", "rs1", "rd")
         status = 0
@@ -471,16 +479,20 @@ def main() -> int:
 
     if not failed_stage:
         assert gcc and objcopy
-        compile_cmd = [gcc, f"-march={'rv64ima_zicsr' if args.topic in {'sstc', 'sscofpmf'} else 'rv64imac'}", "-mabi=lp64", "-nostdlib", "-nostartfiles",
+        compile_cmd = [gcc, f"-march={'rv64ima_zicsr' if args.topic in {'sstc', 'sscofpmf', 'ssnpm'} else 'rv64imac'}", "-mabi=lp64", "-nostdlib", "-nostartfiles",
                        "-Wl,--build-id=none", f"-Wl,-T,{LINKER}", f"-Wl,-Map,{link_map}",
                        *([f"-DCASE_{args.sstc_case.upper().replace('-', '_')}=1"] if args.topic == "sstc" else []),
+                       *(["-DSSNPM_PMLEN7=1"] if args.topic == "ssnpm" and args.ssnpm_case.startswith("pmlen7-") else []),
+                       *(["-DSSNPM_BIT56=1"] if args.topic == "ssnpm" and args.ssnpm_case == "pmlen7-bit56" else []),
+                       *(["-DSSNPM_TAGGED=1"] if args.topic == "ssnpm" and (args.ssnpm_case.endswith("-tagged") or args.ssnpm_case == "pmlen7-bit56") else []),
+                       *(["-DSSNPM_EXPECT_TRAP=1"] if args.topic == "ssnpm" and args.ssnpm_case == "pmlen0-tagged" else []),
                        "-o", str(elf), str(source_snapshot if args.topic == "sstc" else SOURCE)]
         stages.append(("compile and link", compile_cmd))
         copy_cmd = [objcopy, "-O", "binary", str(elf), str(raw)]
         stages.append(("raw image generation", copy_cmd))
         sim_cmd = [str(EMULATOR), "-i", str(raw), "--diff", str(NEMU),
-                   "--max-cycles=100000" if args.topic in {"sstc", "sscofpmf"} else "--max-cycles=10000",
-                   "--max-instr=10000" if args.topic in {"sstc", "sscofpmf"} else "--max-instr=1000",
+                   "--max-cycles=100000" if args.topic in {"sstc", "sscofpmf", "ssnpm"} else "--max-cycles=10000",
+                   "--max-instr=10000" if args.topic in {"sstc", "sscofpmf", "ssnpm"} else "--max-instr=1000",
                    "--dump-commit-trace"]
         stages.append(("emulator CPU run", sim_cmd))
         for stage, command in stages:
@@ -588,7 +600,7 @@ def main() -> int:
         encoding="utf-8",
     )
 
-    recorded_source = source_snapshot if args.topic == "sstc" and source_snapshot.is_file() else SOURCE
+    recorded_source = source_snapshot if args.topic in {"sstc", "ssnpm"} and source_snapshot.is_file() else SOURCE
     expected_artifacts = [str(p.relative_to(ROOT)) for p in (recorded_source, LINKER, elf, link_map, raw)]
     artifacts = [path for path in expected_artifacts if (ROOT / path).is_file()]
     missing_artifacts = [path for path in expected_artifacts if not (ROOT / path).is_file()]
@@ -599,7 +611,9 @@ def main() -> int:
         "input_sha256": input_sha256 or "unavailable",
         "linker_script": str(LINKER.relative_to(ROOT)),
         "linker_script_sha256": linker_sha256 or "unavailable",
-        "configuration": ("KunminghuV2Config; NUM_CORES=1; RV64IMA_Zicsr Sstc S-mode fixture at 0x80000000 (C extension disabled to keep traceable 32-bit fixture instructions); PMP NAPOT grants S-mode access; NEMU difftest."
+        "configuration": ("KunminghuV2Config; NUM_CORES=1; U-mode integer LD from canonical or PMLEN=7 tagged VA; senvcfg.PMM selected in M before mret; PMP NAPOT grants U-mode access; NEMU difftest."
+                           if args.topic == "ssnpm" else
+                           "KunminghuV2Config; NUM_CORES=1; RV64IMA_Zicsr Sstc S-mode fixture at 0x80000000 (C extension disabled to keep traceable 32-bit fixture instructions); PMP NAPOT grants S-mode access; NEMU difftest."
                            if args.topic == "sstc" else
                            "KunminghuV2Config; NUM_CORES=1; RV64IMA_Zicsr Sscofpmf counter3/event2 access matrix and delegated LCOFI probe; NEMU difftest."
                            if args.topic == "sscofpmf" and args.sscofpmf_case == "access-route" else
@@ -608,7 +622,21 @@ def main() -> int:
                            "KunminghuV2Config; NUM_CORES=1; Zifencei self-modifying fixture at 0x80000000; NEMU difftest."
                            if args.topic == "zifencei" else
                            "KunminghuV2Config; NUM_CORES=1; RV64I arithmetic fixture at 0x80000000; NEMU difftest."),
-        **({"topic": "zifencei", "case": SOURCE.stem,
+        **({"topic": "ssnpm", "case": args.ssnpm_case,
+            "expected_controls": {"effective_privilege": "U", "instruction_families": (["ld"] if args.ssnpm_case == "pmlen0-tagged" else ["ld", "sd", "lr.d", "sc.d", "amoadd.d"]),
+                                  "senvcfg.PMM": 2 if args.ssnpm_case.startswith("pmlen7-") else 0,
+                                  "PMLEN": 7 if args.ssnpm_case.startswith("pmlen7-") else 0,
+                                  "expected_senvcfg.PMM_readback": 2 if args.ssnpm_case.startswith("pmlen7-") else 0,
+                                  "input_address": ("probe_data | 0x0100000000000000 (bit 56 set)" if args.ssnpm_case == "pmlen7-bit56" else "probe_data | 0xfe00000000000000" if args.ssnpm_case.endswith("-tagged") else "canonical probe_data"),
+                                  "expected_effective_address": ("raw tagged VA; expect load access fault" if args.ssnpm_case == "pmlen0-tagged" else "PMLEN7 sign-extends bit 56; bus address is not externally sampled" if args.ssnpm_case == "pmlen7-bit56" else "PMLEN7 high-tag VA should address probe_data; bus address is not externally sampled" if args.ssnpm_case == "pmlen7-tagged" else "probe_data"),
+                                  "expected_value": "access fault cause 5" if args.ssnpm_case == "pmlen0-tagged" else "ld=0x1234, store/readback=0x5678, LR/SC=0x9abc, AMOADD old=0x9abc/new=0x9abd"},
+            "observed_values": ({"senvcfg.PMM_readback": 2 if args.ssnpm_case.startswith("pmlen7-") else 0,
+                                 **({"load_trap_cause": 5} if args.ssnpm_case == "pmlen0-tagged" else {"load_store_lr_sc_amo_assertions": "all passed"}),
+                                 "effective_address": "probe_data alias confirmed by successful memory-family assertions" if args.ssnpm_case != "pmlen0-tagged" else "raw tagged VA faulted before target access"}
+                                if observed["expected_observed"] else None),
+            "evidence_method": "M-mode asserts senvcfg.PMM readback before mret; U-mode asserts expected load/store/LR.D/SC.D/AMOADD.D values (or the PMLEN0 tagged load access-fault cause 5); success marker follows the assertions"}
+           if args.topic == "ssnpm" else
+           {"topic": "zifencei", "case": SOURCE.stem,
             "fence_i_encoding": {"standard": "0x0000100f", "funct12": "0x0010100f",
                                  "rs1": "0x0000900f", "rd": "0x0000108f"}[SOURCE.stem],
             "expected_values": {"before_fence_i": 1, "after_fence_i": 42},

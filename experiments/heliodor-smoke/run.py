@@ -32,6 +32,12 @@ SSTC_CASES = ("s-lt", "s-eq", "s-gt", "s-stce-off", "s-tm-off",
               "vs-lt", "vs-eq", "vs-gt", "vs-mstce-off", "vs-hstce-off",
               "vs-mtm-off", "vs-htm-off", "vs-route", "vs-hs-route")
 SSCOFPMF_FIXTURE = "test/sscofpmf/sscofpmf_test.hex"
+SSNPM_CASES = ("pmlen0-canonical", "pmlen0-tagged", "pmlen7-canonical", "pmlen7-tagged", "pmlen7-bit56")
+SSNPM_LINKER = ROOT / "experiments/rva23s64-zifencei/fixture.ld"
+SSNPM_TOOL_HASHES = {
+    "riscv64-unknown-elf-gcc": "3b2b5d5ad7f9c7821c8ca1b11c6c512f30e3d63dcbdc726836c1c7bc0bceed32",
+    "riscv64-unknown-elf-objcopy": "0ed4d26870589f4ba1e5678b62305d66c2df6ee8906da706c830a6f42950c858",
+}
 
 SSTC_CONTROLS = {
     "s-lt": {"menvcfg.STCE": 1, "mcounteren.TM": 1, "relation": "time < stimecmp", "delta": 8},
@@ -177,7 +183,7 @@ def observe(output: str, exit_code: int, arch_label: str = "v4 rv64ui-add") -> t
     # cannot prove that this separate target began execution. Without an arch
     # result marker, report startup as unobserved (blocked) rather than assert
     # either that the target ran or that it did not.
-    target_only_case = arch_label in {"v4 rv64ui-fence_i", "sscofpmf"}
+    target_only_case = arch_label in {"v4 rv64ui-fence_i", "sscofpmf", "supm"} or arch_label.startswith("ssnpm ")
     cpu_started = arch_started if target_only_case else (smoke_started or arch_started)
     values: dict[str, int] = {}
     for reg in (10, 11, 12, 13):
@@ -197,9 +203,9 @@ def observe(output: str, exit_code: int, arch_label: str = "v4 rv64ui-add") -> t
 
 
 def expected_arch_marker(arch_label: str, *, zifencei_case: bool = False,
-                         sscofpmf: bool = False) -> str:
+                         sscofpmf: bool = False, ssnpm_case: str | None = None) -> str:
     """Return the marker that identifies the selected arch target."""
-    return f"{arch_label} PASS" if zifencei_case or sscofpmf else "[test_smoke] PASS"
+    return f"{arch_label} PASS" if zifencei_case or sscofpmf or ssnpm_case or arch_label == "supm" else "[test_smoke] PASS"
 
 
 def transform_testbench(original: str) -> str:
@@ -227,7 +233,7 @@ def transform_arch_harness(original: str, *, target: str = "test_arch_rv64ui_add
     target_start = original.index(target_marker)
     next_target = original.find("\n#[test(", target_start + len(target_marker))
     if next_target < 0:
-        raise ValueError("selected arch target has no bounded module end")
+        next_target = len(original)
     selected_target = original[target_start:next_target].strip() + "\n"
     if target != source_target:
         selected_target = selected_target.replace(source_target, target)
@@ -338,6 +344,8 @@ def run(args: argparse.Namespace) -> dict:
     zifencei_case = getattr(args, "zifencei_case", None)
     sstc_case = getattr(args, "sstc_case", None)
     sscofpmf = getattr(args, "topic", "smoke") == "sscofpmf"
+    ssnpm_case = getattr(args, "ssnpm_case", None)
+    ssnpm = bool(ssnpm_case)
     arch_target = "test_arch_rv64ui_add"
     arch_label = "v4 rv64ui-add"
     fixture_rel = ARCH_FIXTURE
@@ -353,6 +361,10 @@ def run(args: argparse.Namespace) -> dict:
         fixture_rel = SSCOFPMF_FIXTURE
         arch_target = "test_arch_sscofpmf"
         arch_label = "sscofpmf"
+    elif ssnpm:
+        fixture_rel = f"experiments/ssnpm/heliodor/{ssnpm_case}.hex"
+        arch_target = "test_arch_rv64ui_ssnpm"
+        arch_label = f"ssnpm {ssnpm_case}"
     started_at = time.time()
     run_base = time.strftime("heliodor-core-%Y%m%dT%H%M%SZ", time.gmtime()) + f"-{os.getpid()}"
     run_id = run_base
@@ -372,8 +384,9 @@ def run(args: argparse.Namespace) -> dict:
     archive.mkdir(parents=True, exist_ok=True)
     out = bytearray(); err = bytearray(); exit_code = 1; cpu_started = False
     assertion_failed = False; expected_observed = False; first_stage = "locked-source-preflight"; blocker = ""
-    snapshot_sha = LOCKED_SHA; input_path = ((ROOT / "experiments/rva23s64-zifencei" / f"{zifencei_case}.hex") if zifencei_case else (ROOT / "experiments/sstc/heliodor" / f"{sstc_case}.hex") if sstc_case else SOURCE / fixture_rel)
-    archived_arch_fixture = archive / (f"zifencei-{zifencei_case}.hex" if zifencei_case else f"sstc-{sstc_case}.hex" if sstc_case else "sscofpmf.hex" if sscofpmf else "rv64ui-add.hex")
+    snapshot_sha = LOCKED_SHA; input_path = ((ROOT / "experiments/rva23s64-zifencei" / f"{zifencei_case}.hex") if zifencei_case else (ROOT / "experiments/sstc/heliodor" / f"{sstc_case}.hex") if sstc_case else (ROOT / fixture_rel) if ssnpm else SOURCE / fixture_rel)
+    archived_arch_fixture = archive / (f"zifencei-{zifencei_case}.hex" if zifencei_case else f"sstc-{sstc_case}.hex" if sstc_case else "sscofpmf.hex" if sscofpmf else f"ssnpm-{ssnpm_case}.hex" if ssnpm else "rv64ui-add.hex")
+    ssnpm_build_record: dict = {}
     # Snapshot the exact arch input before source preflight so even blocked runs
     # retain a stable, hash-verifiable input artifact.
     if input_path.is_file():
@@ -383,6 +396,7 @@ def run(args: argparse.Namespace) -> dict:
     smoke_input_hash = sha256(smoke_input_path) if smoke_input_path.is_file() else "0" * 64
     tools: dict[str, str] = {"veryl": "unavailable", "verilator": "unavailable", "cxx": "unavailable"}
     command: list[str] = []
+    commands: list[list[str]] = []
     transformed_hash = transformed_arch_hash = fixture_hash = smoke_fixture_hash = ""
     source_tree_hash = isolated_tree_hash = isolated_inputs_hash = ""
     try:
@@ -395,6 +409,12 @@ def run(args: argparse.Namespace) -> dict:
             raise FileNotFoundError(f"required smoke/arch fixture missing: {input_path if not input_path.is_file() else smoke_input_path}")
         input_hash = sha256(input_path)
         smoke_input_hash = sha256(smoke_input_path)
+        if ssnpm:
+            for name, expected_hash in SSNPM_TOOL_HASHES.items():
+                binary_path = shutil.which(name)
+                if not binary_path or sha256(pathlib.Path(binary_path)) != expected_hash:
+                    raise ValueError(f"{name} unavailable or differs from pinned Story 6.1 SHA-256")
+                tools[name] = f"{subprocess.check_output([binary_path, '--version'], text=True).splitlines()[0]}; binary sha256 {expected_hash}"
         first_stage = "isolated-copy"
         if args.work_dir:
             work = args.work_dir.resolve()
@@ -433,7 +453,13 @@ def run(args: argparse.Namespace) -> dict:
         shutil.copy2(work / "test/v4_smoke.hex", archive / "v4_smoke.hex")
         shutil.copy2(work / "tb/test_arch_common.veryl", archive / "test_arch_common.veryl")
         shutil.copy2(arch_fixture, archived_arch_fixture)
-        commands: list[list[str]] = []
+        if ssnpm:
+            shutil.copy2(ROOT / "experiments/ssnpm/build_heliodor_fixtures.py", archive / "build_heliodor_fixtures.py")
+            shutil.copy2(input_path.with_suffix(".S"), archive / f"{ssnpm_case}.S")
+            build_record_path = input_path.with_suffix(".build.json")
+            ssnpm_build_record = json.loads(build_record_path.read_text(encoding="utf-8"))
+            shutil.copy2(build_record_path, archive / f"{ssnpm_case}.build.json")
+            shutil.copy2(SSNPM_LINKER, archive / "fixture.ld")
         for test_name in ("test_smoke", arch_target):
             first_stage = test_name
             command = [binary, "test", "--include-ignored", "--test", test_name]
@@ -506,6 +532,25 @@ def run(args: argparse.Namespace) -> dict:
                 sstc_observed["comparator"] = int(marker.group(4), 16)
                 sstc_observed["time_after_write"] = int(marker.group(5), 16)
     record = {
+        **({"topic": "ssnpm", "case": ssnpm_case,
+            "expected_controls": {"effective_privilege": "U", "instruction_family": "integer load/store", "instruction": "ld",
+                                  "senvcfg.PMM": 2 if ssnpm_case.startswith("pmlen7-") else 0,
+                                  "PMLEN": 7 if ssnpm_case.startswith("pmlen7-") else 0,
+                                  "senvcfg.PMM_readback": 2 if ssnpm_case.startswith("pmlen7-") else 0,
+                                  "input_address": "probe_data | 0x0100000000000000 (bit 56 set)" if ssnpm_case == "pmlen7-bit56" else "probe_data | 0xfe00000000000000" if ssnpm_case.endswith("-tagged") else "canonical probe_data",
+                                  "expected_effective_address": "PMLEN7 VA sign-extends bit 56" if ssnpm_case == "pmlen7-bit56" else "probe_data" if ssnpm_case not in {"pmlen0-tagged"} else "unmasked tagged VA faults",
+                                  "expected_trap_cause": 5 if ssnpm_case == "pmlen0-tagged" else None,
+                                  "expected_trap_mepc": "tagged_load" if ssnpm_case == "pmlen0-tagged" else None,
+                                  "expected_trap_mtval": "probe_data | 0xfe00000000000000" if ssnpm_case == "pmlen0-tagged" else None,
+                                  "expected_stored_and_loaded_value": "0x5678" if ssnpm_case != "pmlen0-tagged" else None},
+            "observed_values": ({"tohost": 1, "pass": True,
+                                 "fixture_assertions": "M-mode senvcfg.PMM readback; U-mode store/load result or tagged-load cause/mepc/mtval checks",
+                                 "harness_limit": "high-address accesses are indexed by low DRAM address bits; raw and masked addresses are not distinguished"}
+                                if expected_observed else None),
+            "fixture_linker_script": str((archive / "fixture.ld").relative_to(ROOT)),
+            "fixture_linker_sha256": sha256(archive / "fixture.ld"),
+            "fixture_build_commands": {"gcc": ssnpm_build_record.get("gcc_argv"), "objcopy": ssnpm_build_record.get("objcopy_argv")},
+            "evidence_method": "U-mode fixture stores and reloads through canonical/tagged/boundary pointer; PMLEN0 tagged pass requires cause 5 at tagged_load with matching mtval"} if ssnpm else {}),
         **({"topic": "zifencei", "case": zifencei_case, "fence_i_encoding": {"standard": "0x0000100f", "funct12": "0x0010100f", "rs1": "0x0000900f", "rd": "0x0000108f"}[zifencei_case], "expected_values": {"before_fence_i": 1, "after_fence_i": 42}, "observed_values": {"before_fence_i": 1, "after_fence_i": 42, "evidence_method": "fixture equality checks for a0==1 before patch and a0==42 after FENCE.I; successful tohost/pass marker is reachable only after both checks"} if expected_observed else None, "reserved_field_trap": "no trap prevented the pass marker; trap-cause telemetry unavailable" if expected_observed else "startup/result not established or see run log; harness does not expose trap cause"} if zifencei_case else {}),
         **({"topic": "sscofpmf", "case": "hardware-overflow-event5-counter3",
             "expected_controls": {"event_selector": 5, "counter": 3, "counter_width": 64,
@@ -523,16 +568,18 @@ def run(args: argparse.Namespace) -> dict:
         "input_sha256": input_hash,
         "inputs": [{"path": "sources/heliodor/test/v4_smoke.hex", "sha256": smoke_input_hash},
                    {"path": str(archived_arch_fixture.relative_to(ROOT)) if archived_arch_fixture.is_file() else str(input_path.relative_to(ROOT)), "sha256": input_hash}],
-        "configuration": (f"Heliodor test_smoke plus {arch_target}; one harness/DUT; 5000 smoke cycles and 300000 arch cycles; expected Zifencei old/new return 1/42 and tohost=1." if zifencei_case else
+        "configuration": (f"Heliodor test_smoke plus isolated test_arch_rv64ui_ssnpm ({ssnpm_case}); one harness/DUT; U-mode senvcfg.PMM PMLEN/tagged-pointer probe." if ssnpm else
+                          f"Heliodor test_smoke plus {arch_target}; one harness/DUT; 5000 smoke cycles and 300000 arch cycles; expected Zifencei old/new return 1/42 and tohost=1." if zifencei_case else
                           f"Heliodor test_smoke plus {arch_target}; one harness/DUT; 5000 smoke cycles and 200000 Sscofpmf arch cycles; event5 mem-port-busy, counter3 64-bit preload all ones; expected tohost=1 after MINH filtering and hardware overflow/cause/OF/scountovf assertions." if sscofpmf else
                           f"Heliodor test_smoke plus {arch_target}; one harness/DUT; 5000 smoke cycles and 300000 arch cycles; mtime counter increments each cycle and CSR time is mtime_ctr >> 8; controls={SSTC_CONTROLS.get(sstc_case, {})}; expected tohost=1." if sstc_case else
                           "Heliodor test_smoke plus test_arch_rv64ui_add; one harness/DUT; 5000 smoke cycles and 300000 arch cycles; expected x10=7, x11=11, x12=77, x13=11 and tohost=1."),
-        "command": json.dumps(commands, ensure_ascii=False) if command else "preflight not reached",
+        "command": json.dumps(([ [sys.executable, str(ROOT / "experiments/ssnpm/build_heliodor_fixtures.py")] ] if ssnpm else []) + commands, ensure_ascii=False) if commands else "preflight not reached",
         "working_directory": str(work) if work else str(ROOT), "tools": tools,
         "exit_code": exit_code, "cpu_started": cpu_started,
         "result": "run-pass" if expected_observed else ("run-fail" if cpu_started and assertion_failed else "blocked"),
         "assertion_failed": assertion_failed, "expected_observed": expected_observed,
-        "expected": ("test_smoke registers pass; Zifencei fixture checks old return 1 then new return 42 and reports tohost=1/pass=1." if zifencei_case else
+        "expected": (f"U-mode Ssnpm fixture {ssnpm_case} verifies senvcfg.PMM readback and expected explicit access behavior before tohost=1/pass=1." if ssnpm else
+                     "test_smoke registers pass; Zifencei fixture checks old return 1 then new return 42 and reports tohost=1/pass=1." if zifencei_case else
                      "Heliodor Sscofpmf fixture checks MINH filtering, hardware event5 counter3 wrap, cause 13, OF, and scountovf[3] before tohost=1." if sscofpmf else
                      f"Heliodor fixture {sstc_case} asserts its named Sstc condition and reports tohost=1." if sstc_case else
                      "Both CPU tests pass: test_smoke reports x10=7, x11=11, x12=77, x13=11; test_arch_rv64ui_add reports tohost=1/pass=1 and its PASS marker."),
@@ -543,9 +590,10 @@ def run(args: argparse.Namespace) -> dict:
         "stderr": str(stderr_path.relative_to(ROOT)) if stderr_path.is_relative_to(ROOT) else str(stderr_path),
         "stderr_sha256": sha256(stderr_path),
         "artifacts": [str(p.relative_to(ROOT)) for p in
-                      [archive / "run.py", archive / "test_smoke.veryl", archive / "v4_smoke.hex"] if p.is_file()],
+                      [archive / "run.py", archive / "test_smoke.veryl", archive / "v4_smoke.hex",
+                       archive / "build_heliodor_fixtures.py", archive / f"{ssnpm_case}.S"] if p.is_file()],
         "artifact_sha256": {}, "expected_marker": expected_arch_marker(
-            arch_label, zifencei_case=bool(zifencei_case), sscofpmf=sscofpmf), "blocker": blocker,
+            arch_label, zifencei_case=bool(zifencei_case), sscofpmf=sscofpmf, ssnpm_case=ssnpm_case), "blocker": blocker,
         "log_path_warnings": log_persistence_errors,
         "first_failed_stage": first_stage if not expected_observed else "",
         "resources": resource_snapshot(args.timeout),
@@ -563,12 +611,13 @@ def run(args: argparse.Namespace) -> dict:
     # runner edits cannot invalidate this run's provenance.
     runner_snapshot = archive / "run.py"
     shutil.copy2(pathlib.Path(__file__).resolve(), runner_snapshot)
+    artifact_names = ["run.py", "test_smoke.veryl", "v4_smoke.hex", "test_arch_common.veryl", archived_arch_fixture.name]
+    if ssnpm:
+        artifact_names.extend(["build_heliodor_fixtures.py", f"{ssnpm_case}.S", f"{ssnpm_case}.build.json", "fixture.ld"])
     record["artifact_sha256"] = {str((archive / n).relative_to(ROOT)): sha256(archive / n)
-                                 for n in ("run.py", "test_smoke.veryl", "v4_smoke.hex",
-                                           "test_arch_common.veryl", archived_arch_fixture.name) if (archive / n).is_file()}
+                                 for n in artifact_names if (archive / n).is_file()}
     record["artifacts"] = [str((archive / n).relative_to(ROOT)) for n in
-                            ("run.py", "test_smoke.veryl", "v4_smoke.hex",
-                             "test_arch_common.veryl", archived_arch_fixture.name) if (archive / n).is_file()]
+                            artifact_names if (archive / n).is_file()]
     metadata_path = archive / "run-metadata.json"
     metadata_path.write_text(json.dumps(record, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     try:
@@ -608,14 +657,17 @@ def main() -> int:
     parser.add_argument("--archive-dir", type=pathlib.Path, default=ROOT / "notes/units/evidence/smoke/heliodor-core-smoke-inputs")
     parser.add_argument("--work-dir", type=pathlib.Path)
     parser.add_argument("--timeout", type=float, default=180.0)
-    parser.add_argument("--topic", choices=("smoke", "zifencei", "sstc", "sscofpmf"), default="smoke")
+    parser.add_argument("--topic", choices=("smoke", "zifencei", "sstc", "sscofpmf", "ssnpm"), default="smoke")
     parser.add_argument("--case", choices=("standard", "funct12", "rs1", "rd"))
     parser.add_argument("--sstc-case", choices=SSTC_CASES)
+    parser.add_argument("--ssnpm-case", choices=SSNPM_CASES)
     args = parser.parse_args()
     if args.timeout <= 0 or not (args.timeout < float("inf")):
         parser.error("--timeout must be finite and positive")
     if args.sstc_case and args.topic != "sstc":
         parser.error("--sstc-case requires --topic sstc")
+    if args.ssnpm_case and args.topic != "ssnpm":
+        parser.error("--ssnpm-case requires --topic ssnpm")
     if args.topic == "zifencei":
         if args.case:
             args.zifencei_case = args.case
@@ -655,6 +707,19 @@ def main() -> int:
     if args.topic == "sscofpmf":
         record = run(args)
         return 0 if record["result"] == "run-pass" else 1
+    if args.topic == "ssnpm":
+        if args.case or args.sstc_case:
+            parser.error("--case and --sstc-case do not apply to --topic ssnpm")
+        build = subprocess.run([sys.executable, str(ROOT / "experiments/ssnpm/build_heliodor_fixtures.py")], cwd=ROOT, check=False)
+        if build.returncode:
+            return build.returncode
+        cases = (args.ssnpm_case,) if args.ssnpm_case else SSNPM_CASES
+        status = 0
+        for case in cases:
+            args.ssnpm_case = case
+            record = run(args)
+            status |= 0 if record["result"] == "run-pass" else 1
+        return status
     try:
         record = run(args)
         return 0 if record["result"] == "run-pass" else 1

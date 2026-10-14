@@ -73,6 +73,14 @@ def test_locked_manifest_and_logs_validate():
     assert validate_manifest(ROOT / "notes/units/evidence/cpu-validation-toolchain-v1.yaml") == []
 
 
+def test_historical_absolute_working_directory_does_not_need_a_placeholder(tmp_path):
+    manifest = json.loads((ROOT / "notes/units/evidence/cpu-validation-toolchain-v1.yaml").read_text(encoding="utf-8"))
+    record = manifest["snapshots"][1]["runs"][0].copy()
+    record["working_directory"] = str(tmp_path / "removed-after-run")
+    errors = validate_record(record, "historical-run")
+    assert not any("working_directory does not exist" in error for error in errors)
+
+
 def test_snapshot_drift_is_reported(tmp_path):
     path = ROOT / "notes/units/evidence/cpu-validation-toolchain-v1.yaml"
     manifest = json.loads(path.read_text(encoding="utf-8"))

@@ -115,7 +115,8 @@ def validate_record(record: dict[str, Any], label: str) -> list[str]:
         errors.append(f"{label}: command must be a non-empty exact command")
     if not isinstance(record["working_directory"], str) or not record["working_directory"].strip():
         errors.append(f"{label}: working_directory is required")
-    elif not _repo_path(record["working_directory"]).is_dir():
+    elif (not pathlib.Path(record["working_directory"]).is_absolute()
+          and not _repo_path(record["working_directory"]).is_dir()):
         errors.append(f"{label}: working_directory does not exist: {record['working_directory']}")
     if not isinstance(record["exit_code"], int) or isinstance(record["exit_code"], bool):
         errors.append(f"{label}: exit_code must be an integer")

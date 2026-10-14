@@ -1,0 +1,64 @@
+[compile and link]
+[raw image generation]
+[emulator CPU run]
+emu compiled at Oct 14 2026, 10:53:44
+[INFO] init for constantin: loaded from init.
+Using simulated 1048576B flash
+Core  0's Commit SHA is: c098f996bf, dirty: 0
+Using simulated 8386560MB RAM
+The image is /nvme_data1/richard/learning_rv64_cpu/notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T112020Z-3e81181d1d02/fixture.bin
+The reference model is /nvme_data1/richard/learning_rv64_cpu/sources/xiangshan/ready-to-run/riscv64-nemu-interpreter-so
+The first instruction of core 0 has commited. Difftest enabled. 
+[00] commit pc 0000000010000000 inst 74446073 wen 0 dst 00 data 0000000000000000 idx 000
+[01] commit pc 0000000010000004 inst 0010029b wen 1 dst 05 data 0000000000000001 idx 001
+[02] commit pc 0000000010000008 inst 02a29313 wen 1 dst 06 data 0000040000000000 idx 002
+[03] commit pc 000000001000000c inst 30033073 wen 0 dst 00 data 0000040000000000 idx 003
+[04] commit pc 0000000010000010 inst 01f29293 wen 1 dst 05 data 0000000080000000 idx 004
+[05] commit pc 0000000010000014 inst 00028067 wen 0 dst 00 data 0000000080000000 idx 005
+[06] commit pc 0000000080000000 inst fff00293 wen 1 dst 05 data ffffffffffffffff idx 006
+[07] commit pc 0000000080000004 inst 3b029073 wen 0 dst 00 data ffffffffffffffff idx 007
+[08] commit pc 0000000080000008 inst 01f00293 wen 1 dst 05 data 000000000000001f idx 008
+[09] commit pc 000000008000000c inst 3a029073 wen 0 dst 00 data 000000000000001f idx 009
+[10] commit pc 0000000080000010 inst 00000297 wen 1 dst 05 data 0000000080000010 idx 00a
+[11] commit pc 0000000080000014 inst 0b028293 wen 1 dst 05 data 00000000800000c0 idx 00b
+[12] commit pc 0000000080000018 inst 30529073 wen 0 dst 00 data 00000000800000c0 idx 00c
+[13] commit pc 000000008000001c inst 10a01073 wen 0 dst 00 data 00000000800000c0 idx 00d
+[14] commit pc 0000000080000020 inst 10a02373 wen 1 dst 06 data 0000000000000000 idx 00e
+[15] commit pc 0000000080000024 inst 02035313 wen 1 dst 06 data 0000000000000000 idx 00f
+[16] commit pc 0000000080000030 inst 08731a63 wen 0 dst 20 data 0000000000000000 idx 010
+[17] commit pc 0000000080000034 inst 00000297 wen 1 dst 05 data 0000000080000034 idx 011
+[18] commit pc 0000000080000038 inst 01428293 wen 1 dst 05 data 0000000080000048 idx 012
+[19] commit pc 000000008000003c inst 34129073 wen 0 dst 00 data 0000000000000000 idx 013
+[20] commit pc 0000000080000040 inst 30001073 wen 0 dst 00 data 0000000000000000 idx 014
+[21] commit pc 0000000080000044 inst 30200073 wen 0 dst 00 data 0000000000000000 idx 015
+[22] commit pc 0000000080000048 inst 00000297 wen 1 dst 05 data 0000000080000048 idx 016
+[23] commit pc 000000008000004c inst 08828293 wen 1 dst 05 data 00000000800000d0 idx 017
+[24] commit pc 0000000080000050 inst 0002b383 wen 1 dst 07 data 0000000000001234 idx 018 (00)
+[25] commit pc 0000000080000054 inst 00001e37 wen 1 dst 28 data 0000000000001234 idx 019
+[26] commit pc 000000008000005c inst 07c39463 wen 0 dst 08 data 0000000000001234 idx 01a
+[27] commit pc 0000000080000060 inst 00005e37 wen 1 dst 28 data 0000000000005678 idx 01b
+[28] commit pc 0000000080000068 inst 01c2b023 wen 0 dst 00 data 0000000080000048 idx 01c (00)
+[29] commit pc 000000008000006c inst 0002b383 wen 1 dst 07 data 0000000000005678 idx 01d (01)
+[30] commit pc 0000000080000070 inst 05c39a63 wen 0 dst 20 data 0000000000000000 idx 01e
+[31] commit pc 0000000080000074 inst 1002b3af wen 1 dst 07 data 0000000000005678 idx 01f
+[32] commit pc 0000000080000078 inst 05c39663 wen 0 dst 12 data 0000000000005678 idx 020
+[33] commit pc 000000008000007c inst 0000ae37 wen 1 dst 28 data 000000000000a000 idx 021
+[34] commit pc 0000000080000080 inst abce0e1b wen 1 dst 28 data 0000000000009abc idx 022
+[35] commit pc 0000000080000084 inst 19c2beaf wen 1 dst 29 data 0000000000000000 idx 023
+[36] commit pc 0000000080000088 inst 020e9e63 wen 0 dst 28 data 0000000000000000 idx 024
+[37] commit pc 000000008000008c inst 0002b383 wen 1 dst 07 data 0000000000009abc idx 025 (02)
+[38] commit pc 0000000080000090 inst 03c39a63 wen 0 dst 20 data 0000000000009abc idx 026
+[39] commit pc 0000000080000094 inst 00100e13 wen 1 dst 28 data 0000000000000001 idx 027
+[40] commit pc 0000000080000098 inst 01c2b3af wen 1 dst 07 data 0000000000009abc idx 028
+[41] commit pc 000000008000009c inst 0000aeb7 wen 1 dst 29 data 0000000000009abc idx 029
+[42] commit pc 00000000800000a4 inst 03d39063 wen 0 dst 00 data 0000000000009abc idx 02a
+[43] commit pc 00000000800000a8 inst 0002b383 wen 1 dst 07 data 0000000000009abd idx 02b (03)
+[44] commit pc 00000000800000ac inst 0000aeb7 wen 1 dst 29 data 000000000000a000 idx 02c
+[45] commit pc 00000000800000b0 inst abde8e9b wen 1 dst 29 data 0000000000009abd idx 02d
+[46] commit pc 00000000800000b4 inst 01d39863 wen 0 dst 16 data 0000000000009abd idx 02e
+[47] commit pc 00000000800000b8 inst 00000513 wen 1 dst 10 data 0000000000000000 idx 02f
+Core 0: [32mHIT GOOD TRAP at pc = 0x800000bc
+[0m[35mCore-0 instrCnt = 53, cycleCnt = 4,405, IPC = 0.012032
+[0m[34mSeed=0 Guest cycle spent: 4,411 (this will be different from cycleCnt if emu loads a snapshot)
+[0m[34mHost time spent: 3,645ms
+[0m

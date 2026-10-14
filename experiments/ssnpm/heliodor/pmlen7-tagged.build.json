@@ -1,0 +1,25 @@
+{
+  "case": "pmlen7-tagged",
+  "gcc_argv": [
+    "/home/richard/richard_opt/riscv/bin/riscv64-unknown-elf-gcc",
+    "-march=rv64ima_zicsr",
+    "-mabi=lp64",
+    "-nostdlib",
+    "-nostartfiles",
+    "-Wl,--build-id=none",
+    "-Wl,-T,/nvme_data1/richard/learning_rv64_cpu/experiments/rva23s64-zifencei/fixture.ld",
+    "-o",
+    "/tmp/heliodor-ssnpm-g7kdlduj/pmlen7-tagged.elf",
+    "/nvme_data1/richard/learning_rv64_cpu/experiments/ssnpm/heliodor/pmlen7-tagged.S"
+  ],
+  "objcopy_argv": [
+    "/home/richard/richard_opt/riscv/bin/riscv64-unknown-elf-objcopy",
+    "-O",
+    "binary",
+    "/tmp/heliodor-ssnpm-g7kdlduj/pmlen7-tagged.elf",
+    "/tmp/heliodor-ssnpm-g7kdlduj/pmlen7-tagged.bin"
+  ],
+  "linker_script": "/nvme_data1/richard/learning_rv64_cpu/experiments/rva23s64-zifencei/fixture.ld",
+  "linker_sha256": "ef98d55689874a6db2ff6e180c0df0372ae7324e67245c0b3846f18d71b89714",
+  "assembly": "/nvme_data1/richard/learning_rv64_cpu/experiments/ssnpm/heliodor/pmlen7-tagged.S"
+}

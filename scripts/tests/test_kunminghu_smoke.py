@@ -226,6 +226,31 @@ def test_sscofpmf_fixtures_repeatable_without_official_evidence_writes():
         shutil.rmtree(temp_root, ignore_errors=True)
 
 
+def test_ssnpm_fixture_separates_canonical_and_tagged_s_mode_loads():
+    source = (ROOT / "experiments/kunminghu-smoke/ssnpm.S").read_text(encoding="utf-8")
+    assert "csrw    senvcfg, zero" in source
+    assert "csrw    senvcfg, t0" in source
+    assert "csrr    t1, senvcfg" in source
+    assert "bne     t1, t2, failed" in source
+    assert "#ifdef SSNPM_PMLEN7" in source
+    assert "#ifdef SSNPM_BIT56" in source
+    assert "0x0100000000000000" in source
+    assert "0xfe00000000000000" in source
+    assert '"pmlen7-bit56"' in (ROOT / "experiments/kunminghu-smoke/run.py").read_text(encoding="utf-8")
+    assert "mret" in source and "u_mode:" in source
+    assert "ld      t2, 0(t0)" in source
+    assert "sd      t3, 0(t0)" in source
+    assert "lr.d    t2, (t0)" in source
+    assert "sc.d    t4, t3, (t0)" in source
+    assert "amoadd.d t2, t3, (t0)" in source
+    assert "bne     t2, t3, failed" in source
+    assert "tagged_load:" in source
+    assert "csrr    t0, mcause" in source and "li      t1, 5" in source
+    assert "la      t1, tagged_load" in source and "csrr    t2, mepc" in source
+    assert "csrr    t2, mtval" in source
+    assert runner.SSNPM_SOURCE.is_file()
+
+
 def test_sscofpmf_act4_sail_blockers_are_explicit():
     act_dir = ROOT / "sources/heliodor/test/act/config/heliodor"
     sail = (act_dir / "sail.json").read_text(encoding="utf-8")

@@ -18,6 +18,11 @@ assert SPEC and SPEC.loader
 runner = importlib.util.module_from_spec(SPEC)
 sys.modules[SPEC.name] = runner
 SPEC.loader.exec_module(runner)
+BUILD_SPEC = importlib.util.spec_from_file_location(
+    "heliodor_ssnpm_fixture_builder", ROOT / "experiments/ssnpm/build_heliodor_fixtures.py")
+assert BUILD_SPEC and BUILD_SPEC.loader
+fixture_builder = importlib.util.module_from_spec(BUILD_SPEC)
+BUILD_SPEC.loader.exec_module(fixture_builder)
 
 
 def test_success_requires_cpu_start_exact_registers_pass_and_zero_exit() -> None:
@@ -42,6 +47,44 @@ def test_sscofpmf_success_requires_arch_cpu_marker_and_pass_output() -> None:
                           1, "sscofpmf") == (
                               True, {"x10": 7, "x11": 11, "x12": 77, "x13": 11,
                                      "arch_tohost": 0x220, "arch_pass": 0}, False, True)
+
+
+def test_ssnpm_u_mode_fixture_checks_controls_and_access_result() -> None:
+    source = (ROOT / "experiments/ssnpm/build_heliodor_fixtures.py").read_text(encoding="utf-8")
+    fixture = runner.ROOT / "experiments/ssnpm/heliodor/pmlen7-tagged.S"
+    generated = fixture.read_text(encoding="utf-8")
+    assert fixture_builder.CASES == ("pmlen0-canonical", "pmlen0-tagged", "pmlen7-canonical", "pmlen7-tagged", "pmlen7-bit56")
+    assert "csrw senvcfg, t0" in generated and "csrr t1, senvcfg" in generated
+    assert "mret" in generated and "u_entry:" in generated
+    assert "sd t3, 0(t0)" in generated and "ld t2, 0(t0)" in generated
+    assert "ssnpm-case" in (ROOT / "experiments/heliodor-smoke/run.py").read_text(encoding="utf-8")
+
+    output = ("[test_smoke] cy=5000 x10=7 x11=b commit=1651\n"
+              "[test_smoke] x12=4d x13=b\n[test_smoke] PASS\n"
+              "ssnpm pmlen7-tagged tohost=00000001 pass=1\nssnpm pmlen7-tagged PASS\n")
+    label = "ssnpm pmlen7-tagged"
+    assert runner.observe(output, 0, label) == (
+        True, {"x10": 7, "x11": 11, "x12": 77, "x13": 11,
+               "arch_tohost": 1, "arch_pass": 1}, True, False)
+    assert runner.expected_arch_marker(label, ssnpm_case="pmlen7-tagged") == f"{label} PASS"
+
+
+def test_ssnpm_expected_fault_requires_tagged_load_cause_pc_and_value() -> None:
+    expected_fault = fixture_builder.assembly("pmlen0-tagged")
+    assert "tagged_load:\n    ld t2, 0(t0)\n    li t5, 0x12\n    j report_fail" in expected_fault
+    assert "li t1, 5\n    bne t0, t1, trap_failure" in expected_fault
+    assert "la t2, tagged_load\n    csrr t3, mepc\n    bne t2, t3, trap_failure" in expected_fault
+    assert "csrr t3, mtval\n    bne t2, t3, trap_failure" in expected_fault
+    boundary = fixture_builder.assembly("pmlen7-bit56")
+    assert "li t1, 0x0100000000000000" in boundary
+    assert "li t0, 2" in boundary
+
+    label = "ssnpm pmlen0-tagged"
+    smoke = "[test_smoke] cy=5000 x10=7 x11=b commit=1651\n[test_smoke] x12=4d x13=b\n[test_smoke] PASS\n"
+    pass_output = smoke + f"{label} tohost=00000001 pass=1\n{label} PASS\n"
+    unexpected_success = smoke + f"{label} tohost=00000012 pass=0\n"
+    assert runner.observe(pass_output, 0, label)[2] is True
+    assert runner.observe(unexpected_success, 1, label)[2:] == (False, True)
 
 
 def test_sscofpmf_run_metadata_expects_arch_marker() -> None:

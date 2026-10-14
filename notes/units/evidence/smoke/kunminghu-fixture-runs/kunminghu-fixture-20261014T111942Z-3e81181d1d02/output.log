@@ -1,0 +1,251 @@
+Kunminghu fixture runner
+snapshot_sha=c098f996bf4d301b88693b20315486d31e93bc9d
+configuration=KunminghuV2Config NUM_CORES=1
+working_directory=/nvme_data1/richard/learning_rv64_cpu
+linked_start=0x80000000
+expected_good_trap_pc=0x800000d0
+$ /home/richard/richard_opt/riscv/bin/riscv64-unknown-elf-gcc -march=rv64ima_zicsr -mabi=lp64 -nostdlib -nostartfiles -Wl,--build-id=none -Wl,-T,/nvme_data1/richard/learning_rv64_cpu/experiments/kunminghu-smoke/fixture.ld -Wl,-Map,/nvme_data1/richard/learning_rv64_cpu/notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T111942Z-3e81181d1d02/fixture.map -DSSNPM_PMLEN7=1 -DSSNPM_TAGGED=1 -o /nvme_data1/richard/learning_rv64_cpu/notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T111942Z-3e81181d1d02/fixture.elf /nvme_data1/richard/learning_rv64_cpu/experiments/kunminghu-smoke/ssnpm.S
+$ /home/richard/richard_opt/riscv/bin/riscv64-unknown-elf-objcopy -O binary /nvme_data1/richard/learning_rv64_cpu/notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T111942Z-3e81181d1d02/fixture.elf /nvme_data1/richard/learning_rv64_cpu/notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T111942Z-3e81181d1d02/fixture.bin
+$ /nvme_data1/richard/learning_rv64_cpu/sources/xiangshan/build/verilator-compile/emu -i /nvme_data1/richard/learning_rv64_cpu/notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T111942Z-3e81181d1d02/fixture.bin --diff /nvme_data1/richard/learning_rv64_cpu/sources/xiangshan/ready-to-run/riscv64-nemu-interpreter-so --max-cycles=100000 --max-instr=10000 --dump-commit-trace
+first_failed_stage=emulator CPU run
+exit_code=1
+cpu_started=true
+result=run-fail
+blocker=emulator CPU run: command exited with 1; emulator reported ABORT
+
+--- stdout ---
+[compile and link]
+[raw image generation]
+[emulator CPU run]
+emu compiled at Oct 14 2026, 10:53:44
+[INFO] init for constantin: loaded from init.
+Using simulated 1048576B flash
+Core  0's Commit SHA is: c098f996bf, dirty: 0
+Using simulated 8386560MB RAM
+The image is /nvme_data1/richard/learning_rv64_cpu/notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T111942Z-3e81181d1d02/fixture.bin
+The reference model is /nvme_data1/richard/learning_rv64_cpu/sources/xiangshan/ready-to-run/riscv64-nemu-interpreter-so
+The first instruction of core 0 has commited. Difftest enabled. 
+[00] commit pc 0000000010000000 inst 74446073 wen 0 dst 00 data 0000000000000000 idx 000
+[01] commit pc 0000000010000004 inst 0010029b wen 1 dst 05 data 0000000000000001 idx 001
+[02] commit pc 0000000010000008 inst 02a29313 wen 1 dst 06 data 0000040000000000 idx 002
+[03] commit pc 000000001000000c inst 30033073 wen 0 dst 00 data 0000040000000000 idx 003
+[04] commit pc 0000000010000010 inst 01f29293 wen 1 dst 05 data 0000000080000000 idx 004
+[05] commit pc 0000000010000014 inst 00028067 wen 0 dst 00 data 0000000080000000 idx 005
+[06] commit pc 0000000080000000 inst fff00293 wen 1 dst 05 data ffffffffffffffff idx 006
+[07] commit pc 0000000080000004 inst 3b029073 wen 0 dst 00 data ffffffffffffffff idx 007
+[08] commit pc 0000000080000008 inst 01f00293 wen 1 dst 05 data 000000000000001f idx 008
+[09] commit pc 000000008000000c inst 3a029073 wen 0 dst 00 data 000000000000001f idx 009
+[10] commit pc 0000000080000010 inst 00000297 wen 1 dst 05 data 0000000080000010 idx 00a
+[11] commit pc 0000000080000014 inst 0c428293 wen 1 dst 05 data 00000000800000d4 idx 00b
+[12] commit pc 0000000080000018 inst 30529073 wen 0 dst 00 data 00000000800000d4 idx 00c
+[13] commit pc 000000008000001c inst 00200293 wen 1 dst 05 data 0000000000000002 idx 00d
+[14] commit pc 0000000080000020 inst 02029293 wen 1 dst 05 data 0000000200000000 idx 00e
+[15] commit pc 0000000080000024 inst 10a29073 wen 0 dst 00 data 0000000200000000 idx 00f
+[16] commit pc 0000000080000028 inst 10a02373 wen 1 dst 06 data 0000000200000000 idx 010
+[17] commit pc 000000008000002c inst 02035313 wen 1 dst 06 data 0000000000000002 idx 011
+[18] commit pc 0000000080000038 inst 0a731063 wen 0 dst 00 data 0000000000000002 idx 012
+[19] commit pc 000000008000003c inst 00000297 wen 1 dst 05 data 000000008000003c idx 013
+[20] commit pc 0000000080000040 inst 01428293 wen 1 dst 05 data 0000000080000050 idx 014
+[21] commit pc 0000000080000044 inst 34129073 wen 0 dst 00 data 0000000000000002 idx 015
+[22] commit pc 0000000080000048 inst 30001073 wen 0 dst 00 data 0000000000000002 idx 016
+[23] commit pc 000000008000004c inst 30200073 wen 0 dst 00 data 0000000000000002 idx 017
+[24] commit pc 0000000080000050 inst 00000297 wen 1 dst 05 data 0000000080000050 idx 018
+[25] commit pc 0000000080000054 inst 09028293 wen 1 dst 05 data 00000000800000e0 idx 019
+[26] commit pc 0000000080000064 inst 0002b383 wen 1 dst 07 data 0000000000001234 idx 01a (00)
+[27] commit pc 0000000080000068 inst 00001e37 wen 1 dst 28 data 0000000000001234 idx 01b
+[28] commit pc 0000000080000070 inst 07c39463 wen 0 dst 08 data 0000000000001234 idx 01c
+[29] commit pc 0000000080000074 inst 00005e37 wen 1 dst 28 data 0000000000005678 idx 01d
+[30] commit pc 000000008000007c inst 01c2b023 wen 0 dst 00 data 0000000080000050 idx 01e (00)
+[31] commit pc 0000000080000080 inst 0002b383 wen 1 dst 07 data 0000000000005678 idx 01f (01)
+[32] commit pc 0000000080000084 inst 05c39a63 wen 0 dst 20 data 0000000000001234 idx 020
+[33] commit pc 0000000080000088 inst 1002b3af wen 1 dst 07 data 0000000000005678 idx 021
+
+============== Commit Group Trace (Core 0) ==============
+commit group [00]: pc 0080000018 cmtcnt 1
+commit group [01]: pc 008000001c cmtcnt 1
+commit group [02]: pc 0080000020 cmtcnt 1
+commit group [03]: pc 0080000024 cmtcnt 1
+commit group [04]: pc 0080000028 cmtcnt 1
+commit group [05]: pc 008000002c cmtcnt 3
+commit group [06]: pc 0080000038 cmtcnt 3
+commit group [07]: pc 0080000044 cmtcnt 1
+commit group [08]: pc 0080000048 cmtcnt 1
+commit group [09]: pc 008000004c cmtcnt 1
+commit group [10]: pc 0080000050 cmtcnt 1
+commit group [11]: pc 0080000054 cmtcnt 4
+commit group [12]: pc 0080000064 cmtcnt 3
+commit group [13]: pc 0080000070 cmtcnt 5
+commit group [14]: pc 0080000084 cmtcnt 1
+commit group [15]: pc 0080000088 cmtcnt 1 <--
+
+============== Commit Instr Trace ==============
+[00] commit pc 0000000010000008 inst 02a29313 wen 1 dst 06 data 0000040000000000 idx 002
+[01] commit pc 000000001000000c inst 30033073 wen 0 dst 00 data 0000040000000000 idx 003
+[02] commit pc 0000000010000010 inst 01f29293 wen 1 dst 05 data 0000000080000000 idx 004
+[03] commit pc 0000000010000014 inst 00028067 wen 0 dst 00 data 0000000080000000 idx 005
+[04] commit pc 0000000080000000 inst fff00293 wen 1 dst 05 data ffffffffffffffff idx 006
+[05] commit pc 0000000080000004 inst 3b029073 wen 0 dst 00 data ffffffffffffffff idx 007
+[06] commit pc 0000000080000008 inst 01f00293 wen 1 dst 05 data 000000000000001f idx 008
+[07] commit pc 000000008000000c inst 3a029073 wen 0 dst 00 data 000000000000001f idx 009
+[08] commit pc 0000000080000010 inst 00000297 wen 1 dst 05 data 0000000080000010 idx 00a
+[09] commit pc 0000000080000014 inst 0c428293 wen 1 dst 05 data 00000000800000d4 idx 00b
+[10] commit pc 0000000080000018 inst 30529073 wen 0 dst 00 data 00000000800000d4 idx 00c
+[11] commit pc 000000008000001c inst 00200293 wen 1 dst 05 data 0000000000000002 idx 00d
+[12] commit pc 0000000080000020 inst 02029293 wen 1 dst 05 data 0000000200000000 idx 00e
+[13] commit pc 0000000080000024 inst 10a29073 wen 0 dst 00 data 0000000200000000 idx 00f
+[14] commit pc 0000000080000028 inst 10a02373 wen 1 dst 06 data 0000000200000000 idx 010
+[15] commit pc 000000008000002c inst 02035313 wen 1 dst 06 data 0000000000000002 idx 011
+[16] commit pc 0000000080000038 inst 0a731063 wen 0 dst 00 data 0000000000000002 idx 012
+[17] commit pc 000000008000003c inst 00000297 wen 1 dst 05 data 000000008000003c idx 013
+[18] commit pc 0000000080000040 inst 01428293 wen 1 dst 05 data 0000000080000050 idx 014
+[19] commit pc 0000000080000044 inst 34129073 wen 0 dst 00 data 0000000000000002 idx 015
+[20] commit pc 0000000080000048 inst 30001073 wen 0 dst 00 data 0000000000000002 idx 016
+[21] commit pc 000000008000004c inst 30200073 wen 0 dst 00 data 0000000000000002 idx 017
+[22] commit pc 0000000080000050 inst 00000297 wen 1 dst 05 data 0000000080000050 idx 018
+[23] commit pc 0000000080000054 inst 09028293 wen 1 dst 05 data 00000000800000e0 idx 019
+[24] commit pc 0000000080000064 inst 0002b383 wen 1 dst 07 data 0000000000001234 idx 01a (00)
+[25] commit pc 0000000080000068 inst 00001e37 wen 1 dst 28 data 0000000000001234 idx 01b
+[26] commit pc 0000000080000070 inst 07c39463 wen 0 dst 08 data 0000000000001234 idx 01c
+[27] commit pc 0000000080000074 inst 00005e37 wen 1 dst 28 data 0000000000005678 idx 01d
+[28] commit pc 000000008000007c inst 01c2b023 wen 0 dst 00 data 0000000080000050 idx 01e (00)
+[29] commit pc 0000000080000080 inst 0002b383 wen 1 dst 07 data 0000000000005678 idx 01f (01)
+[30] commit pc 0000000080000084 inst 05c39a63 wen 0 dst 20 data 0000000000001234 idx 020
+[31] commit pc 0000000080000088 inst 1002b3af wen 1 dst 07 data 0000000000005678 idx 021 <--
+
+==============  REF Regs  ==============
+---------------- Intger Registers ----------------
+  $0: 0x0000000000000000   ra: 0x0000000000000000   sp: 0x0000000000000000   gp: 0x0000000000000000 
+  tp: 0x0000000000000000   t0: 0xfe000000800000e0   t1: 0xfe00000000000000   t2: 0x0000000000005678 
+  s0: 0x0000000000000000   s1: 0x0000000000000000   a0: 0x0000000000000000   a1: 0x0000000000000000 
+  a2: 0x0000000000000000   a3: 0x0000000000000000   a4: 0x0000000000000000   a5: 0x0000000000000000 
+  a6: 0x0000000000000000   a7: 0x0000000000000000   s2: 0x0000000000000000   s3: 0x0000000000000000 
+  s4: 0x0000000000000000   s5: 0x0000000000000000   s6: 0x0000000000000000   s7: 0x0000000000000000 
+  s8: 0x0000000000000000   s9: 0x0000000000000000  s10: 0x0000000000000000  s11: 0x0000000000000000 
+  t3: 0x0000000000005678   t4: 0x0000000000000000   t5: 0x0000000000000000   t6: 0x0000000000000000 
+---------------- Float Registers ----------------
+ ft0: 0x08e832e2ceb97da0  ft1: 0x93aa190f1b687140  ft2: 0x3dd50223916d518b  ft3: 0xb8d3ef6606d9b7f9 
+ ft4: 0xef00cf153c630fc1  ft5: 0xd1dccc61ff964979  ft6: 0x55cbaa8100c5f2eb  ft7: 0xba42598118991844 
+ fs0: 0x1e8b10f59c61604f  fs1: 0x3d41162b2e567c54  fa0: 0x711d435c0ae28b27  fa1: 0xe5d7a200fd22cd94 
+ fa2: 0x590819ec7f42a7cd  fa3: 0x68a970cd73241ba9  fa4: 0xdc0a098b4f7e9f5c  fa5: 0x3f8acd53309a7428 
+ fa6: 0x70bbf0afcb8e8f1b  fa7: 0xf6d1c03686bc8a2d  fs2: 0xbd5d10c9badfcc2b  fs3: 0x3bea19b7751019fc 
+ fs4: 0x27698d2ecda7452b  fs5: 0xaf06f9e9fef227e5  fs6: 0x81c1ff128213872a  fs7: 0x5bfa5152be0e9102 
+ fs8: 0x94acfb1157e6ba3f  fs9: 0x90769ad6874ae2b5 fs10: 0xd1d17302568d6cad fs11: 0xb866c07d069f9880 
+ ft8: 0xf145b8090fc659d0  ft9: 0x18beffba071fa1c9 ft10: 0xb896ff4c929a17f9 ft11: 0xa28068fa15b328fd 
+ fcsr: 0x0000000000000000 fflags: 0x0000000000000000 frm: 0x0000000000000000
+---------------- Privileged CSRs ----------------
+pc: 0x00000000800000d4  privilege mode: M (mode: 3  v: 0  debug: 0)
+   mstatus: 0x0000040a00000000   sstatus: 0x0000000200000000  vsstatus: 0x0000000200000000
+   hstatus: 0x0000000200000000  mnstatus: 0x0000000000000008
+    mcause: 0x0000000000000005      mepc: 0x0000000080000088     mtval: 0xfe000000800000e0
+    scause: 0x0000000000000000      sepc: 0x0000000000000000     stval: 0x0000000000000000
+   vscause: 0x0000000000000000     vsepc: 0x0000000000000000    vstval: 0x0000000000000000
+   mncause: 0x0000000000000000     mnepc: 0x0000000000000000 mnscratch: 0x0000000000000000
+    mtval2: 0x0000000000000000     htval: 0x0000000000000000
+    mtinst: 0x0000000000000000    htinst: 0x0000000000000000
+  mscratch: 0x05e4b6dddc6bd34a  sscratch: 0x92b94707e6424639 vsscratch: 0xbe379150a9e1d836
+     mtvec: 0x00000000800000d4     stvec: 0x0000000000000000    vstvec: 0x0000000000000000
+       mip: 0x0000000000000000       mie: 0x0000000000000000
+   mideleg: 0x0000000000001444   medeleg: 0x0000000000000000
+   hideleg: 0x0000000000000000   hedeleg: 0x0000000000000000
+      satp: 0x0000000000000000     hgatp: 0x0000000000000000     vsatp: 0x0000000000000000
+ mcounteren: 0x0000000000000000 scounteren: 0x0000000000000000 hcounteren: 0x0000000000000000
+  miselect: 0x0000000000000000  siselect: 0x0000000000000000 vsiselect: 0x0000000000000000
+     mireg: 0x0000000000000000     sireg: 0x0000000000000000    vsireg: 0x0000000000000000
+     mtopi: 0x0000000000000000     stopi: 0x0000000000000000    vstopi: 0x0000000000000000
+     mvien: 0x0000000000000000     hvien: 0x0000000000000000      mvip: 0x0000000000000000
+    mtopei: 0x0000000000000000    stopei: 0x0000000000000000   vstopei: 0x0000000000000000
+    hvictl: 0x0000000000000000  hviprio1: 0x0000000000000000  hviprio2: 0x0000000000000000
+---------------- PMP CSRs ----------------
+pmp: 32 entries active, details:
+ 0: cfg:0x1f addr:0x00003fffffffffff| 1: cfg:0x00 addr:0x0000000000000000
+ 2: cfg:0x00 addr:0x0000000000000000| 3: cfg:0x00 addr:0x0000000000000000
+ 4: cfg:0x00 addr:0x0000000000000000| 5: cfg:0x00 addr:0x0000000000000000
+ 6: cfg:0x00 addr:0x0000000000000000| 7: cfg:0x00 addr:0x0000000000000000
+ 8: cfg:0x00 addr:0x0000000000000000| 9: cfg:0x00 addr:0x0000000000000000
+10: cfg:0x00 addr:0x0000000000000000|11: cfg:0x00 addr:0x0000000000000000
+12: cfg:0x00 addr:0x0000000000000000|13: cfg:0x00 addr:0x0000000000000000
+14: cfg:0x00 addr:0x0000000000000000|15: cfg:0x00 addr:0x0000000000000000
+16: cfg:0x00 addr:0x0000000000000000|17: cfg:0x00 addr:0x0000000000000000
+18: cfg:0x00 addr:0x0000000000000000|19: cfg:0x00 addr:0x0000000000000000
+20: cfg:0x00 addr:0x0000000000000000|21: cfg:0x00 addr:0x0000000000000000
+22: cfg:0x00 addr:0x0000000000000000|23: cfg:0x00 addr:0x0000000000000000
+24: cfg:0x00 addr:0x0000000000000000|25: cfg:0x00 addr:0x0000000000000000
+26: cfg:0x00 addr:0x0000000000000000|27: cfg:0x00 addr:0x0000000000000000
+28: cfg:0x00 addr:0x0000000000000000|29: cfg:0x00 addr:0x0000000000000000
+30: cfg:0x00 addr:0x0000000000000000|31: cfg:0x00 addr:0x0000000000000000
+32: cfg:0x00 addr:0x0000000000000000|33: cfg:0x00 addr:0x0000000000000000
+34: cfg:0x00 addr:0x0000000000000000|35: cfg:0x00 addr:0x0000000000000000
+36: cfg:0x00 addr:0x0000000000000000|37: cfg:0x00 addr:0x0000000000000000
+38: cfg:0x00 addr:0x0000000000000000|39: cfg:0x00 addr:0x0000000000000000
+40: cfg:0x00 addr:0x0000000000000000|41: cfg:0x00 addr:0x0000000000000000
+42: cfg:0x00 addr:0x0000000000000000|43: cfg:0x00 addr:0x0000000000000000
+44: cfg:0x00 addr:0x0000000000000000|45: cfg:0x00 addr:0x0000000000000000
+46: cfg:0x00 addr:0x0000000000000000|47: cfg:0x00 addr:0x0000000000000000
+48: cfg:0x00 addr:0x0000000000000000|49: cfg:0x00 addr:0x0000000000000000
+50: cfg:0x00 addr:0x0000000000000000|51: cfg:0x00 addr:0x0000000000000000
+52: cfg:0x00 addr:0x0000000000000000|53: cfg:0x00 addr:0x0000000000000000
+54: cfg:0x00 addr:0x0000000000000000|55: cfg:0x00 addr:0x0000000000000000
+56: cfg:0x00 addr:0x0000000000000000|57: cfg:0x00 addr:0x0000000000000000
+58: cfg:0x00 addr:0x0000000000000000|59: cfg:0x00 addr:0x0000000000000000
+60: cfg:0x00 addr:0x0000000000000000|61: cfg:0x00 addr:0x0000000000000000
+62: cfg:0x00 addr:0x0000000000000000|63: cfg:0x00 addr:0x0000000000000000
+---------------- PMA CSRs ----------------
+pma: 32 entries active, details:
+ 0: cfg:0x00 addr:0x0000000000000000| 1: cfg:0x00 addr:0x0000000000000000
+ 2: cfg:0x00 addr:0x0000000000000000| 3: cfg:0x00 addr:0x0000000000000000
+ 4: cfg:0x00 addr:0x0000000000000000| 5: cfg:0x00 addr:0x0000000000000000
+ 6: cfg:0x00 addr:0x0000000000000000| 7: cfg:0x00 addr:0x0000000000000000
+ 8: cfg:0x00 addr:0x0000000000000000| 9: cfg:0x00 addr:0x0000000000000000
+10: cfg:0x00 addr:0x0000000000000000|11: cfg:0x00 addr:0x0000000000000000
+12: cfg:0x00 addr:0x0000000000000000|13: cfg:0x00 addr:0x0000000000000000
+14: cfg:0x00 addr:0x0000000000000000|15: cfg:0x00 addr:0x0000000000000000
+16: cfg:0x00 addr:0x0000000000000000|17: cfg:0x00 addr:0x0000000000000000
+18: cfg:0x00 addr:0x0000000000000000|19: cfg:0x0b addr:0x0000000004000000
+20: cfg:0x0f addr:0x0000000008000000|21: cfg:0x0b addr:0x000000000c004000
+22: cfg:0x0b addr:0x000000000c014000|23: cfg:0x0b addr:0x000000000e008000
+24: cfg:0x0f addr:0x000000000e008400|25: cfg:0x0b addr:0x000000000e008800
+26: cfg:0x0b addr:0x000000000e400000|27: cfg:0x0b addr:0x000000000e400800
+28: cfg:0x08 addr:0x000000000e800000|29: cfg:0x0b addr:0x0000000020000000
+30: cfg:0x6f addr:0x0000020000000000|31: cfg:0x18 addr:0x00001fffffffffff
+---------------- Vector Registers ----------------
+v0 : 0x61bbc38a6904cb90_11c7833d83988b05  v1 : 0xaf8784d85bba1124_702f2a077fa1b782  
+v2 : 0x2e775f61b1a99920_bf432625c78cea60  v3 : 0x9e4793718043756a_726646842c666005  
+v4 : 0xa2922a7ad7c3a52c_d8e979bc73a45254  v5 : 0x50fe90de44018eef_bde1ee44fad171e8  
+v6 : 0x7efe2383b7fe0012_c1b89e76ca3ddbe6  v7 : 0xdd74ed97bc4d3a29_cc84a94a13ae57f9  
+v8 : 0x136b51f5a90aa53a_5feb829bd2087281  v9 : 0xf0a7766081da1090_b2b15bdc27fe5da4  
+v10: 0xcd03339d85edf749_87bbdbd746a3ed80  v11: 0x52b9d36d4629468f_3e0949cc0fc5f8e9  
+v12: 0x4315ab550d9856c2_07452fbb08480ba6  v13: 0xb68d5d38399742b9_c4396e0b6050bb78  
+v14: 0x43dbf12f33e76817_300d8442737b730b  v15: 0x838369a387854212_78f5cc2d3eb0dc11  
+v16: 0x31d446fb13e4af58_007c9bb0d2d9cb6b  v17: 0x95c6b1f77e2f2d89_6bbc200b4da25c44  
+v18: 0x524b94bf39e229ba_7970b6aee7884233  v19: 0x5768f6490da4b5c4_2777ea814e90bb99  
+v20: 0xe31196bf30b896fb_825ddbd27de1b431  v21: 0x55a16fa96e3751b8_68b4102fdd6db57e  
+v22: 0x4633a99d87a9a523_ba06e3f3aab1d899  v23: 0xa09586bd1d846b5c_c288a2f4166fa786  
+v24: 0xc55eeb3f47fb7d01_a7bb414eedd69f4b  v25: 0xbaaa5dd23a391488_c25cb6cf43d8e636  
+v26: 0x065639d00a5f9d70_2e437395f8d6fa6c  v27: 0xc60e7f4b09dcb3e7_503322db77418cda  
+v28: 0x3f56078343449f0f_ced91f38e959342a  v29: 0x25f41b97eb03e4c9_b8e662fc9286f23b  
+v30: 0x34282506b0aa8bf6_3dd52d6beb885654  v31: 0x19361e6d86634803_b8dc56593147f0ee  
+  vtype: 0x8000000000000000 vstart: 0x0000000000000000  vxsat: 0x0000000000000000
+   vxrm: 0x0000000000000001     vl: 0x0000000000000000   vcsr: 0x0000000000000002
+---------------- Triggers ----------------
+ tselect: 0x0000000000000000
+ 0: tdata1: 0xf000000000000000 tdata2: 0x0000000000000000
+ 1: tdata1: 0xf000000000000000 tdata2: 0x3676725f676e696e
+ 2: tdata1: 0xf000000000000000 tdata2: 0x69782f7365637275
+ 3: tdata1: 0xf000000000000000 tdata2: 0x65762f646c697562
+ 4: tdata1: 0x2d726f74616c6972 tdata2: 0x2f656c69706d6f63
+privilegeMode: 0
+   mode different at pc = 0xfffff96499a4b52a, right = 0x0000000000000003, wrong = 0x0000000000000000
+mstatus different at pc = 0xfffff96499a4b52a, right = 0x0000040a00000000, wrong = 0x0000000a00000080
+   mepc different at pc = 0xfffff96499a4b52a, right = 0x0000000080000088, wrong = 0x0000000080000050
+  mtval different at pc = 0xfffff96499a4b52a, right = 0xfe000000800000e0, wrong = 0x0000000000000000
+ mcause different at pc = 0xfffff96499a4b52a, right = 0x0000000000000005, wrong = 0x0000000000000000
+Core 0: [31mABORT at pc = 0xfffff96499a4b52a
+[0m[35mCore-0 instrCnt = 41, cycleCnt = 4,341, IPC = 0.009445
+[0m[34mSeed=0 Guest cycle spent: 4,346 (this will be different from cycleCnt if emu loads a snapshot)
+[0m[34mHost time spent: 3,619ms
+[0m
+--- stderr ---
+[compile and link]
+/nvme_data2/richard/riscv/bin/../lib/gcc/riscv64-unknown-elf/15.1.0/../../../../riscv64-unknown-elf/bin/ld: warning: /nvme_data1/richard/learning_rv64_cpu/notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T111942Z-3e81181d1d02/fixture.elf has a LOAD segment with RWX permissions
+[raw image generation]
+[emulator CPU run]
