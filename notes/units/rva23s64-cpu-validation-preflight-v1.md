@@ -17,7 +17,7 @@ source_snapshots:
 |---|---|
 | Kunminghu snapshot | `sources.lock` 中 SHA `c098f996bf4d301b88693b20315486d31e93bc9d`；Mill 项目版本 `.mill-version=0.12.3`；Java 17.0.20.1。 |
 | Heliodor snapshot | `sources.lock` 中 SHA `94e9c5821c24a8941c3ddc3b76daddc7124a855a`；Veryl 0.22.0 (`967e477`, 2026-10-02)。 |
-| Kunminghu 仿真器工具 | 本机 Verilator 5.020 (2024-01-01) 与 GCC 13.3.0。5.020 缺少源码引用的 `VerilatedTraceBaseC`；必须选用与这份 XiangShan 快照及其 C++ harness 匹配的 Verilator 版本。上游 CI 配置提及 5.048/5.050+，但本次尚未用这些版本复验兼容性。 |
+| Kunminghu 仿真器工具 | Verilator 5.020 (2024-01-01) 缺少源码引用的 `VerilatedTraceBaseC`；使用上游 Verilator v5.050 tag（commit `0a24d49771fa57c36ff667272bf7b5c6705e4df0`）后 simulator 编译和 CoreMark smoke 通过。Simulator C++ 使用 GCC/G++ 13.3.0；Verilator 自身在 Ubuntu 22.04 容器内用 GCC/G++ 11.4.0 构建。 |
 | Heliodor 共享测试台 | 原仓库多个未实例化测试台也会在 Veryl check 阶段触发 `$readmemh`/`dram` `invalid_initial_assign`。当前受控方法把源码复制到临时目录，排除未实例化 debug harness，并只在临时副本中给普通 DRAM 初始化加 `allow(initial_assign)`；锁定 checkout 保持只读。 |
 | 统一每次运行元数据 | 必须记录：快照 revision、输入/fixture SHA-256、配置与 hart 数、精确命令及 cwd、Mill/Veryl/Verilator/compiler 版本、退出码、CPU 是否启动、完整 stdout/stderr 路径及其 SHA-256、生成产物路径。源码快照、机器码输入、构建/运行日志分开归档；任何启动前错误标 `blocked`，只有 CPU 运行且断言不符才标 `run-fail`。 |
 
@@ -72,6 +72,24 @@ artifacts: ["<generated hex/elf/RTL/simulator>" ]
 6. **6.6 验证 Sscofpmf。** 验收：由实现支持的硬件事件驱动 HPM overflow，检查 `mhpmevent.OF`、`scountovf`、cause 13、IE/pending、clear/re-arm 和 MINH/SINH/UINH/VSINH/VUINH 过滤/权限组合；Sail/ACT4 分别记录版本与工具支持，不将软件写计数器误作硬件事件验证。
 7. **6.7 验证 Ssnpm。** 验收：测试 PMLEN 0/7、enabled/disabled、canonical/tag address boundaries；分列 S/U 与 VS/VU；对 load/store、atomic、FP、compressed、CMO、vector、hypervisor 显式访问族逐一给出运行结果或具体阻塞。
 8. **6.8 验证 Ssstateen。** 验收：两边核对 M/H/S/VS/VU 访问门、八个 CSR 的定义位 reset/readback/WARL 与 ENVCFG gate；复现现有 Heliodor M/HS fail 并保持结果日志；对 Kunminghu 执行相同受控矩阵；若本地快照缺实现，结果标为实际 `run-fail` 并链接到精确源路径，不擅自改写固定快照。
+
+## Story 6.1 固定工具链与 smoke 归档（2026-10-14）
+
+固定组合、源 checkout 和 Kunminghu 所有 11 个直接 gitlink SHA、安装/重建来源、工具哈希与运行记录见 [工具链 manifest](evidence/cpu-validation-toolchain-v1.yaml)。记录校验器为 [`scripts/run_cpu_smoke.py`](../../scripts/run_cpu_smoke.py)，回归用例为 [`test_run_cpu_smoke.py`](../../scripts/tests/test_run_cpu_smoke.py)。Manifest 使用 JSON 语法（它也是有效 YAML），因此校验器可在无 PyYAML 的 `uv run --no-cache` 环境读取；其中明确标注旧日志是合并的 stdout/stderr transcript，避免声称恢复出原始分流日志。校验器还要求两份锁定 checkout 齐全、运行 revision 与所属快照一致、run ID 唯一，并从输出日志核对成功 marker 与持久生成物 SHA-256。
+
+复现/校验命令：
+
+```sh
+uv run --no-cache pytest -q scripts/tests/test_run_cpu_smoke.py
+uv run --no-cache python scripts/run_cpu_smoke.py validate --manifest notes/units/evidence/cpu-validation-toolchain-v1.yaml
+python3 scripts/check_doc_links.py
+```
+
+Kunminghu 固定为 `KunminghuV2Config`、单 hart；Mill 0.12.3 / OpenJDK 17.0.20.1、Verilator 5.050、GCC/G++ 13.3.0。上游 Verilator 5.050 在固定 Ubuntu 22.04 image digest 中从 tag 构建，锁定 SHA 与二进制 hash 见 manifest。重新生成的 simulator 通过 C++ 编译；随后 CoreMark 2-iteration 在 NEMU difftest 下完成，第一条指令已提交并命中 `HIT GOOD TRAP`，`instrCnt=663,692`。完整分流日志：[stdout](evidence/smoke/kunminghu-coremark-2026-10-14.stdout.log)、[stderr](evidence/smoke/kunminghu-coremark-2026-10-14.stderr.log)。历史 Verilator 5.020 阻塞和缺环境变量/GCC flag 的失败仍保留在 manifest 与摘要中。
+
+Heliodor 固定为 Veryl 0.22.0（`967e477`）、Verilator 5.020 和 G++ 13.3.0。基础 smoke runner [`experiments/heliodor-smoke/run.py`](../../experiments/heliodor-smoke/run.py) 在隔离副本运行原有 `test_smoke`，确认 x10/x11/x12/x13 结果并输出 `[test_smoke] PASS`；日志含调用元数据，分别保存在 [stdout](evidence/smoke/heliodor-core-smoke.stdout.log) 和 [stderr](evidence/smoke/heliodor-core-smoke.stderr.log)。归档目录 [smoke inputs](evidence/smoke/heliodor-core-smoke-inputs) 保留 lint 变换后的测试、fixture 及其摘要。源 checkout revision、临时工作树内容摘要、runner 命令和输入摘要见归档 metadata。同一隔离机制运行的 `test_arch_ssstateen` 仍确实执行 CPU，但观察到不符合预期的 marker，归类 `run-fail`，完整日志见此前分流输出。两个 smoke 的目标和结论不同，均不构成 RVA23 符合性结论。
+
+Story 6.1 两侧 CPU-start/marker 验收已通过；Kunminghu 的可重建 Verilator 5.050 环境与 Heliodor 的隔离 Veryl runner 可供后续故事复用。专题级 Ssstateen 的 `run-fail` 是独立的硬件行为发现，必须由 Story 6.8 处理，不改变本 smoke 的基础入口结论。
 
 ## 范围决定
 

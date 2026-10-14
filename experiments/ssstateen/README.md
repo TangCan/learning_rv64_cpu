@@ -20,8 +20,8 @@ cd "$WORK_DIR"
 
 GCC 15.1.0 构建生成 ELF、BIN、HEX 和反汇编文件；HEX 为 1025 words / 4100 bytes。ELF 链接器报告一个 RWX LOAD segment 警告。构建成功不代表 CPU 功能通过。
 
-Veryl 0.22.0 在隔离树完成 build、check 和 CPU simulation。fixture 打印观测 trace 后断言规范预期 marker `tohost=0x2B`；当前快照实际为 `0x02`；Veryl test exit 1，报告 `Failed test (test_arch_ssstateen): Ssstateen expected 20 gate traps plus one HS ecall`，功能断言失败。复现日志：`/tmp/ssstateen-story-5-6-review-final.log`。观测值为：八个 stateen reset 读值及 M 写全 1 后的八个读回值均为 0；M stateen 清零后 HS 对八个 stateen CSR 的 16 次读写及对 `henvcfg`/`senvcfg` 的 4 次读写没有产生预期 stateen trap；HS 开启阶段的状态 CSR 读回仍为 0，而两个 ENVCFG CSR 读回全 1。trap 记录只有 HS `ecall` 的 cause 9、操作编号 21，operation IDs 1–20 均未出现；`hstateen0.SE0` 读回为 0。观察结果与规范预期的 20 次 gate trap、1 次 ecall 且 `SE0=1` 不符，因此功能结果是 **run-fail**，不是 `run-pass`。
+Veryl 0.22.0 在隔离树完成 build、check 和 CPU simulation。fixture 打印观测 trace 后断言规范预期 marker `tohost=0x2B`；当前快照实际为 `0x02`；Veryl test exit 1，报告 `Failed test (test_arch_ssstateen): Ssstateen expected 20 gate traps plus one HS ecall`，功能断言失败。复现日志：[归档运行日志](../../notes/units/evidence/heliodor-ssstateen-run-2026-10-14.log)。观测值为：八个 stateen reset 读值及 M 写全 1 后的八个读回值均为 0；M stateen 清零后 HS 对八个 stateen CSR 的 16 次读写及对 `henvcfg`/`senvcfg` 的 4 次读写没有产生预期 stateen trap；HS 开启阶段的状态 CSR 读回仍为 0，而两个 ENVCFG CSR 读回全 1。trap 记录只有 HS `ecall` 的 cause 9、操作编号 21，operation IDs 1–20 均未出现；`hstateen0.SE0` 读回为 0。观察结果与规范预期的 20 次 gate trap、1 次 ecall 且 `SE0=1` 不符，因此功能结果是 **run-fail**，不是 `run-pass`。
 
 原 Heliodor 仓库中的 `veryl test --test test_arch_ssstateen` 匹配 0 个测试；原有 `test_arch_hvscsr` 在 testbench check 阶段因 `$readmemh`/`dram` `invalid_initial_assign` 退出，仿真未启动。隔离运行解决的是此 harness check 阻塞，不改变上游，也不覆盖 VS/VU 行为。
 
-Kunminghu 快照 SHA 与 `sources.lock` 一致，但 `make emu CONFIG=KunminghuV2Config NUM_CORES=1` 在前置阶段因缺少 `mill` 退出，未启动 CPU 仿真。`ssstateen_probe.hex` SHA-256：`638383a6674e95e96f23c604b969d8b0bdb6033b3409db9b12449d7638caa70d`。
+Kunminghu 快照 SHA 与 `sources.lock` 一致；初次 preflight 因 Mill launcher 不存在而失败，后续固定临时 Mill launcher 后推进到 RTL 生成及 Verilator/C++ 编译，仍未启动 CPU。当前 `ssstateen_probe.hex` SHA-256：`65391f26edfcd03fe56182e53b393e99b8a2500c49e8599f97fbaed49104c789`。

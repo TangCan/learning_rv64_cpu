@@ -1,0 +1,23 @@
+{
+  "source_commit": "94e9c5821c24a8941c3ddc3b76daddc7124a855a",
+  "source_tree_sha256": "6a26dc7c67d60b4ec8634cb3b2061df85ad14de219a8a1fdbc4402da9aa9d495",
+  "transformed_test_sha256": "15bd6b192c2569d078e8d10e872c095a649a1f6848f54f030c7e4123d7d1daf3",
+  "fixture_sha256": "2cf451e3cee19059d2dbc19c08cbe4af9b552ec842d6d2881d039f4bc1aaeeb1",
+  "command": [
+    "/nvme_data1/richard/.local/share/veryl/toolchains/latest/veryl",
+    "test",
+    "--include-ignored",
+    "--test",
+    "test_smoke"
+  ],
+  "runner_invocation": [
+    "/usr/bin/python3",
+    "/nvme_data1/richard/learning_rv64_cpu/experiments/heliodor-smoke/run.py",
+    "--stdout",
+    "notes/units/evidence/smoke/heliodor-core-smoke.stdout.log",
+    "--stderr",
+    "notes/units/evidence/smoke/heliodor-core-smoke.stderr.log",
+    "--archive-dir",
+    "notes/units/evidence/smoke/heliodor-core-smoke-inputs"
+  ]
+}

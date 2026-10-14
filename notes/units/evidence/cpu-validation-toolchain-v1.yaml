@@ -1,0 +1,230 @@
+{
+  "schema_version": 1,
+  "purpose": "固定工具链与 smoke 运行证据；有限案例不表示 RVA23 符合性。",
+  "capture_note": "现存前置日志为合并后的完整 console transcript；stdout/stderr 字段共同引用该逐字节保留的文件，不能据此重建分离流。 Artifact paths prefixed ephemeral: record the captured generation location but are not required to survive cleanup; the smoke runner can rebuild the Heliodor tree.",
+  "snapshots": [
+    {
+      "name": "kunminghu-v2",
+      "project": "Kunminghu V2",
+      "checkout": "sources/xiangshan",
+      "snapshot_sha": "c098f996bf4d301b88693b20315486d31e93bc9d",
+      "source_status": "clean; all 11 direct submodules checked against locked gitlinks",
+      "gitlinks": {
+        "rocket-chip": "46f1efefa1ff431bffe3262e4830bc50316842f4",
+        "difftest": "3729300ae233816d332d057f170472ebe35147b0",
+        "ready-to-run": "c4114ce3fffcd5c147c525014b40f1c841347238",
+        "huancun": "65ef077373ecf398b4cecdea06b65ef9b8d79044",
+        "fudian": "e1bd4695ca7beb36a5ce7357e9527ad9e95b9ec1",
+        "utility": "2f0743f1f3ee1889049841926fa382cd0b32d8e2",
+        "yunsuan": "955921186e34bb8915806582a238181a6dc3435c",
+        "coupledL2": "55d8e69c690690dbc786e9ca2f3839a95555df95",
+        "openLLC": "9e6f78209b2f215fb9f6a8f0de250995ff3ab63d",
+        "ChiselAIA": "c8be865e4fa60d40831ff29e0a30d4269f5ff5b9",
+        "ChiselIOPMP": "09def1a7efa4707a74b7f31fe0a1c254b0940b78"
+      },
+      "configuration": "KunminghuV2Config, NUM_CORES=1 (single hart target); emulator built with make emu and CoreMark 2-iteration smoke completed under NEMU difftest.",
+      "environment": {
+        "NOOP_HOME": "absolute sources/xiangshan checkout path; required by build.sc",
+        "MILL_WORKSPACE_ROOT": "absolute sources/xiangshan checkout path; required by build.sc",
+        "PATH": "include /tmp for Mill 0.12.3 wrapper and /tmp/verilator-install/bin for Verilator 5.050",
+        "VERILATOR_ROOT": "/tmp/verilator-install/share/verilator"
+      },
+      "tools": {
+        "mill": "0.12.3; java -cp /tmp/mill-dist-0.12.3-assembly.jar mill.runner.MillMain (jar sha256 336346091edc69b248c306ca51aaccb73d888d8bf525ce45e02df89db449b41d)",
+        "java": "OpenJDK 17.0.20.1 (Ubuntu; /usr/lib/jvm/java-17-openjdk-amd64)",
+        "verilator": "5.050 2026-07-01; upstream tag v5.050, commit 0a24d49771fa57c36ff667272bf7b5c6705e4df0; binary sha256 fb2cc573b1055cf096c90e1efc9966fe56bdb4b265c83590cf2a49f7a0defcdf",
+        "cxx": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0; gcc same version",
+        "mill_launcher_sha256": "7f086728571afda31d433f7875a2df610f3c9f8e9c76e5bd13f97c3e564c53a4",
+        "verilator_build_cxx": "Ubuntu 22.04 GCC/G++ 11.4.0 in image sha256:829f6df217bcbae2b371026e81711d1a787c61b2967ad09d015063663ebafbf7"
+      },
+      "provisioning": {
+        "mill": "Upstream Maven .12.3-mill.sh URL returned 404; downloaded Mill 0.12.3 assembly JAR and local /tmp wrapper; jar SHA-256 recorded above. Rebuild by obtaining the same Mill assembly artifact, verifying hash, and invoking MillMain via Java 17.",
+        "java": "OpenJDK 17.0.20.1 system package; provision matching Ubuntu OpenJDK 17.",
+        "verilator": "Build upstream tag v5.050 at commit 0a24d49771fa57c36ff667272bf7b5c6705e4df0 in Ubuntu 22.04 image sha256:829f6df217bcbae2b371026e81711d1a787c61b2967ad09d015063663ebafbf7 using autoconf, g++, flex, bison, perl, python3, make, git, help2man; configure --prefix=/opt/verilator-5.050; make -j16; make install. Verify binary sha256 fb2cc573b1055cf096c90e1efc9966fe56bdb4b265c83590cf2a49f7a0defcdf. Regenerate a stale emulator makefile after changing Verilator by removing build/verilator-compile/VSimTop.mk; otherwise it retains the old VERILATOR_ROOT.",
+        "compiler": "System GCC/G++ 13.3.0; make default -fno-slp-vectorize unsupported; OPT_FAST=-O3 -fno-tree-slp-vectorize advances to Verilator header incompatibility."
+      },
+      "runs": [
+        {
+          "id": "make-emu-preflight-5.020",
+          "input": "experiments/ssstateen/ssstateen_probe.hex",
+          "snapshot_sha": "c098f996bf4d301b88693b20315486d31e93bc9d",
+          "input_sha256": "65391f26edfcd03fe56182e53b393e99b8a2500c49e8599f97fbaed49104c789",
+          "configuration": "KunminghuV2Config; NUM_CORES=1; smoke fixture is available but make emu failed before loading it.",
+          "command": "NOOP_HOME=\"$PWD\" MILL_WORKSPACE_ROOT=\"$PWD\" PATH=/tmp:$PATH make emu CONFIG=KunminghuV2Config NUM_CORES=1 OPT_FAST=\"-O3 -fno-tree-slp-vectorize\"",
+          "working_directory": "sources/xiangshan",
+          "tools": {
+            "mill": "0.12.3",
+            "java": "OpenJDK 17.0.20.1",
+            "verilator": "5.020 2024-01-01",
+            "cxx": "GCC/G++ 13.3.0"
+          },
+          "exit_code": 2,
+          "cpu_started": false,
+          "result": "blocked",
+          "first_failed_stage": "simulator C++ compilation after RTL generation",
+          "blocker": "GCC compile failed: VerilatedTraceBaseC undeclared in waveform.h:26 (Verilator 5.020 headers); simulator was not produced. Previous attempts additionally exposed missing NOOP_HOME and unsupported GCC -fno-slp-vectorize.",
+          "expected_observed": false,
+          "assertion_failed": false,
+          "output": "notes/units/evidence/smoke/kunminghu-runmain-2026-10-14-combined.log",
+          "output_sha256": "fa86b85e2ba3e1f34bb555852225319b4ce8f09d24fb5f1f0bcfb4911237dd57",
+          "stdout": "notes/units/evidence/smoke/kunminghu-runmain-2026-10-14-combined.log",
+          "stdout_sha256": "fa86b85e2ba3e1f34bb555852225319b4ce8f09d24fb5f1f0bcfb4911237dd57",
+          "stderr": "notes/units/evidence/smoke/kunminghu-runmain-2026-10-14-combined.log",
+          "stderr_sha256": "fa86b85e2ba3e1f34bb555852225319b4ce8f09d24fb5f1f0bcfb4911237dd57",
+          "artifacts": [
+            "ephemeral:sources/xiangshan/build/rtl/SimTop.fir",
+            "ephemeral:sources/xiangshan/build/rtl/*.sv"
+          ],
+          "stream_capture": "merged transcript; see capture_note",
+          "expected": "smoke fixture is expected to reach an observable success marker after simulator becomes available.",
+          "observed": "CPU not started; no marker observed because simulator compilation failed.",
+          "expected_marker": "HIT GOOD TRAP",
+          "artifact_sha256": {}
+        },
+        {
+          "id": "coremark-smoke-5.050",
+          "input": "sources/xiangshan/ready-to-run/coremark-2-iteration.bin",
+          "snapshot_sha": "c098f996bf4d301b88693b20315486d31e93bc9d",
+          "input_sha256": "c764afb8bfd69542620a4794b858867dd1e455efaac56c28eb477f1732f83e8e",
+          "configuration": "KunminghuV2Config; NUM_CORES=1; CoreMark two-iteration fixture; Verilator 5.050.",
+          "command": "./build/verilator-compile/emu -b 0 -e 0 -i ./ready-to-run/coremark-2-iteration.bin --diff ./ready-to-run/riscv64-nemu-interpreter-so",
+          "working_directory": "sources/xiangshan",
+          "tools": {
+            "mill": "0.12.3",
+            "java": "OpenJDK 17.0.20.1",
+            "verilator": "5.050 2026-07-01; tag v5.050 commit 0a24d49771fa57c36ff667272bf7b5c6705e4df0",
+            "cxx": "GCC/G++ 13.3.0-6ubuntu2~24.04.1"
+          },
+          "exit_code": 0,
+          "cpu_started": true,
+          "result": "run-pass",
+          "expected_observed": true,
+          "assertion_failed": false,
+          "output": "notes/units/evidence/smoke/kunminghu-coremark-2026-10-14.stdout.log",
+          "output_sha256": "a556c8347d0c9e48808cf8ff246a89b8f8fd883ae8c87d218eaa356b31c171f0",
+          "stdout": "notes/units/evidence/smoke/kunminghu-coremark-2026-10-14.stdout.log",
+          "stdout_sha256": "a556c8347d0c9e48808cf8ff246a89b8f8fd883ae8c87d218eaa356b31c171f0",
+          "stderr": "notes/units/evidence/smoke/kunminghu-coremark-2026-10-14.stderr.log",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "artifacts": [
+            "sources/xiangshan/build/verilator-compile/emu",
+            "sources/xiangshan/build/verilator-compile/VSimTop.mk"
+          ],
+          "expected": "CoreMark 2 iterations complete and NEMU difftest reaches HIT GOOD TRAP.",
+          "observed": "CoreMark 2 iterations completed; first instruction committed; NEMU difftest enabled; HIT GOOD TRAP at pc=0x80001ca0; instrCnt=663692; exit_code=0.",
+          "blocker": "",
+          "expected_marker": "HIT GOOD TRAP at pc = 0x80001ca0",
+          "artifact_sha256": {
+            "sources/xiangshan/build/verilator-compile/emu": "21f0700203205870403df50eadf2afd182e33573afdeee9a264a49b328f9e897",
+            "sources/xiangshan/build/verilator-compile/VSimTop.mk": "365608841fbbeaedaa63fc2ff910248b04d1f75fa49b8024e305edca3df31117"
+          }
+        }
+      ]
+    },
+    {
+      "name": "heliodor",
+      "project": "Heliodor",
+      "checkout": "sources/heliodor",
+      "snapshot_sha": "94e9c5821c24a8941c3ddc3b76daddc7124a855a",
+      "source_status": "clean",
+      "gitlinks": {},
+      "configuration": "Heliodor test_arch_ssstateen negative diagnostic and isolated test_smoke base-core positive smoke; neither run implies profile compliance.",
+      "environment": {
+        "VERYl_TOOLCHAIN": "/nvme_data1/richard/.local/share/veryl/toolchains/latest",
+        "TMPDIR": "/tmp; unique isolated Heliodor copy"
+      },
+      "tools": {
+        "veryl": "0.22.0 (967e477 2026-10-02)",
+        "verilator": "5.020 2024-01-01 rev (Debian 5.020-1)",
+        "cxx": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0",
+        "veryl_binary_sha256": "aa57dd31488410769ee61c367f03de6cbf11101be47b510b99bde4ac9155b4c1"
+      },
+      "provisioning": {
+        "veryl": "Official installer: cargo install verylup; verylup setup; verylup install 0.22.0. Verify with veryl +0.22.0 --version and SHA-256 aa57dd31488410769ee61c367f03de6cbf11101be47b510b99bde4ac9155b4c1 for the captured Linux binary. Official install instructions: https://veryl-lang.org/blog/verylup-veryl-toolchain-installer/ . Then rebuild the isolated source/test copy with python3 experiments/ssstateen/run_isolated.py.",
+        "verilator": "System Debian package verilator 5.020-1; exact version captured on the 2026-10-14 rerun.",
+        "compiler": "System Ubuntu GCC/G++ 13.3.0-6ubuntu2~24.04.1; exact version captured on the 2026-10-14 rerun."
+      },
+      "runs": [
+        {
+          "id": "ssstateen-arch-smoke",
+          "input": "experiments/ssstateen/ssstateen_probe.hex",
+          "snapshot_sha": "94e9c5821c24a8941c3ddc3b76daddc7124a855a",
+          "input_sha256": "65391f26edfcd03fe56182e53b393e99b8a2500c49e8599f97fbaed49104c789",
+          "configuration": "test_arch_ssstateen; isolated runner retained normal 1 MiB arch harness, excluded uninstantiated debug harness and added local allow(initial_assign) to DRAM init; one harness/DUT.",
+          "command": "/nvme_data1/richard/.local/share/veryl/toolchains/latest/veryl test --test test_arch_ssstateen",
+          "working_directory": "/tmp/heliodor-ssstateen-isolated-m7_pobxr",
+          "tools": {
+            "veryl": "0.22.0 (967e477 2026-10-02)",
+            "verilator": "5.020 2024-01-01 rev (Debian 5.020-1)",
+            "cxx": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0"
+          },
+          "exit_code": 1,
+          "cpu_started": true,
+          "result": "run-fail",
+          "assertion_failed": true,
+          "expected_observed": false,
+          "expected": "20 stateen/ENVCFG gate traps plus HS ecall; marker tohost=0x2B",
+          "observed": "CPU executed fixture; tohost=0x02; only HS ecall cause=9, operation ID=21; expected gate traps absent; stateen CSR writes read back zero",
+          "output": "notes/units/evidence/smoke/heliodor-ssstateen-rerun-2026-10-14.stdout.log",
+          "output_sha256": "c7ad6436ae162e56940c6cea87c2d8ec2bb6ecc7850fc8a149a185b3df9cce14",
+          "stdout": "notes/units/evidence/smoke/heliodor-ssstateen-rerun-2026-10-14.stdout.log",
+          "stdout_sha256": "c7ad6436ae162e56940c6cea87c2d8ec2bb6ecc7850fc8a149a185b3df9cce14",
+          "stderr": "notes/units/evidence/smoke/heliodor-ssstateen-rerun-2026-10-14.stderr.log",
+          "stderr_sha256": "960adb9564a0b8a431f13f848ccdd5e2719a4af5fed7f4a674f041693eb599be",
+          "artifacts": [
+            "ephemeral:/tmp/heliodor-ssstateen-isolated-m7_pobxr",
+            "ephemeral:/tmp/heliodor-ssstateen-isolated-m7_pobxr/test/ssstateen/ssstateen_probe.hex"
+          ],
+          "stream_capture": "stdout and stderr captured separately on 2026-10-14 rerun",
+          "blocker": "",
+          "expected_marker": "tohost=0x2B",
+          "artifact_sha256": {}
+        },
+        {
+          "id": "base-core-smoke-test_smoke",
+          "input": "sources/heliodor/test/v4_smoke.hex",
+          "snapshot_sha": "94e9c5821c24a8941c3ddc3b76daddc7124a855a",
+          "input_sha256": "2cf451e3cee19059d2dbc19c08cbe4af9b552ec842d6d2881d039f4bc1aaeeb1",
+          "configuration": "Heliodor heliodor_core base smoke; test_smoke runs 5000 cycles in one test harness and checks x10=7, x11=11, x12=77, x13=11; isolated copy with lint-only allow(initial_assign) on ROM initialized through $readmemh.",
+          "command": "PATH=/nvme_data1/richard/.local/share/veryl/toolchains/latest:$PATH python3 experiments/heliodor-smoke/run.py --stdout notes/units/evidence/smoke/heliodor-core-smoke.stdout.log --stderr notes/units/evidence/smoke/heliodor-core-smoke.stderr.log --archive-dir notes/units/evidence/smoke/heliodor-core-smoke-inputs",
+          "working_directory": ".",
+          "tools": {
+            "veryl": "0.22.0 (967e477 2026-10-02); binary sha256 aa57dd31488410769ee61c367f03de6cbf11101be47b510b99bde4ac9155b4c1",
+            "verilator": "5.020 2024-01-01 rev (Debian 5.020-1)",
+            "cxx": "GCC/G++ 13.3.0-6ubuntu2~24.04.1"
+          },
+          "exit_code": 0,
+          "cpu_started": true,
+          "result": "run-pass",
+          "assertion_failed": false,
+          "expected_observed": true,
+          "expected": "[test_smoke] PASS with x10=7, x11=11, x12=77, x13=11.",
+          "observed": "[test_smoke] PASS; x10=7, x11=11, x12=77, x13=11.",
+          "output": "notes/units/evidence/smoke/heliodor-core-smoke.stdout.log",
+          "output_sha256": "9ae4027e163520a04a02e7421ead8e008803fac68dd6800afbccbbefa274b089",
+          "stdout": "notes/units/evidence/smoke/heliodor-core-smoke.stdout.log",
+          "stdout_sha256": "9ae4027e163520a04a02e7421ead8e008803fac68dd6800afbccbbefa274b089",
+          "stderr": "notes/units/evidence/smoke/heliodor-core-smoke.stderr.log",
+          "stderr_sha256": "bd32f57b8476b25abf1f116a8bb1815efdf17c20d5059f83935a7e6e867c5d75",
+          "artifacts": [
+            "experiments/heliodor-smoke/run.py",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/test_smoke.veryl",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/v4_smoke.hex",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/run-metadata.json"
+          ],
+          "stream_capture": "stdout/stderr stored separately; isolated workspace retained for this verification",
+          "blocker": "",
+          "expected_marker": "[test_smoke] PASS",
+          "source_tree_sha256": "6a26dc7c67d60b4ec8634cb3b2061df85ad14de219a8a1fdbc4402da9aa9d495",
+          "source_commit": "94e9c5821c24a8941c3ddc3b76daddc7124a855a",
+          "artifact_sha256": {
+            "experiments/heliodor-smoke/run.py": "02f7bb5f0170df567461fc1a7f62dd7a4f649122cb70b71f495d3e41da782d63",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/test_smoke.veryl": "15bd6b192c2569d078e8d10e872c095a649a1f6848f54f030c7e4123d7d1daf3",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/v4_smoke.hex": "2cf451e3cee19059d2dbc19c08cbe4af9b552ec842d6d2881d039f4bc1aaeeb1",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/run-metadata.json": "3c1fac1b6c7b6a062a92016b9f1a406aa6d2bf5ca29622709c59ec546c10b3b9"
+          }
+        }
+      ]
+    }
+  ]
+}

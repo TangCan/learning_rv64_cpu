@@ -1,0 +1,7 @@
+{"command": ["/nvme_data1/richard/.local/share/veryl/toolchains/latest/veryl", "test", "--include-ignored", "--test", "test_smoke"], "fixture_sha256": "2cf451e3cee19059d2dbc19c08cbe4af9b552ec842d6d2881d039f4bc1aaeeb1", "runner_invocation": ["/usr/bin/python3", "/nvme_data1/richard/learning_rv64_cpu/experiments/heliodor-smoke/run.py", "--stdout", "notes/units/evidence/smoke/heliodor-core-smoke.stdout.log", "--stderr", "notes/units/evidence/smoke/heliodor-core-smoke.stderr.log", "--archive-dir", "notes/units/evidence/smoke/heliodor-core-smoke-inputs"], "source_commit": "94e9c5821c24a8941c3ddc3b76daddc7124a855a", "source_tree_sha256": "6a26dc7c67d60b4ec8634cb3b2061df85ad14de219a8a1fdbc4402da9aa9d495", "transformed_test_sha256": "15bd6b192c2569d078e8d10e872c095a649a1f6848f54f030c7e4123d7d1daf3"}
+work_dir=/tmp/heliodor-core-smoke-rzedlw38
+command=/nvme_data1/richard/.local/share/veryl/toolchains/latest/veryl test --include-ignored --test test_smoke
+[test_smoke] cy=5000 x10=0000000000000007 x11=000000000000000b commit=1651 last_pc=0000000000000010 rename=1678 cdb=1654 rob_sz=1 stall=0 head=34 tail=35 rob_alloc=1682 rob_cdb=1674 rob_commit=1653
+[test_smoke] x12=000000000000004d x13=000000000000000b
+[test_smoke] PASS
+runner_exit_code=0

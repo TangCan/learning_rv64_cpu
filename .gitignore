@@ -3,3 +3,6 @@
 .bmad-loop/policy.toml
 _bmad/render/
 /sources/
+__pycache__/
+*.py[cod]
+.pytest_cache/
