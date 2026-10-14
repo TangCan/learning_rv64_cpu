@@ -179,9 +179,12 @@ def _run_fixture_environment(tmp_path: pathlib.Path, monkeypatch: pytest.MonkeyP
     arch_fixture.parent.mkdir(parents=True)
     arch_fixture.write_text("00000013\n", encoding="ascii")
     (source / "tb/test_arch_common.veryl").write_text(
-        "module ordinary_harness {\n" + runner.ARCH_DRAM_DECL + "\n}\n" +
+        "module ordinary_harness {\n    o_tohost: output logic<32>,\n" + runner.ARCH_DRAM_DECL +
+        "\n    assign o_tohost = tohost_lo;\n    i_mtime: mtime_ctr,\n}\n" +
         runner.ARCH_DEBUG_MARKER + "\nmodule debug_harness {}\n\n" +
-        runner.ARCH_TARGET_MARKER + " {\n    inst h: test_arch_common_harness;\n}\n\n" +
+        runner.ARCH_TARGET_MARKER + " {\n    var tohost: logic<32>;\n    var pass: logic;\n" +
+        "    inst h: test_arch_common_harness #(HEX_FILE: \"test/riscv-arch-test/build/rv64ui/add.hex\", TOHOST_IDX: 1024,) { o_tohost: tohost, i_mtime: mtime_ctr, };\n" +
+        "    $display (\"v4 rv64ui-add tohost=%h pass=%b\", tohost, pass);\n}\n\n" +
         "#[test(test_arch_next)]\nmodule next_test {}\n", encoding="utf-8")
     (source / "Veryl.toml").write_text("[project]\n", encoding="utf-8")
     (source / "Veryl.lock").write_text("", encoding="utf-8")
@@ -358,7 +361,7 @@ def test_actual_locked_arch_harness_smoke_runs_and_is_archived(monkeypatch: pyte
         record = runner.run(args)
         assert record["result"] == "run-pass"
         assert record["cpu_started"] and record["expected_observed"]
-        assert record["input"] == "sources/heliodor/" + runner.ARCH_FIXTURE
+        assert record["input"].endswith("/rv64ui-add.hex")
         assert record["input_sha256"] == record["inputs"][1]["sha256"]
         archived_output = (runner.ROOT / record["output"]).read_text(encoding="utf-8")
         assert "[test_smoke] PASS" in archived_output
@@ -369,3 +372,69 @@ def test_actual_locked_arch_harness_smoke_runs_and_is_archived(monkeypatch: pyte
         assert snapshot["runs"][-1]["id"] == record["id"]
         archived_runner = runner.ROOT / record["artifacts"][0]
         assert runner.sha256(archived_runner) == record["artifact_sha256"][record["artifacts"][0]]
+
+
+def test_sstc_matrix_controls_and_gate_causes_are_complete() -> None:
+    assert len(runner.SSTC_CASES) == 14
+    assert set(runner.SSTC_CASES) == set(runner.SSTC_CONTROLS)
+    for case in ("vs-lt", "vs-eq", "vs-gt"):
+        controls = runner.SSTC_CONTROLS[case]
+        assert controls["htimedelta"] == "0x10000"
+        assert controls["hideleg.VSTIP"] == 1
+        assert controls["hcounteren.TM"] == controls["mcounteren.TM"] == 1
+    assert runner.SSTC_CONTROLS["vs-hstce-off"]["expected_cause"] == 22
+    assert runner.SSTC_CONTROLS["vs-htm-off"]["expected_cause"] == 22
+    assert runner.SSTC_CONTROLS["vs-mstce-off"]["expected_cause"] == 2
+    assert runner.SSTC_CONTROLS["vs-mtm-off"]["expected_cause"] == 2
+    assert runner.SSTC_CONTROLS["vs-route"]["expected_mode"] == "VS"
+    assert runner.SSTC_CONTROLS["vs-hs-route"]["expected_mode"] == "HS"
+
+
+def test_sstc_transform_enables_clock_only_for_fixture() -> None:
+    source = (pathlib.Path(__file__).resolve().parents[2] / "sources/heliodor/tb/test_arch_common.veryl").read_text()
+    normal = runner.transform_arch_harness(source)
+    sstc = runner.transform_arch_harness(
+        source, target="test_arch_rv64ui_sstc", fixture="experiments/sstc/heliodor/vs-lt.hex",
+        label="sstc vs-lt", mtime_enable=True)
+    assert "MTIME_EN: 1'b1" not in normal
+    assert "MTIME_EN: 1'b1" in sstc
+    assert 'HEX_FILE  : "experiments/sstc/heliodor/vs-lt.hex"' in sstc
+    assert "module test_arch_rv64ui_sstc" in sstc
+
+
+def test_sstc_case_rejects_a_non_sstc_topic(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(sys, "argv", [str(RUNNER_PATH), "--sstc-case", "s-eq"])
+    with pytest.raises(SystemExit) as exc:
+        runner.main()
+    assert exc.value.code == 2
+
+
+def test_run_snapshots_repo_fixture_and_records_no_trap_marker(
+        tmp_path: pathlib.Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    _source, manifest, args = _run_fixture_environment(tmp_path, monkeypatch)
+    fixture = tmp_path / "experiments/sstc/heliodor/vs-eq.hex"
+    fixture.parent.mkdir(parents=True)
+    fixture.write_text("deadbeef\n", encoding="ascii")
+    args.sstc_case = "vs-eq"
+    calls = 0
+
+    def execute(command, *_args):
+        nonlocal calls
+        calls += 1
+        if command[-1] == "test_smoke":
+            return 0, (b"[test_smoke] cy=5000 x10=7 x11=b commit=1651\n"
+                       b"[test_smoke] x12=4d x13=b\n[test_smoke] PASS\n"), b"", ""
+        return 1, b"sstc vs-eq tohost=00000210 pass=0 sample_time=00000029 cmp=00000029 time_after=00000029\n", b"", ""
+
+    monkeypatch.setattr(runner, "execute_test", execute)
+    record = runner.run(args)
+    assert calls == 2, record.get("blocker")
+    saved = json.loads(manifest.read_text(encoding="utf-8"))["snapshots"][0]["runs"][0]
+    snapshot = tmp_path / saved["input"]
+    assert snapshot.is_file() and snapshot.read_bytes() == fixture.read_bytes()
+    assert saved["input_sha256"] == hashlib.sha256(fixture.read_bytes()).hexdigest()
+    assert record["result"] == "run-fail" and record["cpu_started"]
+    assert record["observed_values"] == {
+        "tohost": 0x210, "trap_observed": False, "cause": None, "mode": "VS",
+        "pc": "target_access+4; CSR write completed and fallthrough marker executed",
+        "sampled_time": 0x29, "comparator": 0x29, "time_after_write": 0x29}

@@ -1,0 +1,80 @@
+{
+  "artifact_sha256": {
+    "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T073930Z-4057106/run.py": "7550672d503364c86eee5ecf2646b6de0833c5fbb2462386f15145dec67b2dce",
+    "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T073930Z-4057106/sstc-s-eq.hex": "44f14a0fcc203b73145cd5cd7832616b77f0e26271d5309f60f9cd1a77ad7c1e"
+  },
+  "artifacts": [
+    "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T073930Z-4057106/run.py",
+    "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T073930Z-4057106/sstc-s-eq.hex"
+  ],
+  "assertion_failed": false,
+  "blocker": "manifest/source validation failed: heliodor/heliodor-core-20261014T072112Z-3889604: input SHA-256 mismatch; heliodor/heliodor-core-20261014T072339Z-3904350: input SHA-256 mismatch; heliodor/heliodor-core-20261014T072405Z-3904350: input SHA-256 mismatch; heliodor/heliodor-core-20261014T072431Z-3904350: input SHA-256 mismatch; heliodor/heliodor-core-20261014T072502Z-3904350: input SHA-256 mismatch; heliodor/heliodor-core-20261014T072528Z-3904350: input SHA-256 mismatch",
+  "case": "s-eq",
+  "command": "preflight not reached",
+  "configuration": "Heliodor test_smoke plus test_arch_rv64ui_sstc; one harness/DUT; 5000 smoke cycles and 300000 arch cycles; mtime enabled, increments once per harness cycle; controls={'menvcfg.STCE': 1, 'mcounteren.TM': 1, 'relation': 'one sampled time value == stimecmp'}; expected tohost=1.",
+  "cpu_started": false,
+  "evidence_method": "case-specific assembly checks enforce expected architecture state; pending uses a bounded loop, without a cycle-exact latency requirement",
+  "exit_code": 1,
+  "expected": "Heliodor fixture s-eq asserts its named Sstc condition and reports tohost=1.",
+  "expected_controls": {
+    "mcounteren.TM": 1,
+    "menvcfg.STCE": 1,
+    "mtime_enabled": true,
+    "mtime_tick": "increments once per harness cycle",
+    "relation": "one sampled time value == stimecmp"
+  },
+  "expected_marker": "[test_smoke] PASS",
+  "expected_markers": [
+    "[test_smoke] PASS",
+    "sstc s-eq PASS"
+  ],
+  "expected_observed": false,
+  "first_failed_stage": "locked-source-preflight",
+  "fixture_sha256": "",
+  "id": "heliodor-core-20261014T073930Z-4057106",
+  "input": "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T073930Z-4057106/sstc-s-eq.hex",
+  "input_sha256": "44f14a0fcc203b73145cd5cd7832616b77f0e26271d5309f60f9cd1a77ad7c1e",
+  "inputs": [
+    {
+      "path": "sources/heliodor/test/v4_smoke.hex",
+      "sha256": "2cf451e3cee19059d2dbc19c08cbe4af9b552ec842d6d2881d039f4bc1aaeeb1"
+    },
+    {
+      "path": "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T073930Z-4057106/sstc-s-eq.hex",
+      "sha256": "44f14a0fcc203b73145cd5cd7832616b77f0e26271d5309f60f9cd1a77ad7c1e"
+    }
+  ],
+  "isolated_inputs_sha256": "",
+  "isolated_tree_sha256": "",
+  "log_path_warnings": [],
+  "next_environment_change": "Restore the sources.lock revision, clean Heliodor checkout, gitlinks, and valid toolchain manifest before retrying.",
+  "observed": "CPU-start=False; results={}; smoke_marker=False; arch_marker=False",
+  "observed_values": null,
+  "output": "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T073930Z-4057106/output.log",
+  "output_sha256": "169f24774e13a79b6341d6c41c58f159e180701e87e9028aa70afdf8712b6fbb",
+  "resources": {
+    "disk_free_bytes": 857771036672,
+    "logical_cpu_count": 64,
+    "memory_available_bytes": 161263792128,
+    "test_timeout_seconds": 180.0
+  },
+  "result": "blocked",
+  "run_seconds": 1.814,
+  "smoke_fixture_sha256": "",
+  "snapshot_sha": "94e9c5821c24a8941c3ddc3b76daddc7124a855a",
+  "source_commit": "94e9c5821c24a8941c3ddc3b76daddc7124a855a",
+  "source_tree_sha256": "",
+  "stderr": "notes/units/evidence/smoke/heliodor-core-20261014T073930Z-4057106.stderr.log",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stdout": "notes/units/evidence/smoke/heliodor-core-20261014T073930Z-4057106.stdout.log",
+  "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "tools": {
+    "cxx": "unavailable",
+    "verilator": "unavailable",
+    "veryl": "unavailable"
+  },
+  "topic": "sstc",
+  "transformed_arch_harness_sha256": "",
+  "transformed_test_sha256": "",
+  "working_directory": "/nvme_data1/richard/learning_rv64_cpu"
+}

@@ -24,6 +24,22 @@ Kunminghu 使用 `sources/xiangshan` commit `c098f996bf4d301b88693b20315486d31e9
 
 Kunminghu 输出日志路径位于 `notes/units/evidence/smoke/kunminghu-fixture-runs/<run-id>/output.log`；Heliodor 位于 `notes/units/evidence/smoke/heliodor-core-smoke-inputs/<run-id>/output.log`。表中每个 run ID 唯一对应 manifest 记录，其中含 CPU 启动状态、退出码、结果 marker 和完整日志路径；记录与日志均有 SHA-256。
 
+### Evidence table
+
+<a id="evidence-table"></a>
+
+| ID | Claim | Kind | Status | Snapshot/location | Command or observation |
+|---|---|---|---|---|---|
+| E1 | Zifencei local-hart contract and RVA23S64 mandatory status | spec | inspected | Zifencei v2.0; RVA23S64 v1.0 §3.1.2.2/N2 | FENCE.I synchronizes prior visible stores with later instruction fetch on the executing hart; remote harts require their own coordination and FENCE.I. |
+| E2 | Kunminghu decode, ordering, I-cache invalidation and miss suppression | source | inspected | Locked XiangShan snapshot `c098f996bf4d301b88693b20315486d31e93bc9d`; DecodeUnit/Fence/XSCore/Frontend/ICache/ICacheMissUnit | Static path inspection; in-flight miss/fill convergence remains unverified. |
+| E3 | Heliodor decode, ROB commit, store drain, cache invalidation and redirect/refetch | source | inspected | Locked Heliodor snapshot `94e9c5821c24a8941c3ddc3b76daddc7124a855a`; decoder/ROB/core/I-cache | Static path inspection; dynamic behavior is represented only by E9's bounded cases. |
+| E4 | Heliodor's pre-existing architecture test input | test-inspected | inspected | `test_arch_rv64ui_fence_i` and checked-in `fence_i.hex` | Disassembly shows two standard FENCE.I encodings and in-program checks 444/777; these are expected values, not observations from this project's run. |
+| E5 | Original Kunminghu assembly fixture and encoding layout | experiment | inspected | `experiments/rva23s64-zifencei/` | Build and disassembly establish image layout and standard encoding; this legacy fixture is distinct from the Story 6.4 runner cases. |
+| E6 | Historical Heliodor direct-test attempt | test-run | run-fail | Earlier Story 5.2 attempt; Veryl testbench check stopped at `$readmemh`/`dram` initialization | CPU did not start. This is a historical blocked environment path; Story 6.4's isolated runner later executed the cases in E9. |
+| E7 | Exact FENCE.I encodings and per-field variants | test-inspected | inspected | Four Story 6.4 images at byte offset `0x20`; see case table above | Standard `0x0000100f`; `funct12=1` `0x0010100f`; `rs1=1` `0x0000900f`; `rd=1` `0x0000108f`. E8/E9 record runtime outcomes for each variant. |
+| E8 | Four single-hart Kunminghu CPU runs | test-run | run-pass | Story 6.4; manifest topic `zifencei`; run IDs in case table | All four cases started and reached NEMU good trap after the fixture's `a0==1` and `a0==42` checks. Exact commands, config, input/log hashes and outputs are in `cpu-validation-toolchain-v1.yaml`. |
+| E9 | Four single-hart Heliodor CPU runs | test-run | run-pass | Story 6.4; manifest topic `zifencei`; run IDs in case table | All four cases started and reached `tohost=1 pass=1` after the fixture's `a0==1` and `a0==42` checks. Exact commands, config, input/log hashes and outputs are in `cpu-validation-toolchain-v1.yaml`. |
+
 镜像由版本与 SHA-256 均核验的 riscv64-unknown-elf-gcc 15.1.0、GNU objcopy 2.44 和对应 binutils nm 生成；具体散列固定在 `build_images.py`。使用 `python3 experiments/rva23s64-zifencei/build_images.py` 可重建并检查四个 hex image。构建器还核验 `_start` 地址、FENCE.I 符号地址及镜像长度。
 
 ## 镜像与编码核验

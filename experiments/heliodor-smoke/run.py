@@ -28,6 +28,31 @@ ARCH_DEBUG_MARKER = "// Debug variant exposing core internals for stuck-test dia
 ARCH_DRAM_DECL = "    var dram: logic<32> [1048576];"
 ARCH_TARGET_MARKER = "#[test(test_arch_rv64ui_add)]\nmodule test_arch_rv64ui_add"
 ARCH_FIXTURE = "test/riscv-arch-test/build/rv64ui/add.hex"
+SSTC_CASES = ("s-lt", "s-eq", "s-gt", "s-stce-off", "s-tm-off",
+              "vs-lt", "vs-eq", "vs-gt", "vs-mstce-off", "vs-hstce-off",
+              "vs-mtm-off", "vs-htm-off", "vs-route", "vs-hs-route")
+
+SSTC_CONTROLS = {
+    "s-lt": {"menvcfg.STCE": 1, "mcounteren.TM": 1, "relation": "time < stimecmp", "delta": 8},
+    "s-eq": {"menvcfg.STCE": 1, "mcounteren.TM": 1, "relation": "one sampled time value == stimecmp"},
+    "s-gt": {"menvcfg.STCE": 1, "mcounteren.TM": 1, "relation": "time > stimecmp", "delta": -8},
+    "s-stce-off": {"menvcfg.STCE": 0, "mcounteren.TM": 1, "expected_cause": 2},
+    "s-tm-off": {"menvcfg.STCE": 1, "mcounteren.TM": 0, "expected_cause": 2},
+    "vs-lt": {"menvcfg.STCE": 1, "henvcfg.STCE": 1, "mcounteren.TM": 1, "hcounteren.TM": 1, "htimedelta": "0x10000", "hideleg.VSTIP": 1, "delta": 64, "relation": "guest time < vstimecmp"},
+    "vs-eq": {"menvcfg.STCE": 1, "henvcfg.STCE": 1, "mcounteren.TM": 1, "hcounteren.TM": 1, "htimedelta": "0x10000", "hideleg.VSTIP": 1, "delta": 0, "relation": "one sampled guest time == vstimecmp"},
+    "vs-gt": {"menvcfg.STCE": 1, "henvcfg.STCE": 1, "mcounteren.TM": 1, "hcounteren.TM": 1, "htimedelta": "0x10000", "hideleg.VSTIP": 1, "delta": -64, "relation": "guest time > vstimecmp"},
+    "vs-mstce-off": {"menvcfg.STCE": 0, "henvcfg.STCE": 1, "mcounteren.TM": 1, "hcounteren.TM": 1, "htimedelta": "0x10000", "hideleg.VSTIP": 1, "expected_cause": 2},
+    "vs-hstce-off": {"menvcfg.STCE": 1, "henvcfg.STCE": 0, "mcounteren.TM": 1, "hcounteren.TM": 1, "htimedelta": "0x10000", "hideleg.VSTIP": 1, "expected_cause": 22},
+    "vs-mtm-off": {"menvcfg.STCE": 1, "henvcfg.STCE": 1, "mcounteren.TM": 0, "hcounteren.TM": 1, "htimedelta": "0x10000", "hideleg.VSTIP": 1, "expected_cause": 2},
+    "vs-htm-off": {"menvcfg.STCE": 1, "henvcfg.STCE": 1, "mcounteren.TM": 1, "hcounteren.TM": 0, "htimedelta": "0x10000", "hideleg.VSTIP": 1, "expected_cause": 22},
+    "vs-route": {"menvcfg.STCE": 1, "henvcfg.STCE": 1, "mcounteren.TM": 1, "hcounteren.TM": 1, "htimedelta": "0x10000", "hideleg.VSTIP": 1, "expected_mode": "VS", "expected_cause": 5},
+    "vs-hs-route": {"menvcfg.STCE": 1, "henvcfg.STCE": 1, "mcounteren.TM": 1, "hcounteren.TM": 1, "htimedelta": "0x10000", "hideleg.VSTIP": 0, "expected_mode": "HS", "expected_cause": 6},
+}
+for _case, _values in SSTC_CONTROLS.items():
+    _values["mcounteren.value"] = "0x2" if _values.get("mcounteren.TM") else "0x0"
+    if _case.startswith("vs-"):
+        _values["hcounteren.value"] = "0x2" if _values.get("hcounteren.TM") else "0x0"
+        _values["hie.VSTIE"] = 1 if _case == "vs-hs-route" else 0
 
 
 def sha256(path: pathlib.Path) -> str:
@@ -176,12 +201,16 @@ def transform_testbench(original: str) -> str:
     return original.replace(IMEM_DECL, "    #[allow(initial_assign)]\n" + IMEM_DECL, 1)
 
 
-def transform_arch_harness(original: str, *, target: str = "test_arch_rv64ui_add", fixture: str = ARCH_FIXTURE, label: str = "v4 rv64ui-add") -> str:
+def transform_arch_harness(original: str, *, target: str = "test_arch_rv64ui_add", fixture: str = ARCH_FIXTURE, label: str = "v4 rv64ui-add", mtime_enable: bool = False) -> str:
     """Keep the ordinary harness and one RV64UI target; omit the debug harness and unrelated tests."""
     if original.count(ARCH_DEBUG_MARKER) != 1 or original.count(ARCH_DRAM_DECL) != 1:
         raise ValueError("pinned arch harness boundary/DRAM declaration drifted; re-review isolation workaround")
     target_marker = f"#[test({target})]\nmodule {target}"
-    if target == "test_arch_rv64ui_add":
+    source_target = target
+    if original.count(target_marker) != 1:
+        # SSTC uses the pinned, ordinary arch target's RAM/tohost harness shape,
+        # with a local fixture path and label substituted in the isolated copy.
+        source_target = "test_arch_rv64ui_add"
         target_marker = ARCH_TARGET_MARKER
     if original.count(target_marker) != 1:
         raise ValueError(f"pinned {target} target drifted; re-review selected target")
@@ -193,13 +222,64 @@ def transform_arch_harness(original: str, *, target: str = "test_arch_rv64ui_add
     if next_target < 0:
         raise ValueError("selected arch target has no bounded module end")
     selected_target = original[target_start:next_target].strip() + "\n"
-    if target != "test_arch_rv64ui_add":
-        selected_target = selected_target.replace("test_arch_rv64ui_add", target)
+    if target != source_target:
+        selected_target = selected_target.replace(source_target, target)
+    if fixture != ARCH_FIXTURE or label != "v4 rv64ui-add":
         hex_path_pattern = r'HEX_FILE\s*:\s*"[^"]+"'
         if len(re.findall(hex_path_pattern, selected_target)) != 1:
             raise ValueError(f"pinned {target} HEX_FILE anchor drifted; expected exactly one path")
         selected_target = re.sub(hex_path_pattern, f'HEX_FILE  : "{fixture}"', selected_target, count=1)
         selected_target = selected_target.replace("v4 rv64ui-add", label)
+    if mtime_enable:
+        normal_harness, changed = re.subn(
+            r"o_tohost\s*:\s*output\s+logic<32>\s*,",
+            "o_tohost: output logic<32>,\n    o_sstc_sample_time: output logic<32>,\n    o_sstc_compare: output logic<32>,\n    o_sstc_time_after: output logic<32>,",
+            normal_harness, count=1)
+        if changed != 1:
+            raise ValueError("pinned arch harness lacks the tohost output anchor")
+        normal_harness, changed = re.subn(
+            r"assign\s+o_tohost\s*=\s*tohost_lo\s*;",
+            "assign o_tohost = tohost_lo;\n"
+            "    assign o_sstc_sample_time = dram[TOHOST_IDX[19:0] + 20'd1];\n"
+            "    assign o_sstc_compare = dram[TOHOST_IDX[19:0] + 20'd2];\n"
+            "    assign o_sstc_time_after = dram[TOHOST_IDX[19:0] + 20'd3];",
+            normal_harness, count=1)
+        if changed != 1:
+            raise ValueError("pinned arch harness lacks the tohost assignment anchor")
+        selected_target, changed = re.subn(
+            r"(var\s+tohost\s*:\s*logic<32>\s*;)",
+            r"\1\n    var sstc_sample_time: logic<32>;\n"
+            "    var sstc_compare: logic<32>;\n"
+            "    var sstc_time_after: logic<32>;",
+            selected_target, count=1)
+        if changed != 1:
+            raise ValueError("selected SSTC target lacks the tohost signal anchor")
+        selected_target, changed = re.subn(
+            r"o_tohost\s*:\s*tohost\s*,",
+            "o_tohost: tohost,\n"
+            "        o_sstc_sample_time: sstc_sample_time,\n"
+            "        o_sstc_compare: sstc_compare,\n"
+            "        o_sstc_time_after: sstc_time_after,",
+            selected_target, count=1)
+        if changed != 1:
+            raise ValueError("selected SSTC target lacks the tohost port connection anchor")
+        display_pattern = r'(\$display\s*\("' + re.escape(label) + r' tohost=%h pass=%b",\s*tohost,\s*pass\);)'
+        selected_target, changed = re.subn(
+            display_pattern,
+            f'$display ("{label} tohost=%h pass=%b sample_time=%h cmp=%h time_after=%h", '
+            "tohost, pass, sstc_sample_time, sstc_compare, sstc_time_after);",
+            selected_target, count=1)
+        if changed != 1:
+            raise ValueError("selected SSTC target lacks its result display anchor")
+        selected_target, changed = re.subn(r"TOHOST_IDX\s*:\s*1024\s*,", "TOHOST_IDX: 1024, MTIME_EN: 1'b1,", selected_target, count=1)
+        if changed != 1:
+            raise ValueError("pinned arch target lacks TOHOST_IDX anchor for MTIME_EN")
+        # The isolated SSTC harness advances its free-running cycle counter,
+        # but expose time at 1/256 that rate so firmware can sample a stable
+        # timer value, program the comparator, and verify the requested edge.
+        normal_harness, changed = re.subn(r"i_mtime\s*:\s*mtime_ctr\s*,", "i_mtime: mtime_ctr >> 8,", normal_harness, count=1)
+        if changed != 1:
+            raise ValueError("pinned arch harness lacks the mtime input anchor")
     return normal_harness.rstrip() + "\n\n" + selected_target
 
 
@@ -249,6 +329,7 @@ def next_environment_change(stage: str, blocker: str) -> str:
 
 def run(args: argparse.Namespace) -> dict:
     zifencei_case = getattr(args, "zifencei_case", None)
+    sstc_case = getattr(args, "sstc_case", None)
     arch_target = "test_arch_rv64ui_add"
     arch_label = "v4 rv64ui-add"
     fixture_rel = ARCH_FIXTURE
@@ -256,6 +337,10 @@ def run(args: argparse.Namespace) -> dict:
         fixture_rel = f"test/zifencei/{zifencei_case}.hex"
         arch_target = "test_arch_rv64ui_fence_i"
         arch_label = "v4 rv64ui-fence_i"
+    elif sstc_case:
+        fixture_rel = f"experiments/sstc/heliodor/{sstc_case}.hex"
+        arch_target = "test_arch_rv64ui_sstc"
+        arch_label = f"sstc {sstc_case}"
     started_at = time.time()
     run_base = time.strftime("heliodor-core-%Y%m%dT%H%M%SZ", time.gmtime()) + f"-{os.getpid()}"
     run_id = run_base
@@ -275,8 +360,12 @@ def run(args: argparse.Namespace) -> dict:
     archive.mkdir(parents=True, exist_ok=True)
     out = bytearray(); err = bytearray(); exit_code = 1; cpu_started = False
     assertion_failed = False; expected_observed = False; first_stage = "locked-source-preflight"; blocker = ""
-    snapshot_sha = LOCKED_SHA; input_path = (ROOT / "experiments/rva23s64-zifencei" / f"{zifencei_case}.hex") if zifencei_case else SOURCE / fixture_rel
-    archived_arch_fixture = archive / (f"zifencei-{zifencei_case}.hex" if zifencei_case else "rv64ui-add.hex")
+    snapshot_sha = LOCKED_SHA; input_path = ((ROOT / "experiments/rva23s64-zifencei" / f"{zifencei_case}.hex") if zifencei_case else (ROOT / "experiments/sstc/heliodor" / f"{sstc_case}.hex") if sstc_case else SOURCE / fixture_rel)
+    archived_arch_fixture = archive / (f"zifencei-{zifencei_case}.hex" if zifencei_case else f"sstc-{sstc_case}.hex" if sstc_case else "rv64ui-add.hex")
+    # Snapshot the exact arch input before source preflight so even blocked runs
+    # retain a stable, hash-verifiable input artifact.
+    if input_path.is_file():
+        shutil.copy2(input_path, archived_arch_fixture)
     smoke_input_path = SOURCE / "test/v4_smoke.hex"
     input_hash = sha256(input_path) if input_path.is_file() else "0" * 64
     smoke_input_hash = sha256(smoke_input_path) if smoke_input_path.is_file() else "0" * 64
@@ -314,7 +403,7 @@ def run(args: argparse.Namespace) -> dict:
         transformed = transform_testbench(original)
         (work / "tb/test_smoke.veryl").write_text(transformed, encoding="utf-8")
         arch_source = SOURCE / "tb/test_arch_common.veryl"
-        transformed_arch = transform_arch_harness(arch_source.read_text(encoding="utf-8"), target=arch_target, fixture=fixture_rel, label=arch_label)
+        transformed_arch = transform_arch_harness(arch_source.read_text(encoding="utf-8"), target=arch_target, fixture=fixture_rel, label=arch_label, mtime_enable=bool(sstc_case))
         (work / "tb/test_arch_common.veryl").write_text(transformed_arch, encoding="utf-8")
         shutil.copy2(smoke_input_path, work / "test/v4_smoke.hex")
         arch_fixture = work / fixture_rel
@@ -378,19 +467,54 @@ def run(args: argparse.Namespace) -> dict:
                 stderr_path = path
     combined_path = archive / "output.log"
     combined_path.write_bytes(bytes(out) + b"\n--- STDERR ---\n" + bytes(err))
+    sstc_observed = None
+    if sstc_case:
+        text_out = bytes(out).decode("utf-8", errors="replace")
+        marker = re.search(rf"sstc {re.escape(sstc_case)} tohost=([0-9a-fA-F]+) pass=([01])(?: sample_time=([0-9a-fA-F]+) cmp=([0-9a-fA-F]+) time_after=([0-9a-fA-F]+))?", text_out)
+        if marker:
+            value = int(marker.group(1), 16)
+            mode = "VS" if sstc_case.startswith("vs-") else "S"
+            if value == 0x210:
+                sstc_observed = {"tohost": value, "trap_observed": False, "cause": None,
+                                 "mode": mode, "pc": "target_access+4; CSR write completed and fallthrough marker executed"}
+            elif value == 0x211:
+                sstc_observed = {"tohost": value, "trap_observed": False, "cause": None,
+                                 "mode": mode, "pc": "bounded pending poll exhausted"}
+            elif value > 0xFFFF:
+                sstc_observed = {"tohost": value, "trap_observed": True,
+                                 "cause": value >> 16,
+                                 "mode": "unknown (trap origin is not encoded)" if sstc_case.startswith("vs-") else "M",
+                                 "pc_offset_from_target_access": value & 0xFFFF}
+            else:
+                sstc_observed = {"tohost": value, "pass": marker.group(2) == "1",
+                                 "fixture_assertions": "comparator/pending/cause/routing checks precede tohost=1" if value == 1 else "see marker-specific fixture path"}
+            observes_comparator = sstc_case in {"s-lt", "s-eq", "s-gt", "vs-lt", "vs-eq", "vs-gt", "vs-route", "vs-hs-route"}
+            if observes_comparator and sstc_observed is not None and marker.group(3) is not None:
+                sstc_observed["sampled_time"] = int(marker.group(3), 16)
+                sstc_observed["comparator"] = int(marker.group(4), 16)
+                sstc_observed["time_after_write"] = int(marker.group(5), 16)
     record = {
         **({"topic": "zifencei", "case": zifencei_case, "fence_i_encoding": {"standard": "0x0000100f", "funct12": "0x0010100f", "rs1": "0x0000900f", "rd": "0x0000108f"}[zifencei_case], "expected_values": {"before_fence_i": 1, "after_fence_i": 42}, "observed_values": {"before_fence_i": 1, "after_fence_i": 42, "evidence_method": "fixture equality checks for a0==1 before patch and a0==42 after FENCE.I; successful tohost/pass marker is reachable only after both checks"} if expected_observed else None, "reserved_field_trap": "no trap prevented the pass marker; trap-cause telemetry unavailable" if expected_observed else "startup/result not established or see run log; harness does not expose trap cause"} if zifencei_case else {}),
-        "id": run_id, "snapshot_sha": snapshot_sha, "input": str(input_path.relative_to(ROOT)) if input_path.is_relative_to(ROOT) else str(input_path),
+        **({"topic": "sstc", "case": sstc_case,
+            "expected_controls": {**SSTC_CONTROLS.get(sstc_case, {}), "mtime_enabled": True, "mtime_observation": "harness counter increments each cycle; CSR time is mtime_ctr >> 8"},
+            "observed_values": sstc_observed,
+            "evidence_method": "case-specific assembly checks enforce expected architecture state; pending uses a bounded loop, without a cycle-exact latency requirement"} if sstc_case else {}),
+        "id": run_id, "snapshot_sha": snapshot_sha,
+        "input": str(archived_arch_fixture.relative_to(ROOT)) if archived_arch_fixture.is_file() else str(input_path.relative_to(ROOT)),
         "input_sha256": input_hash,
         "inputs": [{"path": "sources/heliodor/test/v4_smoke.hex", "sha256": smoke_input_hash},
-                   {"path": str(input_path.relative_to(ROOT)) if input_path.is_relative_to(ROOT) else str(input_path), "sha256": input_hash}],
-        "configuration": (f"Heliodor test_smoke plus {arch_target}; one harness/DUT; 5000 smoke cycles and 300000 arch cycles; expected Zifencei old/new return 1/42 and tohost=1." if zifencei_case else "Heliodor test_smoke plus test_arch_rv64ui_add; one harness/DUT; 5000 smoke cycles and 300000 arch cycles; expected x10=7, x11=11, x12=77, x13=11 and tohost=1."),
+                   {"path": str(archived_arch_fixture.relative_to(ROOT)) if archived_arch_fixture.is_file() else str(input_path.relative_to(ROOT)), "sha256": input_hash}],
+        "configuration": (f"Heliodor test_smoke plus {arch_target}; one harness/DUT; 5000 smoke cycles and 300000 arch cycles; expected Zifencei old/new return 1/42 and tohost=1." if zifencei_case else
+                          f"Heliodor test_smoke plus {arch_target}; one harness/DUT; 5000 smoke cycles and 300000 arch cycles; mtime counter increments each cycle and CSR time is mtime_ctr >> 8; controls={SSTC_CONTROLS.get(sstc_case, {})}; expected tohost=1." if sstc_case else
+                          "Heliodor test_smoke plus test_arch_rv64ui_add; one harness/DUT; 5000 smoke cycles and 300000 arch cycles; expected x10=7, x11=11, x12=77, x13=11 and tohost=1."),
         "command": json.dumps(commands, ensure_ascii=False) if command else "preflight not reached",
         "working_directory": str(work) if work else str(ROOT), "tools": tools,
         "exit_code": exit_code, "cpu_started": cpu_started,
         "result": "run-pass" if expected_observed else ("run-fail" if cpu_started and assertion_failed else "blocked"),
         "assertion_failed": assertion_failed, "expected_observed": expected_observed,
-        "expected": ("test_smoke registers pass; Zifencei fixture checks old return 1 then new return 42 and reports tohost=1/pass=1." if zifencei_case else "Both CPU tests pass: test_smoke reports x10=7, x11=11, x12=77, x13=11; test_arch_rv64ui_add reports tohost=1/pass=1 and its PASS marker."),
+        "expected": ("test_smoke registers pass; Zifencei fixture checks old return 1 then new return 42 and reports tohost=1/pass=1." if zifencei_case else
+                     f"Heliodor fixture {sstc_case} asserts its named Sstc condition and reports tohost=1." if sstc_case else
+                     "Both CPU tests pass: test_smoke reports x10=7, x11=11, x12=77, x13=11; test_arch_rv64ui_add reports tohost=1/pass=1 and its PASS marker."),
         "observed": f"CPU-start={cpu_started}; results={values if 'values' in locals() else {}}; smoke_marker={'[test_smoke] PASS' in (out + err).decode('utf-8','replace')}; arch_marker={f'{arch_label} PASS' in (out + err).decode('utf-8','replace')}",
         "output": str(combined_path.relative_to(ROOT)), "output_sha256": sha256(combined_path),
         "stdout": str(stdout_path.relative_to(ROOT)) if stdout_path.is_relative_to(ROOT) else str(stdout_path),
@@ -462,11 +586,14 @@ def main() -> int:
     parser.add_argument("--archive-dir", type=pathlib.Path, default=ROOT / "notes/units/evidence/smoke/heliodor-core-smoke-inputs")
     parser.add_argument("--work-dir", type=pathlib.Path)
     parser.add_argument("--timeout", type=float, default=180.0)
-    parser.add_argument("--topic", choices=("smoke", "zifencei"), default="smoke")
+    parser.add_argument("--topic", choices=("smoke", "zifencei", "sstc"), default="smoke")
     parser.add_argument("--case", choices=("standard", "funct12", "rs1", "rd"))
+    parser.add_argument("--sstc-case", choices=SSTC_CASES)
     args = parser.parse_args()
     if args.timeout <= 0 or not (args.timeout < float("inf")):
         parser.error("--timeout must be finite and positive")
+    if args.sstc_case and args.topic != "sstc":
+        parser.error("--sstc-case requires --topic sstc")
     if args.topic == "zifencei":
         if args.case:
             args.zifencei_case = args.case
@@ -478,6 +605,28 @@ def main() -> int:
         status = 0
         for case in ("standard", "funct12", "rs1", "rd"):
             args.zifencei_case = case
+            record = run(args)
+            status |= 0 if record["result"] == "run-pass" else 1
+        return status
+    if args.topic == "sstc":
+        if args.case:
+            parser.error("--case is for zifencei; use --sstc-case")
+        if args.sstc_case:
+            cases = (args.sstc_case,)
+        else:
+            cases = SSTC_CASES
+        status = 0
+        built_groups: set[str] = set()
+        for case in cases:
+            group = "vs" if case.startswith("vs-") else "s"
+            if group not in built_groups:
+                builder = ROOT / f"experiments/sstc/heliodor/build_heliodor_{group}_fixtures.py"
+                build = subprocess.run([sys.executable, str(builder)], cwd=ROOT, check=False)
+                if build.returncode:
+                    status |= build.returncode
+                    continue
+                built_groups.add(group)
+            args.sstc_case = case
             record = run(args)
             status |= 0 if record["result"] == "run-pass" else 1
         return status

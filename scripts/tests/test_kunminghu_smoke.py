@@ -147,6 +147,40 @@ def test_fixture_links_at_ram_base_and_declares_start():
     assert "0x80000000" in linker
 
 
+def test_sstc_matrix_sources_cover_all_supported_cases_and_permission_macros():
+    source = (ROOT / "experiments/sstc/kunminghu-full-matrix.S").read_text(encoding="utf-8")
+    assert runner.SSTC_SOURCE == ROOT / "experiments/sstc/kunminghu-full-matrix.S"
+    assert runner.SSTC_SOURCE.is_file()
+    for case in runner.SSTC_CASES:
+        assert f"CASE_{case.upper().replace('-', '_')}" in source
+    assert "csrw pmpcfg0, t0" in source
+    assert "csrw menvcfg, zero" in source
+    assert "csrw mcounteren, zero" in source
+    assert "csrw 0x14d, t1" in source
+    assert "bne t0, t1, fail" in source
+
+
+def test_sstc_cli_requires_a_supported_case_and_topic(monkeypatch):
+    for argv in (("--sstc-case", "s-eq"), ("--topic", "sstc")):
+        monkeypatch.setattr(sys, "argv", [str(RUNNER_PATH), *argv])
+        with pytest.raises(SystemExit) as exc:
+            runner.main()
+        assert exc.value.code == 2
+
+
+def test_sstc_trace_records_sample_and_comparator_operand():
+    trace = ("[1] commit pc 80000010 inst c0102373 wen 1 dst 06 data 0000000000000029 idx 001 (S)\n"
+             "[2] commit pc 80000014 inst 00030293 wen 1 dst 05 data 0000000000000029 idx 002\n"
+             "[3] commit pc 80000018 inst 00028313 wen 1 dst 06 data 0000000000000029 idx 003\n"
+             "[4] commit pc 8000001c inst 14d31073 wen 0 dst 00 data 0000000000000000 idx 004\n"
+             + runner.GOOD_TRAP)
+    observed = runner.parse_sstc_trace(trace, "s-eq")
+    assert observed["sampled_time"] == 0x29
+    assert observed["comparator_operand"] == 0x29
+    assert observed["sample_relation"] == "=="
+    assert observed["pass_marker_observed"]
+
+
 def _prepare_main(tmp_path, monkeypatch, *, post_run_errors=None, pre_append_errors=None):
     root = tmp_path
     source = root / "experiments/kunminghu-smoke/fixture.S"

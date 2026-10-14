@@ -1,0 +1,5 @@
+[test_smoke] cy=5000 x10=0000000000000007 x11=000000000000000b commit=1651 last_pc=0000000000000010 rename=1678 cdb=1654 rob_sz=1 stall=0 head=34 tail=35 rob_alloc=1682 rob_cdb=1674 rob_commit=1653
+[test_smoke] x12=000000000000004d x13=000000000000000b
+[test_smoke] PASS
+sstc vs-eq tohost=00000001 pass=1 sample_time=00010001 cmp=00010001 time_after=00010001
+sstc vs-eq PASS

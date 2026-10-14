@@ -1,0 +1,78 @@
+{
+  "artifact_sha256": {
+    "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T072932Z-3954054/run.py": "a3688e003372f04c844a44e756036e4190521c08bc325ab223384e881774fed0"
+  },
+  "artifacts": [
+    "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T072932Z-3954054/run.py"
+  ],
+  "assertion_failed": false,
+  "blocker": "manifest/source validation failed: heliodor/heliodor-core-20261014T072309Z-3901157: input SHA-256 mismatch; heliodor/heliodor-core-20261014T072551Z-3904350: input SHA-256 mismatch; heliodor/heliodor-core-20261014T072615Z-3904350: input SHA-256 mismatch; heliodor/heliodor-core-20261014T072639Z-3904350: input SHA-256 mismatch; heliodor/heliodor-core-20261014T072703Z-3904350: input SHA-256 mismatch; heliodor/heliodor-core-20261014T072728Z-3904350: input SHA-256 mismatch",
+  "case": "vs-hstce-off",
+  "command": "preflight not reached",
+  "configuration": "Heliodor test_smoke plus test_arch_rv64ui_sstc; one harness/DUT; 5000 smoke cycles and 300000 arch cycles; controls={'menvcfg.STCE': 1, 'henvcfg.STCE': 0, 'mcounteren.TM': 1, 'hcounteren.TM': 1, 'expected_cause': 22}; expected tohost=1.",
+  "cpu_started": false,
+  "evidence_method": "case-specific assembly checks enforce expected architecture state; pending uses a bounded loop, without a cycle-exact latency requirement",
+  "exit_code": 1,
+  "expected": "Heliodor fixture vs-hstce-off asserts its named Sstc condition and reports tohost=1.",
+  "expected_controls": {
+    "expected_cause": 22,
+    "hcounteren.TM": 1,
+    "henvcfg.STCE": 0,
+    "mcounteren.TM": 1,
+    "menvcfg.STCE": 1
+  },
+  "expected_marker": "[test_smoke] PASS",
+  "expected_markers": [
+    "[test_smoke] PASS",
+    "sstc vs-hstce-off PASS"
+  ],
+  "expected_observed": false,
+  "first_failed_stage": "locked-source-preflight",
+  "fixture_sha256": "",
+  "id": "heliodor-core-20261014T072932Z-3954054",
+  "input": "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T072932Z-3954054/sstc-vs-hstce-off.hex",
+  "input_sha256": "f59473d1d0a0312ceb6eee5214f3b1c5431410034a6f177939b249b13fc713df",
+  "inputs": [
+    {
+      "path": "sources/heliodor/test/v4_smoke.hex",
+      "sha256": "2cf451e3cee19059d2dbc19c08cbe4af9b552ec842d6d2881d039f4bc1aaeeb1"
+    },
+    {
+      "path": "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T072932Z-3954054/sstc-vs-hstce-off.hex",
+      "sha256": "f59473d1d0a0312ceb6eee5214f3b1c5431410034a6f177939b249b13fc713df"
+    }
+  ],
+  "isolated_inputs_sha256": "",
+  "isolated_tree_sha256": "",
+  "log_path_warnings": [],
+  "next_environment_change": "Restore the sources.lock revision, clean Heliodor checkout, gitlinks, and valid toolchain manifest before retrying.",
+  "observed": "CPU-start=False; results={}; smoke_marker=False; arch_marker=False",
+  "observed_values": null,
+  "output": "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T072932Z-3954054/output.log",
+  "output_sha256": "169f24774e13a79b6341d6c41c58f159e180701e87e9028aa70afdf8712b6fbb",
+  "resources": {
+    "disk_free_bytes": 857972195328,
+    "logical_cpu_count": 64,
+    "memory_available_bytes": 162924707840,
+    "test_timeout_seconds": 180.0
+  },
+  "result": "blocked",
+  "run_seconds": 1.991,
+  "smoke_fixture_sha256": "",
+  "snapshot_sha": "94e9c5821c24a8941c3ddc3b76daddc7124a855a",
+  "source_commit": "94e9c5821c24a8941c3ddc3b76daddc7124a855a",
+  "source_tree_sha256": "",
+  "stderr": "notes/units/evidence/smoke/heliodor-core-20261014T072932Z-3954054.stderr.log",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stdout": "notes/units/evidence/smoke/heliodor-core-20261014T072932Z-3954054.stdout.log",
+  "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "tools": {
+    "cxx": "unavailable",
+    "verilator": "unavailable",
+    "veryl": "unavailable"
+  },
+  "topic": "sstc",
+  "transformed_arch_harness_sha256": "",
+  "transformed_test_sha256": "",
+  "working_directory": "/nvme_data1/richard/learning_rv64_cpu"
+}

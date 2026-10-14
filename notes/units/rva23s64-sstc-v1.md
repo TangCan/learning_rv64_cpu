@@ -83,8 +83,11 @@ Kunminghu 用独立 CSR 模块、带更新条件的比较器和中断 pending bu
 | E5 | S-mode 定向目标尝试 | test-run | run-fail | cwd `sources/heliodor`；Veryl `0.22.0 (967e477 2026-10-02)`；命令 `/nvme_data1/richard/.local/share/veryl/toolchains/latest/veryl test --test test_arch_sstc_stimecmp`；Verilator `5.020`；测试输入 `test/sstc/sstc_test.hex`，`MTIME_EN=1`，预算 100000 clocks。期望 tohost/pass；观察：Veryl testbench check 在 `tb/test_arch_common.veryl:440` 因 `$readmemh(HEX_FILE, dram)` 的 `invalid_initial_assign` 退出 1，仿真未启动。完整原始输出 `/tmp/story-5-3-sstc-stimecmp.log`；关键错误摘录见下方“验证状态与未决边界”，无仿真产物。 |
 | E6 | VS 定向目标尝试 | test-run | run-fail | cwd `sources/heliodor`；同 E5 工具版本；命令 `/nvme_data1/richard/.local/share/veryl/toolchains/latest/veryl test --test test_arch_hsstc`；输入 `test/hsstc/hsstc_test.hex`，`MTIME_EN=1`，预算 100000 clocks。期望 tohost/pass；观察：同在 `tb/test_arch_common.veryl:440` 因 `$readmemh(HEX_FILE, dram)` 的 `invalid_initial_assign` 退出 1，仿真未启动。完整原始输出 `/tmp/story-5-3-hsstc.log`；关键错误摘录见下方“验证状态与未决边界”，无仿真产物。 |
 | E7 | Kunminghu 测试入口就绪度 | environment / test-inspected | unverified | 快照中 `src/test/` 有界搜索 `sstc`、`stimecmp`、`vstimecmp` 无定向命中；`src/test/scala` 当前是模块/后端单测，不是已定位的 CSR/interrupt CPU harness。`command -v mill` 无路径结果，仓库也无 `mill` wrapper；Makefile 的通用 emu 构建不提供本案例 fixture/加载与观察步骤。本故事未运行 Kunminghu CPU 测试。 |
+| E8 | Story 6.5 新增的 S/VS 动态比较、访问门与路由矩阵 | test-run | observed | [动态运行表](#dynamic-sstc-evidence)、不可变输入副本、日志与 SHA-256 见 [toolchain manifest](evidence/cpu-validation-toolchain-v1.yaml)；coverage 仍保持 `studied-unverified`，未宣称合规。 |
 
 ## 验证状态与未决边界
+
+> 本节记录 Epic 5 / Story 5.3 的原始静态研究基线和当时阻断；它不是当前动态验证状态。Epic 6 / Story 6.5 后续使用隔离 harness 跑了 S/VS 矩阵，最终结果见本页下方“Story 6.5 动态复验结果”和 manifest。本节的历史命令与早期判断保留作追溯。
 
 - 两侧 HEAD 已复核与 `sources.lock` 完全一致；未改动 `sources/` 上游 checkout。
 - Heliodor 两条候选命令均已实际调用。Veryl 成功读入项目源后在 testbench semantic check 阶段失败，具体错误为 `invalid_initial_assign`: `tb/test_arch_common.veryl:440` 对 `dram` 执行 `$readmemh`，退出码 1；CPU 仿真体没有启动。因此没有任何动态 `run-pass` 结果。完整命令输出当时保存在 `/tmp/story-5-3-sstc-stimecmp.log` 与 `/tmp/story-5-3-hsstc.log`；关键错误摘录如下，供脱离原机器复核：
@@ -112,9 +115,44 @@ Error: invalid_initial_assign (https://doc.veryl-lang.org/book/07_appendix/02_se
 2. VS 比较器使用什么时间？64 位截断的 `time + htimedelta`，与 `vstimecmp` 做无符号大于等于比较。
 3. 哪些配置控制可访问性？低特权访问受 `mcounteren.TM` 和 `menvcfg.STCE` 限制；VS 还受 `hcounteren.TM` 和 `henvcfg.STCE` 限制，关闭时异常类型依规范区分 illegal-instruction 与 virtual-instruction。
 4. 两边中断怎么到 S/VS？pending 接入 mip/hip 等视图，再由 enable、delegation 和当前 privilege/V 决定陷入。源码连线不等于运行观察。
-5. 这两个 Heliodor 测试通过了吗？没有。两条命令都在 Veryl testbench check 以 `invalid_initial_assign` 退出 1，仿真未启动；Kunminghu 也没有可运行的定向 harness。
-6. 实际阈值测试覆盖哪些？S 案例检查关闭时不因比较器触发，并安排未来阈值；VS 案例安排一个未来 guest-time 阈值。没有分别检查 `<`、`==`、`>`，没有非零 `htimedelta` 或逐层 gate 关闭案例。
+5. 原始 Heliodor 测试尝试通过了吗？没有；当时两条候选命令都被 Veryl testbench check 阻断。Story 6.5 后来通过隔离 harness 运行 S/VS 矩阵，最新结果在下方动态证据表。
+6. 原始测试源码覆盖哪些边界？未分别检查 `<`、`==`、`>`，也没有非零 `htimedelta` 或逐层 gate 关闭；Story 6.5 的后续矩阵已补测这些场景，Heliodor gate 行为差异如实记录为 `run-fail`。
 
 ## 后续验证
 
-修复或绕过 Heliodor testbench 的 `dram` 初始化兼容性问题后，重跑上面的两个 Veryl 测试并保存真实 tohost/assert 输出；补充 S/VS 权限门控、等值阈值、非零 `htimedelta` 和独立 STCE 开关案例。为 Kunminghu 先定位可加载程序并观察 trap/tohost 的锁定单核 harness，再接入相同边界矩阵。当前学习单元只完成静态映射和阻塞边界记录。
+上述后续验证建议已由 Epic 6 / Story 6.5 的隔离 runner 实施；Heliodor 原 testbench 的 Veryl 阻断仍是该旧入口的限制。当前矩阵结果只适用于表列的锁定快照、单 hart 与控制组合，不构成 Sstc 或 RVA23S64 合规结论。
+
+
+<a id="dynamic-sstc-evidence"></a>
+
+## Story 6.5 动态复验结果（2026-10-14）
+
+以下结果来自该故事新增的 CPU runs，旧的未启动/历史记录保留为历史证据，不覆盖本表。Heliodor SSTC 输入采用 run-id 下不可变 `.hex` 副本；完整输入路径、SHA-256、命令及 stdout/stderr 见 [toolchain manifest](evidence/cpu-validation-toolchain-v1.yaml) 与对应 run archive。Kunminghu 使用同样归档的 `input.S`、PMP NAPOT（`pmpaddr0=-1`, `pmpcfg0=0x1f`）和锁定单核 NEMU difftest。Heliodor SSTC harness 将 `MTIME_EN=1`，内部计数器每 harness cycle 加一，连接到 DUT 的 CSR `time` 为 `mtime_ctr >> 8`；架构预算 300000 clocks，比较器观察使用 bounded poll，不作周期精确断言。
+
+| DUT | Case | Run ID | Result | Actual controls | Observed result | Input SHA-256 |
+|---|---|---|---|---|---|---|
+| Kunminghu V2 | `s-lt` | `kunminghu-fixture-20261014T084338Z-3e81181d1d02` | run-pass | menvcfg.STCE=1; mcounteren.TM=1; relation=time < stimecmp | sample=0x29; cmp=0x31; after=0x29; relation <; fixture pass marker | `58bc6497bfaeef3acd28066af9cf3c638cbb42a69260fe8e9f0ae15841313881` |
+| Heliodor | `s-lt` | `heliodor-core-20261014T084321Z-1266742` | run-pass | menvcfg.STCE=1; mcounteren.TM=1; relation=time < stimecmp; delta=8 | sample=0x1; cmp=0x9; after=0x1; fixture pass marker | `ae8b15401dc1fc4701d765d097f414e1feee6551a90c69c781d7de63a4d9d904` |
+| Kunminghu V2 | `s-eq` | `kunminghu-fixture-20261014T084352Z-3e81181d1d02` | run-pass | menvcfg.STCE=1; mcounteren.TM=1; relation=time == stimecmp | sample=0x29; cmp=0x29; after=0x29; relation ==; fixture pass marker | `58bc6497bfaeef3acd28066af9cf3c638cbb42a69260fe8e9f0ae15841313881` |
+| Heliodor | `s-eq` | `heliodor-core-20261014T084348Z-1266742` | run-pass | menvcfg.STCE=1; mcounteren.TM=1; relation=one sampled time value == stimecmp | sample=0x1; cmp=0x1; after=0x1; fixture pass marker | `c53adad8fd6aa99dc7a639eba49d8ce2e46cf29b65a0f44400973d1c3df3619b` |
+| Kunminghu V2 | `s-gt` | `kunminghu-fixture-20261014T084405Z-3e81181d1d02` | run-pass | menvcfg.STCE=1; mcounteren.TM=1; relation=time > stimecmp | sample=0x29; cmp=0x21; after=0x29; relation >; fixture pass marker | `58bc6497bfaeef3acd28066af9cf3c638cbb42a69260fe8e9f0ae15841313881` |
+| Heliodor | `s-gt` | `heliodor-core-20261014T084415Z-1266742` | run-pass | menvcfg.STCE=1; mcounteren.TM=1; relation=time > stimecmp; delta=-8 | sample=0x9; cmp=0x1; after=0x9; fixture pass marker | `3b8c039cb1e29749fc0c1885f02f615129fa5fedc368df6f91cca356c45638f7` |
+| Kunminghu V2 | `s-stce-off` | `kunminghu-fixture-20261014T084419Z-3e81181d1d02` | run-pass | menvcfg.STCE=0; mcounteren.TM=1; expected_exception=2 | fixture verified cause=2; pass marker | `58bc6497bfaeef3acd28066af9cf3c638cbb42a69260fe8e9f0ae15841313881` |
+| Heliodor | `s-stce-off` | `heliodor-core-20261014T084442Z-1266742` | run-fail | menvcfg.STCE=0; mcounteren.TM=1; expected_cause=2 | no trap; S; target_access+4; CSR write completed and fallthrough marker executed; tohost=0x210 | `093f33a1a008a1a0361145bfdd6f6cfa059e17e23b47dc1d362b0a9fae53da62` |
+| Kunminghu V2 | `s-tm-off` | `kunminghu-fixture-20261014T084433Z-3e81181d1d02` | run-pass | menvcfg.STCE=1; mcounteren.TM=0; expected_exception=2 | fixture verified cause=2; pass marker | `58bc6497bfaeef3acd28066af9cf3c638cbb42a69260fe8e9f0ae15841313881` |
+| Heliodor | `s-tm-off` | `heliodor-core-20261014T084509Z-1266742` | run-fail | menvcfg.STCE=1; mcounteren.TM=0; expected_cause=2 | no trap; S; target_access+4; CSR write completed and fallthrough marker executed; tohost=0x210 | `cf8bfed4ceef7b9220b050902cb2c06f34b67da16b0ccdff6500fd2ba830fad8` |
+| Heliodor | `vs-lt` | `heliodor-core-20261014T084845Z-1425307` | run-pass | menvcfg.STCE=1; henvcfg.STCE=1; mcounteren.TM=1; hcounteren.TM=1; htimedelta=0x10000; hideleg.VSTIP=1; hie.VSTIE=0; relation=guest time < vstimecmp; delta=64 | sample=0x10001; cmp=0x10041; after=0x10001; fixture pass marker | `f9b158df5574a18da83f48c68cd155d1f33c2d197145f944ec39d3cba510e56b` |
+| Heliodor | `vs-eq` | `heliodor-core-20261014T084919Z-1440267` | run-pass | menvcfg.STCE=1; henvcfg.STCE=1; mcounteren.TM=1; hcounteren.TM=1; htimedelta=0x10000; hideleg.VSTIP=1; hie.VSTIE=0; relation=one sampled guest time == vstimecmp; delta=0 | sample=0x10001; cmp=0x10001; after=0x10001; fixture pass marker | `c62dae14af5f564bdbf30832b8dfdf310b1117bbf18e25e3b453f2d990c149a7` |
+| Heliodor | `vs-gt` | `heliodor-core-20261014T084946Z-1455938` | run-pass | menvcfg.STCE=1; henvcfg.STCE=1; mcounteren.TM=1; hcounteren.TM=1; htimedelta=0x10000; hideleg.VSTIP=1; hie.VSTIE=0; relation=guest time > vstimecmp; delta=-64 | sample=0x10001; cmp=0xffc1; after=0x10001; fixture pass marker | `43cc196f1392a3e6b2eb93bd6d69e9aa0faee25a07d3c478c7e58dea0de38191` |
+| Heliodor | `vs-mstce-off` | `heliodor-core-20261014T085012Z-1467848` | run-fail | menvcfg.STCE=0; henvcfg.STCE=1; mcounteren.TM=1; hcounteren.TM=1; htimedelta=0x10000; hideleg.VSTIP=1; hie.VSTIE=0; expected_cause=2 | no trap; VS; target_access+4; CSR write completed and fallthrough marker executed; tohost=0x210 | `ad05519a8502a1f1e0c7ea4a513ce1e9f5551c0271a3c7715bf8611912700565` |
+| Heliodor | `vs-hstce-off` | `heliodor-core-20261014T085039Z-1479859` | run-fail | menvcfg.STCE=1; henvcfg.STCE=0; mcounteren.TM=1; hcounteren.TM=1; htimedelta=0x10000; hideleg.VSTIP=1; hie.VSTIE=0; expected_cause=22 | no trap; VS; target_access+4; CSR write completed and fallthrough marker executed; tohost=0x210 | `e5f69ad3863514ac89c154bb173f9375abfa233fd4cd7abe633308b3ffc749d3` |
+| Heliodor | `vs-mtm-off` | `heliodor-core-20261014T085106Z-1493174` | run-fail | menvcfg.STCE=1; henvcfg.STCE=1; mcounteren.TM=0; hcounteren.TM=1; htimedelta=0x10000; hideleg.VSTIP=1; hie.VSTIE=0; expected_cause=2 | no trap; VS; target_access+4; CSR write completed and fallthrough marker executed; tohost=0x210 | `2ee3d674ac5f0c22ff7c0d3a9e50e3eb30df29c110c195d27c878df69d4fe0fc` |
+| Heliodor | `vs-htm-off` | `heliodor-core-20261014T085132Z-1506010` | run-fail | menvcfg.STCE=1; henvcfg.STCE=1; mcounteren.TM=1; hcounteren.TM=0; htimedelta=0x10000; hideleg.VSTIP=1; hie.VSTIE=0; expected_cause=22 | no trap; VS; target_access+4; CSR write completed and fallthrough marker executed; tohost=0x210 | `2365464397cb9a2a6831428528f7f88b2b4f3bce02dde319643db72dd21dadd2` |
+| Heliodor | `vs-route` | `heliodor-core-20261014T085159Z-1516435` | run-pass | menvcfg.STCE=1; henvcfg.STCE=1; mcounteren.TM=1; hcounteren.TM=1; htimedelta=0x10000; hideleg.VSTIP=1; hie.VSTIE=0; expected_cause=5 | sample=0x10000; cmp=0x10100; after=0x10000; fixture pass marker | `ab225bcfbf06cabc03ee27160add9c5c978e33e933d1fd9623bd384b8c976781` |
+| Heliodor | `vs-hs-route` | `heliodor-core-20261014T085226Z-1526513` | run-pass | menvcfg.STCE=1; henvcfg.STCE=1; mcounteren.TM=1; hcounteren.TM=1; htimedelta=0x10000; hideleg.VSTIP=0; hie.VSTIE=1; expected_cause=6 | sample=0x10000; cmp=0x10100; after=0x10000; fixture pass marker | `2d6559cccc4cb3bea4ca876f7a93a80a67719c0c08281c08735557ed6890a0e1` |
+
+Heliodor 六个 access-gate 用例均为 CPU-started `run-fail`：目标 `stimecmp` 写入后执行了 fallthrough marker `tohost=0x210`，没有产生预期异常（S 模式 cause 2；VS 的 M/H 门分别期望 cause 2/22）。VS 正向比较和路由用例在写入前确认 VSTIP 为低；路由 handler 复位 comparator 后以有界轮询确认 pending 清除。这些结果是实现行为观察，不是环境 blocker。静态核对 `alu_wrap.veryl` 的 CSR checker 只检查 CSR privilege encoding、只读与未实现地址，未检查 Sstc STCE/TM 权限；运行结果与该观察一致。VS 用例分别单独关闭 M STCE、H STCE、M TM、H TM，其他门保持开启。
+
+Kunminghu 的五个 S-mode 案例均在锁定单 hart 配置通过。三种比较边界的 commit trace 记录了实际 `time` 样本和 comparator operand；STCE/TM 关闭案例由 fixture 校验 cause 2 后才写入成功 marker。为让这组 Sstc 探针的算术与提交 trace 清晰，构建使用 `RV64IMA_Zicsr`（禁用 C 扩展）；本结果不覆盖 Kunminghu 的压缩指令行为。
+
+两侧运行均只覆盖表中锁定的单 hart 配置和列出的控制组合。该表不是 Sstc 或 RVA23S64 完整符合性结论。

@@ -1,0 +1,75 @@
+{
+  "id": "kunminghu-fixture-20261014T071016Z-3e81181d1d02",
+  "snapshot_sha": "unknown",
+  "input": "experiments/sstc/kunminghu.S",
+  "input_sha256": "unavailable",
+  "linker_script": "experiments/kunminghu-smoke/fixture.ld",
+  "linker_script_sha256": "unavailable",
+  "configuration": "KunminghuV2Config; NUM_CORES=1; Sstc S-mode fixture at 0x80000000; PMP NAPOT grants S-mode access; NEMU difftest.",
+  "topic": "sstc",
+  "case": "s-lt",
+  "expected_controls": {
+    "menvcfg.STCE": 1,
+    "mcounteren.TM": 1,
+    "relation": "time < stimecmp"
+  },
+  "command": "preflight only; no build or simulator command executed",
+  "working_directory": ".",
+  "tools": {
+    "cross_gcc": "riscv64-unknown-elf-gcc () 15.1.0",
+    "cross_objcopy": "GNU objcopy (GNU Binutils) 2.44",
+    "emulator": "emu compiled at Oct 14 2026, 10:53:44; binary sha256 21f0700203205870403df50eadf2afd182e33573afdeee9a264a49b328f9e897",
+    "nemu": "locked ready-to-run reference library; binary sha256 3e9d63c31d2cd68ec68d55fa9df56ec990ce9a9fd3a8e59709ecb92f21176c40",
+    "mill": "0.12.3; java -cp /tmp/mill-dist-0.12.3-assembly.jar mill.runner.MillMain (jar sha256 336346091edc69b248c306ca51aaccb73d888d8bf525ce45e02df89db449b41d)",
+    "java": "OpenJDK 17.0.20.1 (Ubuntu; /usr/lib/jvm/java-17-openjdk-amd64)",
+    "verilator": "5.050 2026-07-01; upstream tag v5.050, commit 0a24d49771fa57c36ff667272bf7b5c6705e4df0; binary sha256 fb2cc573b1055cf096c90e1efc9966fe56bdb4b265c83590cf2a49f7a0defcdf",
+    "cxx": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0; gcc same version",
+    "mill_launcher_sha256": "7f086728571afda31d433f7875a2df610f3c9f8e9c76e5bd13f97c3e564c53a4",
+    "verilator_build_cxx": "Ubuntu 22.04 GCC/G++ 11.4.0 in image sha256:829f6df217bcbae2b371026e81711d1a787c61b2967ad09d015063663ebafbf7"
+  },
+  "exit_code": 1,
+  "cpu_started": false,
+  "result": "blocked",
+  "output": "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T071016Z-3e81181d1d02/output.log",
+  "output_sha256": "fd5e7008180c36609923792204cc22b44d8bc80aa2ea4f8abe21005e6c059fa7",
+  "stdout": "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T071016Z-3e81181d1d02/stdout.log",
+  "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderr": "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T071016Z-3e81181d1d02/stderr.log",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "artifacts": [
+    "experiments/sstc/kunminghu.S",
+    "experiments/kunminghu-smoke/fixture.ld"
+  ],
+  "expected_artifacts": [
+    "experiments/sstc/kunminghu.S",
+    "experiments/kunminghu-smoke/fixture.ld",
+    "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T071016Z-3e81181d1d02/fixture.elf",
+    "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T071016Z-3e81181d1d02/fixture.map",
+    "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T071016Z-3e81181d1d02/fixture.bin"
+  ],
+  "missing_artifacts": [
+    "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T071016Z-3e81181d1d02/fixture.elf",
+    "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T071016Z-3e81181d1d02/fixture.map",
+    "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T071016Z-3e81181d1d02/fixture.bin"
+  ],
+  "artifact_sha256": {
+    "experiments/sstc/kunminghu.S": "d6e3a95a5d5215e4d7a3d1879e920b309ca979396539f987d115e767f306f59d",
+    "experiments/kunminghu-smoke/fixture.ld": "1a09d98e3c1ba4c22c1ecd2c16e5f4d8cad65fc6944efe0a0ccd8b3149d4a412"
+  },
+  "assertion_failed": false,
+  "expected_observed": false,
+  "expected": "recorded fixture image loaded at 0x80000000; first instruction commits; NEMU good trap.",
+  "observed": "image load not observed; first instruction commit not observed",
+  "expected_good_trap_pc": "unknown",
+  "blocker": "locked source and manifest preflight: kunminghu-v2/kunminghu-fixture-20261014T070950Z-3e81181d1d02: artifact SHA-256 mismatch: experiments/sstc/kunminghu.S; kunminghu-v2/kunminghu-fixture-20261014T070950Z-3e81181d1d02: input SHA-256 mismatch; post-run source/manifest integrity: kunminghu-v2/kunminghu-fixture-20261014T070950Z-3e81181d1d02: artifact SHA-256 mismatch: experiments/sstc/kunminghu.S; kunminghu-v2/kunminghu-fixture-20261014T070950Z-3e81181d1d02: input SHA-256 mismatch",
+  "expected_marker": "HIT GOOD TRAP",
+  "resources": {
+    "disk_free_bytes": 858673086464,
+    "memory_available_bytes": 165003636736,
+    "logical_cpu_count": 64,
+    "build_command_timeout_seconds": 120,
+    "emulator_timeout_seconds": 120.0
+  },
+  "next_environment_change": "Restore the manifest and locked source/gitlinks to a valid, clean state, then rerun preflight.",
+  "first_failed_stage": "locked source and manifest preflight"
+}

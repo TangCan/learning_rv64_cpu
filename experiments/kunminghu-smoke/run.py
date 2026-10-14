@@ -21,6 +21,8 @@ from collections.abc import Callable
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 SOURCE = ROOT / "experiments/kunminghu-smoke/fixture.S"
 LINKER = ROOT / "experiments/kunminghu-smoke/fixture.ld"
+SSTC_SOURCE = ROOT / "experiments/sstc/kunminghu-full-matrix.S"
+SSTC_CASES = ("s-lt", "s-eq", "s-gt", "s-stce-off", "s-tm-off")
 CHECKOUT = ROOT / "sources/xiangshan"
 EMULATOR = CHECKOUT / "build/verilator-compile/emu"
 NEMU = CHECKOUT / "ready-to-run/riscv64-nemu-interpreter-so"
@@ -90,6 +92,37 @@ def classify_output(output: str, exit_code: int, *, timed_out: bool = False,
             "HIT GOOD TRAP" if good and not bad else "HIT BAD TRAP" if bad else "good trap not observed"
         ) if started else "first instruction commit not observed"),
     }
+
+
+def parse_sstc_trace(output: str, case: str) -> dict[str, object]:
+    """Recover timer sample and comparator operands from architectural commits."""
+    sampled_time = None
+    comparator = None
+    registers: dict[int, int] = {}
+    for line in output.splitlines():
+        match = re.search(r"inst ([0-9a-fA-F]{8}) wen \d+ dst ([0-9a-fA-F]{2}) data ([0-9a-fA-F]{16})", line)
+        if not match:
+            continue
+        instruction, rd, data = int(match.group(1), 16), int(match.group(2), 16), int(match.group(3), 16)
+        if instruction == 0xC0102373 and rd == 6 and sampled_time is None:
+            sampled_time = data
+        # CSR writes have no destination register; recover rs1 from prior commits.
+        if sampled_time is not None and ((instruction >> 20) & 0xFFF) == 0x14D:
+            source_register = (instruction >> 15) & 0x1F
+            comparator = registers.get(source_register)
+            break
+        if rd != 0:
+            registers[rd] = data
+    result: dict[str, object] = {
+        "pass_marker_observed": "HIT GOOD TRAP" in output,
+        "evidence_method": "commit trace captures the time CSR sample and recovers the stimecmp rs1 operand from the latest committed value of that source register",
+    }
+    if sampled_time is not None:
+        result["sampled_time"] = sampled_time
+        if comparator is not None:
+            result["comparator_operand"] = comparator
+            result["sample_relation"] = "<" if sampled_time < comparator else ("==" if sampled_time == comparator else ">")
+    return result
 
 
 def _run(command: list[str], cwd: pathlib.Path, timeout: float | None = None):
@@ -286,18 +319,26 @@ def missing_dependencies(gcc: str | None, objcopy: str | None,
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--topic", choices=("fixture", "zifencei"), default="fixture")
+    parser.add_argument("--topic", choices=("fixture", "zifencei", "sstc"), default="fixture")
     parser.add_argument("--manifest", type=pathlib.Path,
                         default=ROOT / "notes/units/evidence/cpu-validation-toolchain-v1.yaml")
     parser.add_argument("--evidence-dir", type=pathlib.Path,
                         default=ROOT / "notes/units/evidence/smoke/kunminghu-fixture-runs")
     parser.add_argument("--case", choices=("standard", "funct12", "rs1", "rd"))
+    parser.add_argument("--sstc-case", choices=SSTC_CASES)
     parser.add_argument("--timeout", type=float, default=120.0,
                         help="maximum emulator wall time in seconds")
     parser.add_argument("--input", type=pathlib.Path, help=argparse.SUPPRESS)
     args = parser.parse_args()
     if args.case and args.topic != "zifencei":
         parser.error("--case requires --topic zifencei")
+    if args.sstc_case and args.topic != "sstc":
+        parser.error("--sstc-case requires --topic sstc")
+    if args.topic == "sstc" and not args.sstc_case:
+        parser.error("--topic sstc requires --sstc-case")
+    if args.topic == "sstc":
+        global SOURCE, LINKER
+        SOURCE = SSTC_SOURCE
     if args.topic == "zifencei" and args.input is None:
         cases = (args.case,) if args.case else ("standard", "funct12", "rs1", "rd")
         status = 0
@@ -309,7 +350,6 @@ def main() -> int:
             status |= subprocess.run(command, cwd=ROOT, check=False).returncode
         return status
     if args.topic == "zifencei":
-        global SOURCE, LINKER
         case_path = args.input.resolve()
         topic_dir = (ROOT / "experiments/rva23s64-zifencei").resolve()
         if (not case_path.is_relative_to(topic_dir) or not case_path.is_file()
@@ -344,6 +384,9 @@ def main() -> int:
     elf = run_dir / "fixture.elf"
     link_map = run_dir / "fixture.map"
     raw = run_dir / "fixture.bin"
+    source_snapshot = run_dir / "input.S"
+    if SOURCE.is_file():
+        shutil.copy2(SOURCE, source_snapshot)
     tools = {
         "cross_gcc": "unavailable",
         "cross_objcopy": "unavailable",
@@ -420,14 +463,17 @@ def main() -> int:
 
     if not failed_stage:
         assert gcc and objcopy
-        compile_cmd = [gcc, "-march=rv64imac", "-mabi=lp64", "-nostdlib", "-nostartfiles",
+        compile_cmd = [gcc, f"-march={'rv64ima_zicsr' if args.topic == 'sstc' else 'rv64imac'}", "-mabi=lp64", "-nostdlib", "-nostartfiles",
                        "-Wl,--build-id=none", f"-Wl,-T,{LINKER}", f"-Wl,-Map,{link_map}",
-                       "-o", str(elf), str(SOURCE)]
+                       *([f"-DCASE_{args.sstc_case.upper().replace('-', '_')}=1"] if args.topic == "sstc" else []),
+                       "-o", str(elf), str(source_snapshot if args.topic == "sstc" else SOURCE)]
         stages.append(("compile and link", compile_cmd))
         copy_cmd = [objcopy, "-O", "binary", str(elf), str(raw)]
         stages.append(("raw image generation", copy_cmd))
         sim_cmd = [str(EMULATOR), "-i", str(raw), "--diff", str(NEMU),
-                   "--max-cycles=10000", "--max-instr=1000", "--dump-commit-trace"]
+                   "--max-cycles=100000" if args.topic == "sstc" else "--max-cycles=10000",
+                   "--max-instr=10000" if args.topic == "sstc" else "--max-instr=1000",
+                   "--dump-commit-trace"]
         stages.append(("emulator CPU run", sim_cmd))
         for stage, command in stages:
             commands.append("$ " + shlex.join(command))
@@ -534,17 +580,20 @@ def main() -> int:
         encoding="utf-8",
     )
 
-    expected_artifacts = [str(p.relative_to(ROOT)) for p in (SOURCE, LINKER, elf, link_map, raw)]
+    recorded_source = source_snapshot if args.topic == "sstc" and source_snapshot.is_file() else SOURCE
+    expected_artifacts = [str(p.relative_to(ROOT)) for p in (recorded_source, LINKER, elf, link_map, raw)]
     artifacts = [path for path in expected_artifacts if (ROOT / path).is_file()]
     missing_artifacts = [path for path in expected_artifacts if not (ROOT / path).is_file()]
     record = {
         "id": run_dir.name,
         "snapshot_sha": snapshot_sha or "unknown",
-        "input": str(SOURCE.relative_to(ROOT)),
+        "input": str(recorded_source.relative_to(ROOT)),
         "input_sha256": input_sha256 or "unavailable",
         "linker_script": str(LINKER.relative_to(ROOT)),
         "linker_script_sha256": linker_sha256 or "unavailable",
-        "configuration": ("KunminghuV2Config; NUM_CORES=1; Zifencei self-modifying fixture at 0x80000000; NEMU difftest."
+        "configuration": ("KunminghuV2Config; NUM_CORES=1; RV64IMA_Zicsr Sstc S-mode fixture at 0x80000000 (C extension disabled to keep traceable 32-bit fixture instructions); PMP NAPOT grants S-mode access; NEMU difftest."
+                           if args.topic == "sstc" else
+                           "KunminghuV2Config; NUM_CORES=1; Zifencei self-modifying fixture at 0x80000000; NEMU difftest."
                            if args.topic == "zifencei" else
                            "KunminghuV2Config; NUM_CORES=1; RV64I arithmetic fixture at 0x80000000; NEMU difftest."),
         **({"topic": "zifencei", "case": SOURCE.stem,
@@ -555,7 +604,16 @@ def main() -> int:
                                  "evidence_method": "fixture equality checks for a0==1 before patch and a0==42 after FENCE.I; the successful NEMU marker is reachable only after both checks"}
                                 if observed["expected_observed"] else None),
             "reserved_field_trap": "not observed" if observed["expected_observed"] else "see run log"}
-           if args.topic == "zifencei" else {}),
+           if args.topic == "zifencei" else
+           ({"topic": "sstc", "case": args.sstc_case,
+             "expected_controls": {"s-lt": {"menvcfg.STCE": 1, "mcounteren.TM": 1, "relation": "time < stimecmp"},
+                                   "s-eq": {"menvcfg.STCE": 1, "mcounteren.TM": 1, "relation": "time == stimecmp"},
+                                   "s-gt": {"menvcfg.STCE": 1, "mcounteren.TM": 1, "relation": "time > stimecmp"},
+                                   "s-stce-off": {"menvcfg.STCE": 0, "mcounteren.TM": 1, "expected_exception": 2},
+                                   "s-tm-off": {"menvcfg.STCE": 1, "mcounteren.TM": 0, "expected_exception": 2}}[args.sstc_case],
+             "observed_values": {**parse_sstc_trace(stdout_text + "\n" + stderr_text, args.sstc_case),
+                                 **({"verified_trap_cause": 2} if args.sstc_case.endswith("off") and observed["expected_observed"] else {})}}
+            if args.topic == "sstc" else {})),
         "command": " && ".join(commands) if commands else "preflight only; no build or simulator command executed",
         "working_directory": ".",
         "tools": tools,

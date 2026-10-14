@@ -1,0 +1,95 @@
+{
+  "artifact_sha256": {
+    "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T082837Z-808333/run.py": "d3b34e26dd9e3fc657137d5c95c53b77d1cc78af9904f637ab5c840a787fe3e7",
+    "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T082837Z-808333/sstc-s-gt.hex": "3b8c039cb1e29749fc0c1885f02f615129fa5fedc368df6f91cca356c45638f7",
+    "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T082837Z-808333/test_arch_common.veryl": "fa42c7478d1e2b173febccc20020c67b149086e4885c57c7a742fd4dc16b8947",
+    "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T082837Z-808333/test_smoke.veryl": "15bd6b192c2569d078e8d10e872c095a649a1f6848f54f030c7e4123d7d1daf3",
+    "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T082837Z-808333/v4_smoke.hex": "2cf451e3cee19059d2dbc19c08cbe4af9b552ec842d6d2881d039f4bc1aaeeb1"
+  },
+  "artifacts": [
+    "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T082837Z-808333/run.py",
+    "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T082837Z-808333/test_smoke.veryl",
+    "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T082837Z-808333/v4_smoke.hex",
+    "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T082837Z-808333/test_arch_common.veryl",
+    "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T082837Z-808333/sstc-s-gt.hex"
+  ],
+  "assertion_failed": false,
+  "blocker": "",
+  "case": "s-gt",
+  "command": "[[\"/nvme_data1/richard/.local/share/veryl/toolchains/latest/veryl\", \"test\", \"--include-ignored\", \"--test\", \"test_smoke\"], [\"/nvme_data1/richard/.local/share/veryl/toolchains/latest/veryl\", \"test\", \"--include-ignored\", \"--test\", \"test_arch_rv64ui_sstc\"]]",
+  "configuration": "Heliodor test_smoke plus test_arch_rv64ui_sstc; one harness/DUT; 5000 smoke cycles and 300000 arch cycles; mtime enabled, increments once per harness cycle; controls={'menvcfg.STCE': 1, 'mcounteren.TM': 1, 'relation': 'time > stimecmp', 'delta': -8, 'mcounteren.value': '0x2'}; expected tohost=1.",
+  "cpu_started": true,
+  "evidence_method": "case-specific assembly checks enforce expected architecture state; pending uses a bounded loop, without a cycle-exact latency requirement",
+  "exit_code": 0,
+  "expected": "Heliodor fixture s-gt asserts its named Sstc condition and reports tohost=1.",
+  "expected_controls": {
+    "delta": -8,
+    "mcounteren.TM": 1,
+    "mcounteren.value": "0x2",
+    "menvcfg.STCE": 1,
+    "mtime_enabled": true,
+    "mtime_tick": "increments once per harness cycle",
+    "relation": "time > stimecmp"
+  },
+  "expected_marker": "[test_smoke] PASS",
+  "expected_markers": [
+    "[test_smoke] PASS",
+    "sstc s-gt PASS"
+  ],
+  "expected_observed": true,
+  "first_failed_stage": "",
+  "fixture_sha256": "3b8c039cb1e29749fc0c1885f02f615129fa5fedc368df6f91cca356c45638f7",
+  "id": "heliodor-core-20261014T082837Z-808333",
+  "input": "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T082837Z-808333/sstc-s-gt.hex",
+  "input_sha256": "3b8c039cb1e29749fc0c1885f02f615129fa5fedc368df6f91cca356c45638f7",
+  "inputs": [
+    {
+      "path": "sources/heliodor/test/v4_smoke.hex",
+      "sha256": "2cf451e3cee19059d2dbc19c08cbe4af9b552ec842d6d2881d039f4bc1aaeeb1"
+    },
+    {
+      "path": "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T082837Z-808333/sstc-s-gt.hex",
+      "sha256": "3b8c039cb1e29749fc0c1885f02f615129fa5fedc368df6f91cca356c45638f7"
+    }
+  ],
+  "isolated_inputs_sha256": "2b905beb19d21a8a4de4867d3e3868cceb08acbe7781ac7d9c06acf4cb0131c0",
+  "isolated_tree_sha256": "2b905beb19d21a8a4de4867d3e3868cceb08acbe7781ac7d9c06acf4cb0131c0",
+  "log_path_warnings": [],
+  "next_environment_change": "No environment change required; this smoke completed successfully.",
+  "observed": "CPU-start=True; results={'x10': 7, 'x11': 11, 'x12': 77, 'x13': 11, 'arch_tohost': 1, 'arch_pass': 1}; smoke_marker=True; arch_marker=True",
+  "observed_values": {
+    "comparator": 1,
+    "fixture_assertions": "comparator/pending/cause/routing checks precede tohost=1",
+    "pass": true,
+    "sampled_time": 9,
+    "time_after_write": 9,
+    "tohost": 1
+  },
+  "output": "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T082837Z-808333/output.log",
+  "output_sha256": "bd638ae26c2b6332899777fe956680d6ffee5552d71d1ead58f2285f0e7fede0",
+  "resources": {
+    "disk_free_bytes": 854975832064,
+    "logical_cpu_count": 64,
+    "memory_available_bytes": 156802330624,
+    "test_timeout_seconds": 180.0
+  },
+  "result": "run-pass",
+  "run_seconds": 24.628,
+  "smoke_fixture_sha256": "2cf451e3cee19059d2dbc19c08cbe4af9b552ec842d6d2881d039f4bc1aaeeb1",
+  "snapshot_sha": "94e9c5821c24a8941c3ddc3b76daddc7124a855a",
+  "source_commit": "94e9c5821c24a8941c3ddc3b76daddc7124a855a",
+  "source_tree_sha256": "4553612bb7ea7ac02259977213b5f8089c889bf2a65d07d23aa0634b9de0c4b9",
+  "stderr": "notes/units/evidence/smoke/heliodor-core-20261014T082837Z-808333.stderr.log",
+  "stderr_sha256": "0d67e977ec34711ffe2f23929196b8fbcba14f62602837b796439e1f8b889fb0",
+  "stdout": "notes/units/evidence/smoke/heliodor-core-20261014T082837Z-808333.stdout.log",
+  "stdout_sha256": "8ba171546f396475f9d3d074aaeaf518b760d9b715de88ff7a345ec7acac8e80",
+  "tools": {
+    "cxx": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0",
+    "verilator": "Verilator 5.020 2024-01-01 rev (Debian 5.020-1)",
+    "veryl": "veryl 0.22.0 (967e477 2026-10-02); binary sha256 aa57dd31488410769ee61c367f03de6cbf11101be47b510b99bde4ac9155b4c1"
+  },
+  "topic": "sstc",
+  "transformed_arch_harness_sha256": "fa42c7478d1e2b173febccc20020c67b149086e4885c57c7a742fd4dc16b8947",
+  "transformed_test_sha256": "15bd6b192c2569d078e8d10e872c095a649a1f6848f54f030c7e4123d7d1daf3",
+  "working_directory": "/tmp/heliodor-core-smoke-o1bdg0zk"
+}
