@@ -1,6 +1,6 @@
 ---
 title: RV64 双核访存微架构学习计划
-status: in-progress
+status: complete
 created: 2026-10-15
 updated: 2026-10-15
 ---
@@ -47,12 +47,12 @@ updated: 2026-10-15
 
 ## 当前状态
 
-- 计划：已建立草案。
-- 历史阶段回顾：Stage 1 ADD 试点、Stage 2 乱序依赖/分支恢复、Stage 3 访存/原子/fault、Stage 4 RVA23 必选项映射均已于 2026-10-15 基于现有记录回顾；Stage 5 已于 2026-10-15 基于现有记录回顾；Stage 6 已于 2026-10-15 基于 Epic 6 复盘和运行证据回顾。
+- 计划：已完成，完成范围为六阶段历史回顾，以及本计划中 `LD`、`SD`、Sv39 非规范 `LD` fault 的固定快照静态路径学习与综合。
+- 历史阶段回顾：Stage 1–5 于 2026-10-15 基于现有记录回顾；Stage 6 于同日基于 Epic 6 复盘和运行证据回顾。六篇文章均链接原始记录，并区分历史事实与事后总结。
 - 前置勘察：已完成，结论见 [`feasibility.md`](../_agile-output/specs/spec-rv64-load-store-deep-dive/feasibility.md)。
-- 日志首页和路线导航：已建立；Stage 1–6 历程文章均已完成；各文区分历史事实、运行结果和未验证边界。
+- 日志首页和路线导航：已建立；Stage 1–6 历程文章均已完成，索引状态与本计划一致。
 - `LD`：已完成本次静态源码复核，日志与 load-v2 已发布；案例未运行。
 - `SD`：已完成本次静态源码追踪，日志与 store-v1 已发布；案例未运行，DRAM 可见性未验证。
 - `Sv39` 非规范 `LD` fault：已完成固定 tuple 的双核静态复核，审计日志与不可变 v3 已发布，v1/v2 保留；动态案例仍未验证。
 - Story 1.4：六条路径、活动 ID、证据状态和固定快照已审计；fault v3 将 ACT 测试比较明确为 partial，见[审计日志](2026-10-15-three-case-evidence-audit.md)。
-- 综合阶段：已完成静态综合和导航；双核差异为 LD 写回/退休门控、SD 接受终点及 fault 检测/异常保留路径各有实现，具体证据见[综合日志](2026-10-15-load-store-fault-synthesis.md)。当前未验证边界包括 LD hit/值/退休、SD 实际接受及 DRAM 可见性、fault 的动态 cause/CSR/redirect；fault 测试材料比较为 partial。Stage 1–6 的历史回顾已完成。若继续访存微架构或扩大 RVA23 行为验证，应另行制定主题、固定输入与完成门槛。
+- 动态行为保留项：LD hit、读值与退休；SD 实际接受及 DRAM 可见性；fault 的动态 cause、CSR 与 redirect 均未验证。Kunminghu fault 测试材料比较为 partial。完成本计划不表示这些行为已通过动态验证，也不表示 RVA23 符合性。若要继续验证，应另立计划，固定输入、环境、命令、观察点和完成门槛。
