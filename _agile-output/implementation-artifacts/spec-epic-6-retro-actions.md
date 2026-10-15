@@ -72,6 +72,7 @@ context:
 - 可选 manifest 字段 `infrastructure_blocked` 用于区分运行后的完整性错误，同时兼容历史 schema-v1 记录。
 - `scripts/check_rva23_run_matrices.py` 检查必需矩阵行、重复行、列数、每个模式格的合法状态、运行结果词表、evidence ID、每次运行内 operation ID 唯一性，以及操作的预期行为/异常和观察值。对缺失 heading 和畸形 YAML 容器返回错误。现有链接和 manifest validator 负责校验引用目标及哈希。
 - 本次未改写或移除归档路径；未来压缩/去重须单独审核，并验证 manifest 引用兼容性。
+- 归档产物来源复核（2026-10-15）：`.bin/.elf/.map` 共 393 个，其中 Kunminghu 运行归档 377 个、Heliodor Ssstateen 归档 16 个；manifest 有对应源码/链接脚本、构建命令、工具版本和产物 SHA-256。302 个 `.hex` 中有 289 个被 manifest 的 `artifacts` 路径引用，另 13 个未被该字段直接引用；全部保留。四类产物共 695 个、3,111,509 字节，约占归档 1,099,348,447 字节的 0.28%。manifest 校验有效。来源链可追溯不等于逐项 bit-for-bit 重建已验证；结合用户要求保留可读日志及产物占比，本轮不压缩或清理，未产生需要更新的 manifest hash。
 
 
 ## Spec Change Log
