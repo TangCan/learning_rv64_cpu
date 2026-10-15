@@ -21,8 +21,8 @@ updated: 2026-10-15
 | B | 建立日志规则和路线导航 | 使用首页按阶段/时间组织文章；约定文章结构、证据状态和链接方式 | `learning-journal/index.md` 已建 | 沿用[学习记录与证据约定](../_agile-output/specs/spec-learning_rv64_cpu/learning-record-conventions.md) | 日志能链接到知识单元、固定快照和证据文件；计划/进行中/完成状态清楚 |
 | 1 | `LD`：数据如何从指令到达目的寄存器并退休？ | 已复核两侧译码、地址生成、地址转换、缓存响应、写回与退休路径；区分源码结构和未观察状态 | [双核 LD 路径复核](2026-10-15-ld-path-review.md) | [`load-v2.md`](../notes/units/load-v2.md)，保留 [`load-v1.md`](../notes/units/load-v1.md) | 本次静态源码复核完成；案例运行仍未验证 |
 | 2 | `SD`：何时提交，何时被写入路径接受？ | 已对照 StoreUnit/StoreQueue/ROB 与 Heliodor commit-store 路径，追踪普通对齐 DRAM `SD`；DRAM 可见性边界仍未验证 | [双核 SD 提交与写入边界](2026-10-15-sd-commit-write-boundary.md) | [`store-v1.md`](../notes/units/store-v1.md) | 本次静态路径追踪完成；案例未运行，未声称下游可见 |
-| 3 | 共同 fault：Sv39 非规范地址 `LD` 如何成为精确异常？ | 已固定 S-mode、V=0、Sv39、VA `0x0000008000000000` 的普通 `LD`，静态追踪 fault 检测、ROB 保留、cause 与 trap 更新 | [Sv39 非规范地址 LD fault](2026-10-15-sv39-noncanonical-ld-fault.md) | [`sv39-load-fault-v2.md`](../notes/units/sv39-load-fault-v2.md)；保留 [`v1`](../notes/units/sv39-load-fault-v1.md) | 本次静态路径复核完成；两侧固定案例均未运行，动态 cause/CSR/redirect 未验证 |
-| 4 | 总结：相同架构行为为何有不同实现路径？ | 汇总阶段日志和知识单元，比较两种设计的路径、提交边界和证据缺口 | 一篇总结日志（待写） | 更新 [`trace-matrix.md`](../_agile-output/specs/spec-rv64-load-store-deep-dive/trace-matrix.md) 与 `notes/units/index.md`（待更新） | 主要结论可由双侧证据追溯；遗留问题列出后续触发条件 |
+| 3 | 共同 fault：Sv39 非规范地址 `LD` 如何成为精确异常？ | 已固定 S-mode、V=0、Sv39、VA `0x0000008000000000` 的普通 `LD`，静态追踪 fault 检测、ROB 保留、cause 与 trap 更新 | [Sv39 非规范地址 LD fault](2026-10-15-sv39-noncanonical-ld-fault.md) | [`sv39-load-fault-v3.md`](../notes/units/sv39-load-fault-v3.md)；保留 [`v2`](../notes/units/sv39-load-fault-v2.md) 与 [`v1`](../notes/units/sv39-load-fault-v1.md) | 本次静态路径复核完成；ACT 比较为 partial（Kunminghu 测试材料 unverified）；两侧动态 cause/CSR/redirect 未验证 |
+| 4 | 总结：相同架构行为为何有不同实现路径？ | 汇总阶段日志和知识单元，比较两种设计的路径、提交边界和证据缺口 | 一篇总结日志（待写） | 更新 [`trace-matrix.md`](../_agile-output/specs/spec-rv64-load-store-deep-dive/trace-matrix.md) 与 `notes/units/index.md`（访存单元索引已更新） | 主要结论可由双侧证据追溯；遗留问题列出后续触发条件 |
 
 ## 每篇日志的结构
 
@@ -52,5 +52,6 @@ updated: 2026-10-15
 - 日志首页和路线导航：已建立；既有历程文章尚待依据现有材料回顾。
 - `LD`：已完成本次静态源码复核，日志与 load-v2 已发布；案例未运行。
 - `SD`：已完成本次静态源码追踪，日志与 store-v1 已发布；案例未运行，DRAM 可见性未验证。
-- `Sv39` 非规范 `LD` fault：已完成固定 tuple 的双核静态复核，日志与不可变 v2 已发布，v1 保留；动态案例仍未验证。
+- `Sv39` 非规范 `LD` fault：已完成固定 tuple 的双核静态复核，审计日志与不可变 v3 已发布，v1/v2 保留；动态案例仍未验证。
+- Story 1.4：六条路径、活动 ID、证据状态和固定快照已审计；fault v3 将 ACT 测试比较明确为 partial，见[审计日志](2026-10-15-three-case-evidence-audit.md)。
 - 综合阶段尚未完成。
