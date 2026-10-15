@@ -41,12 +41,12 @@ context:
 ## Tasks & Acceptance
 
 **Execution:**
-- [ ] `_agile-output/planning-artifacts/followups/rv64-load-store-deep-dive-2026-10-15/decisions/story-1-2-store.md` — 记录共同 tuple、两侧实际默认配置差异、接受终点选择及未知边界，便于后续复查路径选择。
-- [ ] `notes/units/store-v1.md` — 新建不可变 SD 技术记录，包含双侧从译码/地址数据形成到提交及接受终点的证据、比较结论、子案例、证据表和未解问题。
-- [ ] `notes/units/index.md` — 将 `store` 指向 v1，不改动既有 load/fault 版本。
-- [ ] `learning-journal/2026-10-15-sd-commit-write-boundary.md` — 按约定记录问题、探索动作、发现、证据边界、知识单元链接和下一步。
-- [ ] `learning-journal/index.md` 与 `learning-journal/plan.md` — 链接日志，并把 SD 阶段标成已完成本次静态追踪。
-- [ ] `_agile-output/specs/spec-rv64-load-store-deep-dive/trace-matrix.md` — 添加 Kunminghu 与 Heliodor SD 行，分别列出路径终点、快照、证据链接、type/status 与配置假设。
+- [x] `_agile-output/planning-artifacts/followups/rv64-load-store-deep-dive-2026-10-15/decisions/story-1-2-store.md` — 记录共同 tuple、两侧实际默认配置差异、接受终点选择及未知边界，便于后续复查路径选择。
+- [x] `notes/units/store-v1.md` — 新建不可变 SD 技术记录，包含双侧从译码/地址数据形成到提交及接受终点的证据、比较结论、子案例、证据表和未解问题。
+- [x] `notes/units/index.md` — 将 `store` 指向 v1，不改动既有 load/fault 版本。
+- [x] `learning-journal/2026-10-15-sd-commit-write-boundary.md` — 按约定记录问题、探索动作、发现、证据边界、知识单元链接和下一步。
+- [x] `learning-journal/index.md` 与 `learning-journal/plan.md` — 链接日志，并把 SD 阶段标成已完成本次静态追踪。
+- [x] `_agile-output/specs/spec-rv64-load-store-deep-dive/trace-matrix.md` — 添加 Kunminghu 与 Heliodor SD 行，分别列出路径终点、快照、证据链接、type/status 与配置假设。
 
 **Acceptance Criteria:**
 - Given 两个锁定源码快照，when 追踪普通 `SD`，then 两侧都从指令和源寄存器开始，引用地址、8-byte mask/data、提交条件及所选接受边界的源码位置；不足处明确标为 unknown/unverified。
