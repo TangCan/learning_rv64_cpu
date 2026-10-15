@@ -25,6 +25,11 @@ def test_post_start_assertion_is_run_fail():
                     expected_observed=False) == "run-fail"
 
 
+def test_post_start_integrity_failure_is_blocked_not_a_dut_failure():
+    assert classify(cpu_started=True, exit_code=1, assertion_failed=False,
+                    expected_observed=False, infrastructure_blocked=True) == "blocked"
+
+
 def test_success_requires_expected_marker():
     assert classify(cpu_started=True, exit_code=0, assertion_failed=False,
                     expected_observed=True) == "run-pass"

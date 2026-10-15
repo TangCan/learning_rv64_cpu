@@ -42,16 +42,18 @@
 
 下表将普通 U、guest VS/VU 与 HLV/HSV hypervisor explicit-access 分开。`tested` 只指列出的 U fixture；`run-fail` 保留失败观察；`static/unverified` 表示有实现或测试入口线索但没有本模式 Ssnpm runtime；`not-applicable` 表示该访问族本身不是 HLV/HSV 指令。
 
-| 访问族 | Kunminghu U | Kunminghu VS/VU | Kunminghu HLV/HSV | Heliodor U | Heliodor VS/VU | Heliodor HLV/HSV |
-|---|---|---|---|---|---|---|
-| Integer load/store | `tested` PMLEN0/7 canonical；PMLEN0 tagged cause 5；PMLEN7 tagged load/store到达但 alias-limited；bit56=1 load cause 5 run-fail | `unverified`：selector有静态路径、无运行 | `not-applicable`（此行是普通 load/store） | `tested` 四个 PMLEN/tag 组合及 bit56=1；所有高地址 store/load 结果受 low-bit DRAM alias 限制 | `unverified`：guest selector未定位、无运行 | `not-applicable`（普通 load/store） |
-| Atomic LR/SC/AMO | canonical全序列 `tested`；PMLEN7 tagged LR.D `run-fail` cause 5，SC/AMO未到达 | `unverified`：selector有静态路径、无运行 | `not-applicable` | `unverified`：有 AGU issue/reservation路径，无 U-mode atomic fixture | `unverified`：selector未定位 | `not-applicable` |
-| FP load/store | `unverified`：FLW/FLD解码至普通 LDU；无 tagged FP fixture | `unverified`：无 VS/VU FP Ssnpm fixture | `not-applicable` | `unverified`：有 `fp_smoke.S`，未设置 Ssnpm controls | `unverified`：无 guest FP Ssnpm fixture | `not-applicable` |
-| Compressed load/store | `unverified`：普通压缩 load/store decode路径，未运行 tagged fixture | `unverified`：无 guest压缩 Ssnpm fixture | `not-applicable` | `unverified`：普通 RV64C ISA cases不设 PMM | `unverified`：无 guest压缩 Ssnpm fixture | `not-applicable` |
-| Cache management | `unverified`：CBO decode/StoreQueue路径，不是 Ssnpm运行 | `unverified`：无 guest CMO运行 | `not-applicable` | `unverified`：`test/cmo/cmo_test.S` 不设 PMM | `unverified`：无 guest CMO运行 | `not-applicable` |
-| Vector load/store | `unverified`：vector LSU/DTLB线索，无 tagged element地址观察 | `unverified`：无 VS/VU vector PMM运行 | `not-applicable` | `unverified`：有 `test/vmem/vmem_test.S`，无 PMM控制 | `unverified`：无 guest vector PMM运行 | `not-applicable` |
-| Hypervisor access family | `not-applicable`：U普通访问不是 HLV/HSV | `unverified`：VS/VU有效地址路径有静态 selector，无运行 | `unverified`：HLV/HSV-as-VS/VU未运行 | `not-applicable`：U普通访问不是 HLV/HSV | `unverified`：selector未定位 | `unverified`：有 `test/hlv/hlv_test.S` 入口但无 PMM控制 |
-| Zicfiss shadow-stack access | `unverified`：扩展支持和地址路由未建立 | `unverified` | `not-applicable` | `unverified`：扩展支持和地址路由未建立 | `unverified` | `not-applicable` |
+| 访问族 | Kunminghu U | Kunminghu VS/VU | Kunminghu HLV/HSV | Heliodor U | Heliodor VS/VU | Heliodor HLV/HSV | Evidence |
+|---|---|---|---|---|---|---|---|
+| Integer load/store | `tested` PMLEN0/7 canonical；PMLEN0 tagged cause 5；PMLEN7 tagged load/store到达但 alias-limited；bit56=1 load cause 5 run-fail | `unverified`：selector有静态路径、无运行 | `not-applicable`（此行是普通 load/store） | `tested` 四个 PMLEN/tag 组合及 bit56=1；所有高地址 store/load 结果受 low-bit DRAM alias 限制 | `unverified`：guest selector未定位、无运行 | `not-applicable`（普通 load/store） | E10–E21 |
+| Atomic LR/SC/AMO | canonical全序列 `tested`；PMLEN7 tagged LR.D `run-fail` cause 5，SC/AMO未到达 | `unverified`：selector有静态路径、无运行 | `not-applicable` | `unverified`：有 AGU issue/reservation路径，无 U-mode atomic fixture | `unverified`：selector未定位 | `not-applicable` | E10–E13 |
+| FP load/store | `unverified`：FLW/FLD解码至普通 LDU；无 tagged FP fixture | `unverified`：无 VS/VU FP Ssnpm fixture | `not-applicable` | `unverified`：有 `fp_smoke.S`，未设置 Ssnpm controls | `unverified`：无 guest FP Ssnpm fixture | `not-applicable` | Static source review; no runtime record |
+| Compressed load/store | `unverified`：普通压缩 load/store decode路径，未运行 tagged fixture | `unverified`：无 guest压缩 Ssnpm fixture | `not-applicable` | `unverified`：普通 RV64C ISA cases不设 PMM | `unverified`：无 guest压缩 Ssnpm fixture | `not-applicable` | Static source review; no runtime record |
+| Cache management | `unverified`：CBO decode/StoreQueue路径，不是 Ssnpm运行 | `unverified`：无 guest CMO运行 | `not-applicable` | `unverified`：`test/cmo/cmo_test.S` 不设 PMM | `unverified`：无 guest CMO运行 | `not-applicable` | Static source review; no runtime record |
+| Vector load/store | `unverified`：vector LSU/DTLB线索，无 tagged element地址观察 | `unverified`：无 VS/VU vector PMM运行 | `not-applicable` | `unverified`：有 `test/vmem/vmem_test.S`，无 PMM控制 | `unverified`：无 guest vector PMM运行 | `not-applicable` | Static source review; no runtime record |
+| Hypervisor access family | `not-applicable`：U普通访问不是 HLV/HSV | `unverified`：VS/VU有效地址路径有静态 selector，无运行 | `unverified`：HLV/HSV-as-VS/VU未运行 | `not-applicable`：U普通访问不是 HLV/HSV | `unverified`：selector未定位 | `unverified`：有 `test/hlv/hlv_test.S` 入口但无 PMM控制 | Static source review; no runtime record |
+| Zicfiss shadow-stack access | `unverified`：扩展支持和地址路由未建立 | `unverified` | `not-applicable` | `unverified`：扩展支持和地址路由未建立 | `unverified` | `not-applicable` | No support or runtime evidence established |
+| `FENCE` / `FENCE.I` unused address fields | `not-applicable`：不产生显式内存访问 | `not-applicable` | `not-applicable` | `not-applicable`：不产生显式内存访问 | `not-applicable` | `not-applicable` | Specification excludes unused address fields |
+| Instruction fetch and implicit accesses | `not-applicable`：规范排除取指与页表遍历 | `not-applicable` | `not-applicable` | `not-applicable`：规范排除取指与页表遍历 | `not-applicable` | `not-applicable` | Specification excludes fetch and implicit accesses |
 
 ## Heliodor 案例与验证记录
 

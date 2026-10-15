@@ -185,7 +185,7 @@ def observe(output: str, exit_code: int, arch_label: str = "v4 rv64ui-add") -> t
     """Require CPU-produced smoke and ordinary arch-harness observations."""
     smoke_started = bool(re.search(r"\[test_smoke\]\s+cy=\d+.*\bcommit=\d+", output))
     arch_result = re.search(re.escape(arch_label) + r" tohost=([0-9a-fA-F]+) pass=([01])", output)
-    arch_started = arch_result is not None
+    arch_started = arch_result is not None and int(arch_result.group(1), 16) != 0
     # For the Zifencei arch-only invocation, the earlier generic smoke marker
     # cannot prove that this separate target began execution. Without an arch
     # result marker, report startup as unobserved (blocked) rather than assert
@@ -205,7 +205,13 @@ def observe(output: str, exit_code: int, arch_label: str = "v4 rv64ui-add") -> t
               values.get("x12") == 77 and values.get("x13") == 11 and
               arch_result is not None and values["arch_tohost"] == 1 and values["arch_pass"] == 1 and
               f"{arch_label} PASS" in output and exit_code == 0)
-    failed = cpu_started and not passed
+    smoke_passed = (smoke_started and "[test_smoke] PASS" in output and
+                    values.get("x10") == 7 and values.get("x11") == 11 and
+                    values.get("x12") == 77 and values.get("x13") == 11)
+    arch_passed = (arch_started and values.get("arch_tohost") == 1 and
+                   values.get("arch_pass") == 1 and f"{arch_label} PASS" in output and exit_code == 0)
+    # A zero tohost value is the testbench's idle default, not a DUT result.
+    failed = (smoke_started and not smoke_passed) or (arch_started and not arch_passed)
     return cpu_started, values, passed, failed
 
 
@@ -426,7 +432,8 @@ def run(args: argparse.Namespace) -> dict:
     stdout_path.parent.mkdir(parents=True, exist_ok=True); stderr_path.parent.mkdir(parents=True, exist_ok=True)
     archive.mkdir(parents=True, exist_ok=True)
     out = bytearray(); err = bytearray(); exit_code = 1; cpu_started = False
-    assertion_failed = False; expected_observed = False; first_stage = "locked-source-preflight"; blocker = ""
+    assertion_failed = False; expected_observed = False; infrastructure_blocked = False
+    first_stage = "locked-source-preflight"; blocker = ""
     snapshot_sha = LOCKED_SHA; input_path = ((ROOT / "experiments/rva23s64-zifencei" / f"{zifencei_case}.hex") if zifencei_case else (ROOT / "experiments/sstc/heliodor" / f"{sstc_case}.hex") if sstc_case else (ROOT / fixture_rel) if ssnpm or sscofpmf else SOURCE / fixture_rel)
     archived_arch_fixture = archive / (f"zifencei-{zifencei_case}.hex" if zifencei_case else f"sstc-{sstc_case}.hex" if sstc_case else f"sscofpmf-{sscofpmf_case}.hex" if sscofpmf else f"ssnpm-{ssnpm_case}.hex" if ssnpm else "rv64ui-add.hex")
     ssnpm_build_record: dict = {}
@@ -534,7 +541,8 @@ def run(args: argparse.Namespace) -> dict:
         if cpu_started:
             first_stage = "post-run-integrity"
             expected_observed = False
-            assertion_failed = True
+            assertion_failed = False
+            infrastructure_blocked = True
     log_persistence_errors = []
     for stream, path, fallback, payload in (
             ("stdout", stdout_path, archive / "stdout.log", bytes(out)),
@@ -634,6 +642,7 @@ def run(args: argparse.Namespace) -> dict:
         "exit_code": exit_code, "cpu_started": cpu_started,
         "result": "run-pass" if expected_observed else ("run-fail" if cpu_started and assertion_failed else "blocked"),
         "assertion_failed": assertion_failed, "expected_observed": expected_observed,
+        "infrastructure_blocked": infrastructure_blocked,
         "expected": (f"U-mode Ssnpm fixture {ssnpm_case} verifies senvcfg.PMM readback and expected explicit access behavior before tohost=1/pass=1." if ssnpm else
                      "test_smoke registers pass; Zifencei fixture checks old return 1 then new return 42 and reports tohost=1/pass=1." if zifencei_case else
                      "Heliodor Sscofpmf fixture checks MINH filtering, hardware event5 counter3 wrap, cause 13, OF, and scountovf[3] before tohost=1." if sscofpmf else

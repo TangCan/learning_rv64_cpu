@@ -49,6 +49,19 @@ def test_sscofpmf_success_requires_arch_cpu_marker_and_pass_output() -> None:
                                      "arch_tohost": 0x220, "arch_pass": 0}, False, True)
 
 
+def test_arch_marker_with_idle_tohost_does_not_prove_cpu_start() -> None:
+    assert runner.observe("sscofpmf tohost=00000000 pass=0\n", 1, "sscofpmf") == (
+        False, {"arch_tohost": 0, "arch_pass": 0}, False, False)
+
+
+def test_idle_arch_result_after_a_passing_smoke_is_blocked_not_a_dut_failure() -> None:
+    output = ("[test_smoke] cy=5000 x10=7 x11=b commit=1651\n"
+              "[test_smoke] x12=4d x13=b\n[test_smoke] PASS\n"
+              "v4 rv64ui-add tohost=00000000 pass=0\n")
+    started, _values, passed, failed = runner.observe(output, 0)
+    assert started and not passed and not failed
+
+
 def test_ssnpm_u_mode_fixture_checks_controls_and_access_result() -> None:
     source = (ROOT / "experiments/ssnpm/build_heliodor_fixtures.py").read_text(encoding="utf-8")
     fixture = runner.ROOT / "experiments/ssnpm/heliodor/pmlen7-tagged.S"
@@ -108,10 +121,12 @@ def test_sscofpmf_observation_keeps_partial_s_filter_evidence_separate() -> None
     assert runner.sscofpmf_observed_values("hardware-overflow", {"arch_tohost": 34}, False) is None
 
 
+@pytest.mark.parametrize("case,budget", [("hardware-overflow", 200000), ("mode-filters", 1000000)])
 def test_run_selects_sscofpmf_fixture_target_and_marker(tmp_path: pathlib.Path,
-                                                       monkeypatch: pytest.MonkeyPatch) -> None:
+                                                       monkeypatch: pytest.MonkeyPatch,
+                                                       case: str, budget: int) -> None:
     source, _manifest, args = _run_fixture_environment(tmp_path, monkeypatch)
-    args.sscofpmf_case = "hardware-overflow"
+    args.sscofpmf_case = case
     fixture_rel, source_rel = runner.SSCOFPMF_FIXTURES[args.sscofpmf_case]
     fixture = runner.ROOT / fixture_rel
     fixture.parent.mkdir(parents=True)
@@ -134,8 +149,42 @@ def test_run_selects_sscofpmf_fixture_target_and_marker(tmp_path: pathlib.Path,
     assert calls[1][-1] == "test_arch_sscofpmf"
     transformed = (args.archive_dir / record["id"] / "test_arch_common.veryl").read_text(encoding="utf-8")
     assert f'HEX_FILE  : "{fixture_rel}"' in transformed
+    assert f"clk.next ({budget});" in transformed or f"clk.next  ({budget});" in transformed
     assert record["expected_marker"] == "sscofpmf PASS"
     assert record["result"] == "run-pass"
+    assert record["case"] == case
+
+
+def test_run_blocks_when_arch_target_reports_only_idle_tohost(tmp_path: pathlib.Path,
+                                                              monkeypatch: pytest.MonkeyPatch) -> None:
+    _source, _manifest, args = _run_fixture_environment(tmp_path, monkeypatch)
+    args.topic = "sscofpmf"
+    args.sscofpmf_case = "mode-filters"
+    (runner.ROOT / runner.SSCOFPMF_FIXTURES["mode-filters"][0]).parent.mkdir(parents=True)
+    (runner.ROOT / runner.SSCOFPMF_FIXTURES["mode-filters"][0]).write_text("00000013\n")
+    (runner.ROOT / runner.SSCOFPMF_FIXTURES["mode-filters"][1]).write_text("fixture\n")
+    (runner.ROOT / runner.SSCOFPMF_LINKER).write_text("linker\n")
+    outputs = iter([
+        (0, b"[test_smoke] cy=5000 x10=7 x11=b commit=1\n[test_smoke] x12=4d x13=b\n[test_smoke] PASS\n", b"", ""),
+        (0, b"sscofpmf tohost=00000000 pass=0\n", b"", ""),
+    ])
+    monkeypatch.setattr(runner, "execute_test", lambda *_args: next(outputs))
+    record = runner.run(args)
+    assert record["result"] == "blocked"
+    assert not record["cpu_started"] and not record["assertion_failed"]
+
+
+def test_combined_passing_smoke_and_idle_arch_target_records_blocked(tmp_path: pathlib.Path,
+                                                                    monkeypatch: pytest.MonkeyPatch) -> None:
+    _source, _manifest, args = _run_fixture_environment(tmp_path, monkeypatch)
+    outputs = iter([
+        (0, b"[test_smoke] cy=5000 x10=7 x11=b commit=1\n[test_smoke] x12=4d x13=b\n[test_smoke] PASS\n", b"", ""),
+        (0, b"v4 rv64ui-add tohost=00000000 pass=0\n", b"", ""),
+    ])
+    monkeypatch.setattr(runner, "execute_test", lambda *_args: next(outputs))
+    record = runner.run(args)
+    assert record["result"] == "blocked"
+    assert record["cpu_started"] and not record["assertion_failed"]
 
 
 def test_heliodor_sscofpmf_mode_fixture_checks_s_and_u_filters() -> None:
@@ -167,17 +216,17 @@ def test_sscofpmf_fixture_does_not_software_set_of_and_bounds_unsupported_filter
     assert "ev_sel[59]" not in filter_logic and "ev_sel[58]" not in filter_logic
 
 
-@pytest.mark.parametrize("output,code", [
-    ("[test_smoke] PASS", 0),  # marker without evidence CPU started
-    ("[test_smoke] cy=5000 x10=7 x11=b commit=1651\n[test_smoke] PASS\nx12=4c x13=b", 0),
-    ("[test_smoke] cy=5000 x10=7 x11=b commit=1651\nx12=4d x13=b", 0),
-    ("[test_smoke] cy=5000 x10=7 x11=b commit=1651\nx12=4d x13=b\n[test_smoke] PASS", 1),
-    ("[INFO ] Executing test (test_smoke)\n[test_smoke] PASS", 0),  # harness start alone is not CPU start
+@pytest.mark.parametrize("output,code,expected_failed", [
+    ("[test_smoke] PASS", 0, False),  # marker without evidence CPU started
+    ("[test_smoke] cy=5000 x10=7 x11=b commit=1651\n[test_smoke] PASS\nx12=4c x13=b", 0, True),
+    ("[test_smoke] cy=5000 x10=7 x11=b commit=1651\nx12=4d x13=b", 0, True),
+    ("[test_smoke] cy=5000 x10=7 x11=b commit=1651\nx12=4d x13=b\n[test_smoke] PASS", 1, False),
+    ("[INFO ] Executing test (test_smoke)\n[test_smoke] PASS", 0, False),  # harness start alone is not CPU start
 ])
-def test_missing_or_wrong_result_never_passes(output: str, code: int) -> None:
+def test_missing_or_wrong_result_never_passes(output: str, code: int, expected_failed: bool) -> None:
     started, _values, passed, failed = runner.observe(output, code)
     assert not passed
-    assert failed is started
+    assert failed is expected_failed
 
 
 def test_transform_adds_only_the_single_local_lint_allow() -> None:
@@ -323,6 +372,7 @@ def _run_fixture_environment(tmp_path: pathlib.Path, monkeypatch: pytest.MonkeyP
         runner.ARCH_DEBUG_MARKER + "\nmodule debug_harness {}\n\n" +
         runner.ARCH_TARGET_MARKER + " {\n    var tohost: logic<32>;\n    var pass: logic;\n" +
         "    inst h: test_arch_common_harness #(HEX_FILE: \"test/riscv-arch-test/build/rv64ui/add.hex\", TOHOST_IDX: 1024,) { o_tohost: tohost, i_mtime: mtime_ctr, };\n" +
+        "    clk.next (200000);\n" +
         "    $display (\"v4 rv64ui-add tohost=%h pass=%b\", tohost, pass);\n}\n\n" +
         "#[test(test_arch_next)]\nmodule next_test {}\n", encoding="utf-8")
     (source / "Veryl.toml").write_text("[project]\n", encoding="utf-8")
@@ -393,7 +443,8 @@ def test_run_detects_mutated_fixture_after_cpu_start(tmp_path: pathlib.Path,
 
     monkeypatch.setattr(runner, "execute_test", mutate_fixture)
     record = runner.run(args)
-    assert record["result"] == "run-fail"
+    assert record["result"] == "blocked"
+    assert record["infrastructure_blocked"] and not record["assertion_failed"]
     assert record["first_failed_stage"] == "post-run-integrity"
     assert not record["expected_observed"]
     assert "isolated source" in record["blocker"]
@@ -411,7 +462,8 @@ def test_run_detects_mutated_isolated_rtl_after_cpu_start(tmp_path: pathlib.Path
 
     monkeypatch.setattr(runner, "execute_test", mutate_rtl)
     record = runner.run(args)
-    assert record["result"] == "run-fail"
+    assert record["result"] == "blocked"
+    assert record["infrastructure_blocked"] and not record["assertion_failed"]
     assert record["first_failed_stage"] == "post-run-integrity"
     assert "isolated source" in record["blocker"]
 
@@ -423,7 +475,8 @@ def test_arch_compile_failure_keeps_the_failed_target_stage(tmp_path: pathlib.Pa
     calls = iter([(0, smoke_output, b"", ""), (1, b"compile error\n", b"", "")])
     monkeypatch.setattr(runner, "execute_test", lambda *_args: next(calls))
     record = runner.run(args)
-    assert record["result"] == "run-fail"
+    assert record["result"] == "blocked"
+    assert not record["assertion_failed"] and not record["expected_observed"]
     assert record["first_failed_stage"] == "test_arch_rv64ui_add"
 
 

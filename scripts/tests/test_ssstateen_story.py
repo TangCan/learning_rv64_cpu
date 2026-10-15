@@ -3,6 +3,8 @@ import importlib.util
 import json
 import pathlib
 import re
+import shutil
+import subprocess
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 
@@ -25,6 +27,155 @@ def test_ssstateen_gate_operations_have_stable_unique_ids():
     assert len({item[0] for item in operations}) == 21
     assert operations[-1][1] == "ecall"
     assert sum(item[1] in {"csrw", "csrr"} for item in operations[:20]) == 20
+
+
+def test_isolated_case_generation_selects_assertions_and_fixture(tmp_path):
+    runner_path = ROOT / "experiments/ssstateen/run_isolated.py"
+    spec = importlib.util.spec_from_file_location("isolated_ssstateen", runner_path)
+    module = importlib.util.module_from_spec(spec)
+    assert spec and spec.loader
+    spec.loader.exec_module(module)
+    assert set(module.CASES) == set(module.FIXTURES)
+    assert set(module.CASES) == set(module.CASE_ASSERTIONS)
+    assert len(module.FIXTURES.values()) == len(set(module.FIXTURES.values()))
+    fixtures = ROOT / "experiments/ssstateen"
+    for case in module.CASES:
+        result = subprocess.run(["python3", str(runner_path), "--case", case], check=True,
+                                capture_output=True, text=True)
+        workspace = pathlib.Path(result.stdout.strip().splitlines()[-1])
+        try:
+            generated = (workspace / "tb/test_arch_common.veryl").read_text()
+            selected_fixture = fixtures / module.FIXTURES[case]
+            assert module.CASE_ASSERTIONS[case] in generated
+            assert (workspace / "test/ssstateen/ssstateen_probe.hex").read_bytes() == selected_fixture.read_bytes()
+            assert 'HEX_FILE: "test/ssstateen/ssstateen_probe.hex"' in generated or \
+                'HEX_FILE  : "test/ssstateen/ssstateen_probe.hex"' in generated
+        finally:
+            shutil.rmtree(workspace)
+    try:
+        module.fixture_for("unknown")
+    except ValueError as exc:
+        assert "unknown Ssstateen case" in str(exc)
+    else:
+        raise AssertionError("unknown case was accepted")
+
+
+def test_rva23_runtime_matrix_completeness_and_operation_ids():
+    spec = importlib.util.spec_from_file_location(
+        "rva23_runtime_matrices", ROOT / "scripts/check_rva23_run_matrices.py")
+    module = importlib.util.module_from_spec(spec)
+    assert spec and spec.loader
+    spec.loader.exec_module(module)
+    assert module.validate() == []
+
+
+def _matrix_checker_fixture(tmp_path, monkeypatch):
+    spec = importlib.util.spec_from_file_location(
+        "rva23_runtime_matrices_negative", ROOT / "scripts/check_rva23_run_matrices.py")
+    module = importlib.util.module_from_spec(spec)
+    assert spec and spec.loader
+    spec.loader.exec_module(module)
+    docs = tmp_path / "notes/units"
+    docs.mkdir(parents=True)
+    for name in ("rva23s64-ssnpm-v1.md", "rva23s64-ssstateen-v1.md"):
+        shutil.copy2(ROOT / "notes/units" / name, docs / name)
+    manifest = tmp_path / "manifest.yaml"
+    manifest.write_text(json.dumps({"snapshots": [{"runs": [{
+        "id": "sample", "result": "run-pass", "operation_records": [{
+            "operation_id": 1, "mode": "U", "csr": "sstateen0", "operation": "read",
+            "expected": "value", "observed": "value",
+        }],
+    }]}]}), encoding="utf-8")
+    monkeypatch.setattr(module, "ROOT", tmp_path)
+    monkeypatch.setattr(module, "MANIFEST", manifest)
+    return module, docs, manifest
+
+
+def test_matrix_checker_reports_missing_heading_and_duplicate_required_rows(tmp_path, monkeypatch):
+    module, docs, _manifest = _matrix_checker_fixture(tmp_path, monkeypatch)
+    path = docs / "rva23s64-ssnpm-v1.md"
+    path.write_text(path.read_text().replace("### 逐核、逐模式状态", "### missing"), encoding="utf-8")
+    assert any("missing heading" in error for error in module.validate())
+
+    module, docs, _manifest = _matrix_checker_fixture(tmp_path / "duplicate", monkeypatch)
+    path = docs / "rva23s64-ssnpm-v1.md"
+    text = path.read_text()
+    row = next(line for line in text.splitlines() if line.startswith("| Integer load/store | `tested`"))
+    text = text.replace("\n## Heliodor 案例与验证记录", f"\n{row}\n## Heliodor 案例与验证记录", 1)
+    path.write_text(text, encoding="utf-8")
+    assert any("duplicate rows" in error for error in module.validate())
+
+
+def test_matrix_checker_reports_missing_row_state_and_evidence_reference(tmp_path, monkeypatch):
+    module, docs, _manifest = _matrix_checker_fixture(tmp_path, monkeypatch)
+    path = docs / "rva23s64-ssnpm-v1.md"
+    lines = path.read_text().splitlines()
+    for index, line in enumerate(lines):
+        if line.startswith("| Zicfiss shadow-stack access |"):
+            lines[index] = line.replace("Zicfiss shadow-stack access", "Removed row", 1)
+        if line.startswith("| Atomic LR/SC/AMO |"):
+            cells = line.strip().strip("|").split("|")
+            cells[1] = " canonical behavior (state omitted) "
+            cells[4] = " tested "
+            cells[-1] = " none "
+            lines[index] = "|" + "|".join(cells) + "|"
+    text = "\n".join(lines) + "\n"
+    path.write_text(text, encoding="utf-8")
+    errors = module.validate()
+    assert any("missing rows" in error for error in errors)
+    assert any("no allowed evidence state" in error for error in errors)
+    assert any("no evidence ID" in error for error in errors)
+
+
+def test_matrix_checker_rejects_undefined_evidence_id(tmp_path, monkeypatch):
+    module, docs, _manifest = _matrix_checker_fixture(tmp_path, monkeypatch)
+    path = docs / "rva23s64-ssnpm-v1.md"
+    lines = path.read_text(encoding="utf-8").splitlines()
+    for index, line in enumerate(lines):
+        if line.startswith("| Atomic LR/SC/AMO |"):
+            cells = line.strip().strip("|").split("|")
+            cells[-1] = " E99 "
+            lines[index] = "|" + "|".join(cells) + "|"
+            break
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    errors = module.validate()
+    assert any("undefined evidence ID/range E99" in error for error in errors)
+
+
+def test_matrix_checker_reports_invalid_result_duplicate_ids_and_missing_observation(tmp_path, monkeypatch):
+    module, _docs, manifest = _matrix_checker_fixture(tmp_path, monkeypatch)
+    data = json.loads(manifest.read_text())
+    run = data["snapshots"][0]["runs"][0]
+    run["result"] = "pass"
+    run["operation_records"].append(dict(run["operation_records"][0], observed=""))
+    run["operation_records"][0].pop("observed")
+    manifest.write_text(json.dumps(data), encoding="utf-8")
+    errors = module.validate()
+    assert any("invalid result state" in error for error in errors)
+    assert any("duplicate operation_id" in error for error in errors)
+    assert any("missing observation" in error for error in errors)
+
+
+def test_matrix_checker_reports_malformed_yaml_containers_without_crashing(tmp_path, monkeypatch):
+    module, _docs, manifest = _matrix_checker_fixture(tmp_path, monkeypatch)
+    manifest.write_text("[]\n", encoding="utf-8")
+    assert any("root must be a mapping" in error for error in module.validate())
+    manifest.write_text(json.dumps({"snapshots": [{"runs": {}}]}), encoding="utf-8")
+    assert any("runs must be a list" in error for error in module.validate())
+    manifest.write_text(json.dumps({"snapshots": ["not a mapping"]}), encoding="utf-8")
+    assert any("must be a mapping" in error for error in module.validate())
+    manifest.write_text(json.dumps({"snapshots": [{"runs": [{"result": [], "operation_records": {}}]}]}),
+                        encoding="utf-8")
+    errors = module.validate()
+    assert any("invalid result state" in error for error in errors)
+    assert any("operation_records must be a list" in error for error in errors)
+    manifest.write_text(json.dumps({"snapshots": [{"runs": [{
+        "result": "run-pass", "operation_records": [{
+            "operation_id": [], "mode": "U", "csr": "sstateen0", "operation": "read",
+            "expected": "value", "observed": "value",
+        }],
+    }]}]}), encoding="utf-8")
+    assert any("operation_id must be an integer" in error for error in module.validate())
 
 
 def test_ssstateen_m_operations_have_unique_trace_ids():
@@ -237,7 +388,7 @@ def test_heliodor_s_gate_fixture_toggles_m_se0_and_records_both_s_reads():
     assert "li      t6, 24" in fixture and "set_m_se0:" in fixture
     assert "li      t6, 43" in fixture and "csrr    t2, 0x10c" in fixture
     assert "sd      t2, 1272(t0)" in fixture and "sd      t2, 1280(t0)" in fixture
-    assert 'choices=("baseline", "s-gates", "s-gates-v2", "s-gates-v3", "vs", "vs-v2", "vu", "vu-fcsr")' in runner
+    assert 'parser.add_argument("--case", choices=CASES, default="baseline")' in runner
     assert '"vs-v2": "ssstateen_probe_vs_v2.hex"' in runner
     assert "ssstateen_probe_s_gates.hex" in runner
     assert "ssstateen_probe_s_gates_v2.hex" in runner

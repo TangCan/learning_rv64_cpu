@@ -31,8 +31,10 @@ class ValidationError(ValueError):
 
 
 def classify(*, cpu_started: bool, exit_code: int, assertion_failed: bool,
-             expected_observed: bool) -> str:
+             expected_observed: bool, infrastructure_blocked: bool = False) -> str:
     """Apply the story's strict distinction between blockers and CPU failures."""
+    if infrastructure_blocked:
+        return "blocked"
     if not cpu_started:
         return "blocked"
     if assertion_failed:
@@ -125,6 +127,8 @@ def validate_record(record: dict[str, Any], label: str) -> list[str]:
     for key in ("assertion_failed", "expected_observed"):
         if not isinstance(record[key], bool):
             errors.append(f"{label}: {key} must be boolean")
+    if "infrastructure_blocked" in record and not isinstance(record["infrastructure_blocked"], bool):
+        errors.append(f"{label}: infrastructure_blocked must be boolean")
     for key in ("expected", "observed"):
         if not isinstance(record[key], str) or not record[key].strip():
             errors.append(f"{label}: {key} must be a non-empty string")
@@ -193,6 +197,7 @@ def validate_record(record: dict[str, Any], label: str) -> list[str]:
                     cpu_started=record["cpu_started"], exit_code=record["exit_code"],
                     assertion_failed=record["assertion_failed"],
                     expected_observed=record["expected_observed"],
+                    infrastructure_blocked=record.get("infrastructure_blocked", False),
                 )
                 if record["result"] != derived:
                     errors.append(f"{label}: result {record['result']} conflicts with derived {derived}")
