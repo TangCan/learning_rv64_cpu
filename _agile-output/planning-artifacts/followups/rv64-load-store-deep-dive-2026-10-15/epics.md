@@ -11,7 +11,7 @@ inputDocuments:
   - learning-plan.md
 ---
 
-# RV64 load/store deep dive - Epic Breakdown
+# RV64 load/store deep dive - Delivery Plan
 
 ## Overview
 
@@ -69,7 +69,7 @@ FR-5: Epic 1 — Trace the shared Sv39 noncanonical LD page fault through suppor
 FR-6: Epic 1 — Keep evidence type, validation status, comparison completeness, and claim scope explicit.
 FR-7: Epic 1 — Preserve source snapshot provenance and revalidation boundaries.
 
-## Epic List
+## Planned Delivery
 
 ### Epic 1: 完成可回顾、可复查的双核访存学习阶段
 
