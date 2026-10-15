@@ -28,6 +28,10 @@
 | 已完成本次静态追踪 | `SD` 从派发到提交及写入接受边界 | [双核 SD 提交与写入边界](2026-10-15-sd-commit-write-boundary.md) | [`store-v1.md`](../notes/units/store-v1.md)；DRAM 可见性未验证 |
 | 已完成静态复核 | Sv39 非规范 `LD` fault 双核路径 | [Sv39 非规范地址 LD fault](2026-10-15-sv39-noncanonical-ld-fault.md) | [`sv39-load-fault-v3.md`](../notes/units/sv39-load-fault-v3.md)；历史版 v1/v2 保留；固定案例动态行为未验证 |
 | 已完成本次审计 | `LD`/`SD`/Sv39 fault 证据与固定快照核验 | [三类案例证据审计](2026-10-15-three-case-evidence-audit.md) | 六条路径与活动 ID 已核对；fault C3 测试比较为 partial，动态案例仍未验证 |
-| 计划中 | 双核访存路径综合比较 | 待写 | 后续对照记录待定 |
+| 已完成静态整理 | 双核访存路径综合比较 | [综合日志](2026-10-15-load-store-fault-synthesis.md) | 三类活动单元与六条路径已综合；运行边界仍未验证 |
 
 新日志按 `YYYY-MM-DD-主题.md` 命名，并从本页按时间顺序添加。先写已有证据支持的回顾；如果历史材料不能还原过程，就明确写“基于现有记录回顾”，不虚构当时的探索细节。
+
+## 本次访存阶段（已完成静态整理）
+
+本轮 `LD`、`SD`、Sv39 fault 的双核路径与证据审计已完成，综合发现见[双核访存综合日志](2026-10-15-load-store-fault-synthesis.md)。这里的“完成”指静态学习单元、过程记录和导航整理完成，不代表案例动态运行：LD hit/退休、SD 接受及 DRAM 可见性、fault cause/CSR/redirect 仍按单元标为未验证。既有六阶段历史尚待依据存量材料回顾；新阶段主题仍待规划。
