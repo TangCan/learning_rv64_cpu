@@ -30,7 +30,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 # - Retrospective appends its action items to action_items; the status view surfaces open ones
 generated: 10-12-2026 14:04
-last_updated: 10-14-2026 18:42
+last_updated: 10-15-2026 00:30
 project: learning_rv64_cpu
 project_key: NOKEY
 tracking_system: file-system
@@ -76,16 +76,16 @@ development_status:
   5-7-审计-rva23s64-覆盖与学习结项证据: done
   epic-5-retrospective: done
 
-  epic-6: in-progress
+  epic-6: done
   6-1-固定-cpu-验证工具链与结果归档: done
   6-2-建立-kunminghu-fixture-加载与模拟器入口: done
   6-3-建立-heliodor-arch-harness-隔离运行入口: done
   6-4-运行-zifencei-自修改代码对照: done
   6-5-运行-sstc-s-vs-comparator-与陷阱对照: done
-  6-6-运行-sscofpmf-硬件计数器溢出与过滤对照: review
+  6-6-运行-sscofpmf-硬件计数器溢出与过滤对照: done
   6-7-运行-ssnpm-pmlen-与访问族对照: done
-  6-8-运行-ssstateen-八-csr-与层级访问门对照: backlog
-  epic-6-retrospective: optional
+  6-8-运行-ssstateen-八-csr-与层级访问门对照: done
+  epic-6-retrospective: done
 action_items:
   - id: "epic-1-retro-item-1-修订-add-记录的证据可追溯性和测试表述-自检答案补充-heliodor-写回"
     epic: 1
@@ -167,3 +167,37 @@ action_items:
     owner: "Tang Can"
     status: done
     ref: "_agile-output/implementation-artifacts/epic-5-retro-2026-10-14.md"
+  - id: "epic-6-retro-item-13-修订-heliodor-cpu-start-与失败分类-只有可追溯的目标执行证据"
+    epic: 6
+    action: "修订 Heliodor CPU-start 与失败分类：只有可追溯的目标执行证据才能标记 CPU-start；区分 DUT assertion
+      mismatch、post-run integrity failure 和无法确认启动，并补对应测试。"
+    owner: "Tang Can"
+    status: open
+    ref: "_agile-output/implementation-artifacts/epic-6-retro-2026-10-15.md"
+  - id: "epic-6-retro-item-14-补齐-heliodor-runner-集成测试-验证-mode-filters"
+    epic: 6
+    action: "补齐 Heliodor runner 集成测试：验证 mode-filters 选择正确 fixture、target、manifest
+      case、marker 和 cycle budget；为共享 dispatch 的其他分支复用最小映射检查。"
+    owner: "Tang Can"
+    status: open
+    ref: "_agile-output/implementation-artifacts/epic-6-retro-2026-10-15.md"
+  - id: "epic-6-retro-item-15-贯通-ssstateen-case-选择测试-用表驱动检查-run_isolat"
+    epic: 6
+    action: "贯通 Ssstateen case 选择测试：用表驱动检查 run_isolated.py 中允许的 case、fixture、harness
+      断言和结果记录映射。"
+    owner: "Tang Can"
+    status: open
+    ref: "_agile-output/implementation-artifacts/epic-6-retro-2026-10-15.md"
+  - id: "epic-6-retro-item-16-验证运行矩阵完整性-为专题-访问族的状态-唯一-operation-id-和证据"
+    epic: 6
+    action: "验证运行矩阵完整性：为专题/访问族的状态、唯一 operation ID 和证据引用定义最小结构化校验，减少 Markdown 表格漏项。"
+    owner: "Tang Can"
+    status: open
+    ref: "_agile-output/implementation-artifacts/epic-6-retro-2026-10-15.md"
+  - id: "epic-6-retro-item-17-量化并控制运行归档体积-清点约-1-1-gib-smoke-目录-区分可重建产物"
+    epic: 6
+    action: "量化并控制运行归档体积：清点约 1.1 GiB smoke 目录，区分可重建产物与独有诊断日志，提出保留/压缩策略并验证 manifest
+      更新。"
+    owner: "Tang Can"
+    status: open
+    ref: "_agile-output/implementation-artifacts/epic-6-retro-2026-10-15.md"

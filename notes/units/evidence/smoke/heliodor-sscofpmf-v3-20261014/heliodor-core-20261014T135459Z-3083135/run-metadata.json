@@ -1,0 +1,106 @@
+{
+  "artifact_sha256": {
+    "notes/units/evidence/smoke/heliodor-sscofpmf-v3-20261014/heliodor-core-20261014T135459Z-3083135/run.py": "f8af25e1b9ced373065b1b865c997a089598b2932f2fa1542bbf7c7df525c7a1",
+    "notes/units/evidence/smoke/heliodor-sscofpmf-v3-20261014/heliodor-core-20261014T135459Z-3083135/sscofpmf.hex": "de50fba74f8f28608ef0608d99d37850a90fbe2c79e2415b04ebdd3a90db5acc",
+    "notes/units/evidence/smoke/heliodor-sscofpmf-v3-20261014/heliodor-core-20261014T135459Z-3083135/test_arch_common.veryl": "613c80e4a2300e8ca44194fd5a3ad6fceafde9ce3b0602ea87614f60d4e4a743",
+    "notes/units/evidence/smoke/heliodor-sscofpmf-v3-20261014/heliodor-core-20261014T135459Z-3083135/test_smoke.veryl": "15bd6b192c2569d078e8d10e872c095a649a1f6848f54f030c7e4123d7d1daf3",
+    "notes/units/evidence/smoke/heliodor-sscofpmf-v3-20261014/heliodor-core-20261014T135459Z-3083135/v4_smoke.hex": "2cf451e3cee19059d2dbc19c08cbe4af9b552ec842d6d2881d039f4bc1aaeeb1"
+  },
+  "artifacts": [
+    "notes/units/evidence/smoke/heliodor-sscofpmf-v3-20261014/heliodor-core-20261014T135459Z-3083135/run.py",
+    "notes/units/evidence/smoke/heliodor-sscofpmf-v3-20261014/heliodor-core-20261014T135459Z-3083135/test_smoke.veryl",
+    "notes/units/evidence/smoke/heliodor-sscofpmf-v3-20261014/heliodor-core-20261014T135459Z-3083135/v4_smoke.hex",
+    "notes/units/evidence/smoke/heliodor-sscofpmf-v3-20261014/heliodor-core-20261014T135459Z-3083135/test_arch_common.veryl",
+    "notes/units/evidence/smoke/heliodor-sscofpmf-v3-20261014/heliodor-core-20261014T135459Z-3083135/sscofpmf.hex"
+  ],
+  "assertion_failed": true,
+  "blocker": "",
+  "case": "hardware-overflow-event5-counter3",
+  "command": "[[\"/nvme_data1/richard/.local/share/veryl/toolchains/latest/veryl\", \"test\", \"--include-ignored\", \"--test\", \"test_smoke\"], [\"/nvme_data1/richard/.local/share/veryl/toolchains/latest/veryl\", \"test\", \"--include-ignored\", \"--test\", \"test_arch_sscofpmf\"]]",
+  "configuration": "Heliodor test_smoke plus test_arch_sscofpmf; one harness/DUT; 5000 smoke cycles and 200000 Sscofpmf arch cycles; event5 mem-port-busy, counter3 64-bit preload all ones; expected tohost=1 after MINH filtering and hardware overflow/cause/OF/scountovf assertions.",
+  "cpu_started": true,
+  "evidence_method": "Self-checking local assembly; event5 mem-port-busy increments cause two hardware wraps; MIP.LCOFIP is read in each cause-13 handler",
+  "exit_code": 1,
+  "expected": "Heliodor Sscofpmf fixture checks MINH filtering, hardware event5 counter3 wrap, cause 13, OF, and scountovf[3] before tohost=1.",
+  "expected_controls": {
+    "counter": 3,
+    "counter_preload": "0xffffffffffffffff",
+    "counter_width": 64,
+    "event_selector": 5,
+    "expected_trap_cause": 13,
+    "filter_phase": "MINH=1 then MINH=0",
+    "pending": "mip.LCOFIP checked at each cause-13 handler; first pending is cleared separately before re-arm",
+    "privilege": "M"
+  },
+  "expected_marker": "sscofpmf PASS",
+  "expected_markers": [
+    "[test_smoke] PASS",
+    "sscofpmf PASS"
+  ],
+  "expected_observed": false,
+  "first_failed_stage": "test_arch_sscofpmf",
+  "fixture_build": {
+    "command": "riscv64-unknown-elf-gcc -march=rv64imafdc_zicsr -mabi=lp64d -nostdlib -nostartfiles -ffreestanding -T experiments/sscofpmf/heliodor-sscofpmf.ld -Wl,--build-id=none -o heliodor-sscofpmf-v3.elf experiments/sscofpmf/heliodor-sscofpmf-v3.S && riscv64-unknown-elf-objcopy -O binary heliodor-sscofpmf-v3.elf heliodor-sscofpmf-v3.bin && python3 sources/heliodor/test/c/bin2hex.py heliodor-sscofpmf-v3.bin heliodor-sscofpmf-v3.hex",
+    "gcc": "riscv64-unknown-elf-gcc () 15.1.0; sha256 3b2b5d5ad7f9c7821c8ca1b11c6c512f30e3d63dcbdc726836c1c7bc0bceed32",
+    "linker": "experiments/sscofpmf/heliodor-sscofpmf.ld",
+    "linker_sha256": "a9d8ab9967872b9d9816f4f62cdd8b393994a401423dd9e141549726db946c32",
+    "objcopy": "GNU objcopy 2.44; sha256 0ed4d26870589f4ba1e5678b62305d66c2df6ee8906da706c830a6f42950c858",
+    "source": "experiments/sscofpmf/heliodor-sscofpmf-v3.S",
+    "source_sha256": "d685e89375ed88b63dc5a4d4bf3c0e6e165f63f160c1c5f67fc1eb4da6aa4c27"
+  },
+  "fixture_sha256": "de50fba74f8f28608ef0608d99d37850a90fbe2c79e2415b04ebdd3a90db5acc",
+  "id": "heliodor-core-20261014T135459Z-3083135",
+  "input": "notes/units/evidence/smoke/heliodor-sscofpmf-v3-20261014/heliodor-core-20261014T135459Z-3083135/sscofpmf.hex",
+  "input_sha256": "de50fba74f8f28608ef0608d99d37850a90fbe2c79e2415b04ebdd3a90db5acc",
+  "inputs": [
+    {
+      "path": "sources/heliodor/test/v4_smoke.hex",
+      "sha256": "2cf451e3cee19059d2dbc19c08cbe4af9b552ec842d6d2881d039f4bc1aaeeb1"
+    },
+    {
+      "path": "notes/units/evidence/smoke/heliodor-sscofpmf-v3-20261014/heliodor-core-20261014T135459Z-3083135/sscofpmf.hex",
+      "sha256": "de50fba74f8f28608ef0608d99d37850a90fbe2c79e2415b04ebdd3a90db5acc"
+    },
+    {
+      "path": "experiments/sscofpmf/heliodor-sscofpmf-v3.S",
+      "sha256": "d685e89375ed88b63dc5a4d4bf3c0e6e165f63f160c1c5f67fc1eb4da6aa4c27"
+    },
+    {
+      "path": "experiments/sscofpmf/heliodor-sscofpmf.ld",
+      "sha256": "a9d8ab9967872b9d9816f4f62cdd8b393994a401423dd9e141549726db946c32"
+    }
+  ],
+  "isolated_inputs_sha256": "96546bc9158994a5787a66df0386af4d69fa5bd853e4fde431ac6e0182fb15c4",
+  "isolated_tree_sha256": "96546bc9158994a5787a66df0386af4d69fa5bd853e4fde431ac6e0182fb15c4",
+  "log_path_warnings": [],
+  "next_environment_change": "No environment change required; this smoke completed successfully.",
+  "observed": "CPU-start=True; results={'x10': 7, 'x11': 11, 'x12': 77, 'x13': 11, 'arch_tohost': 40, 'arch_pass': 0}; smoke_marker=True; arch_marker=False",
+  "observed_values": null,
+  "output": "notes/units/evidence/smoke/heliodor-sscofpmf-v3-20261014/heliodor-core-20261014T135459Z-3083135/output.log",
+  "output_sha256": "f51a38d6398f23143b5b667062f513a7916352f778735f73bcb6c1bbb6d64833",
+  "resources": {
+    "disk_free_bytes": 906991067136,
+    "logical_cpu_count": 64,
+    "memory_available_bytes": 144888770560,
+    "test_timeout_seconds": 180.0
+  },
+  "result": "run-fail",
+  "run_seconds": 29.807,
+  "smoke_fixture_sha256": "2cf451e3cee19059d2dbc19c08cbe4af9b552ec842d6d2881d039f4bc1aaeeb1",
+  "snapshot_sha": "94e9c5821c24a8941c3ddc3b76daddc7124a855a",
+  "source_commit": "94e9c5821c24a8941c3ddc3b76daddc7124a855a",
+  "source_tree_sha256": "4553612bb7ea7ac02259977213b5f8089c889bf2a65d07d23aa0634b9de0c4b9",
+  "stderr": "notes/units/evidence/smoke/heliodor-core-20261014T135459Z-3083135.stderr.log",
+  "stderr_sha256": "05883c60570bb7c19248f5a8a6eb2bf07aba963578338252b8cf64f5940a6381",
+  "stdout": "notes/units/evidence/smoke/heliodor-core-20261014T135459Z-3083135.stdout.log",
+  "stdout_sha256": "7b11f2a448f4460e6e1c0c6126c637eb74f8fd4330352eaced35c1b23d61141a",
+  "tools": {
+    "cxx": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0",
+    "verilator": "Verilator 5.020 2024-01-01 rev (Debian 5.020-1)",
+    "veryl": "veryl 0.22.0 (967e477 2026-10-02); binary sha256 aa57dd31488410769ee61c367f03de6cbf11101be47b510b99bde4ac9155b4c1"
+  },
+  "topic": "sscofpmf",
+  "transformed_arch_harness_sha256": "613c80e4a2300e8ca44194fd5a3ad6fceafde9ce3b0602ea87614f60d4e4a743",
+  "transformed_test_sha256": "15bd6b192c2569d078e8d10e872c095a649a1f6848f54f030c7e4123d7d1daf3",
+  "working_directory": "/tmp/heliodor-core-smoke-qd7ovdcb"
+}

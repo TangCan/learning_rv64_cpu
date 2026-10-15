@@ -1,0 +1,38 @@
+
+There are no discarded input sections
+
+Memory Configuration
+
+Name             Origin             Length             Attributes
+*default*        0x0000000000000000 0xffffffffffffffff
+
+Linker script and memory map
+
+                0x0000000080000000                . = 0x80000000
+
+.text           0x0000000080000000      0x580
+ *(.text.init)
+ .text.init     0x0000000080000000      0x580 /tmp/ccA4SoXV.o
+                0x0000000080000000                _start
+                0x00000000800004ac                good_trap
+ *(.text)
+ .text          0x0000000080000580        0x0 /tmp/ccA4SoXV.o
+
+.data           0x0000000080000580        0x0
+ .data          0x0000000080000580        0x0 /tmp/ccA4SoXV.o
+                0x0000000080001000                . = 0x80001000
+
+.tohost         0x0000000080001000        0x4
+                0x0000000080001000        0x4 LONG 0x0
+
+.bss            0x0000000080001010      0x900
+ *(.bss)
+ .bss           0x0000000080001010      0x900 /tmp/ccA4SoXV.o
+ *(COMMON)
+LOAD /tmp/ccA4SoXV.o
+OUTPUT(/nvme_data1/richard/learning_rv64_cpu/notes/units/evidence/smoke/kunminghu-ssstateen-no-diff-trace-aware-20261014/kunminghu-fixture-20261014T123931Z-cc7bc34a80d2/fixture.elf elf64-littleriscv)
+
+.riscv.attributes
+                0x0000000000000000       0x4d
+ .riscv.attributes
+                0x0000000000000000       0x4d /tmp/ccA4SoXV.o

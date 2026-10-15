@@ -1,0 +1,38 @@
+
+There are no discarded input sections
+
+Memory Configuration
+
+Name             Origin             Length             Attributes
+*default*        0x0000000000000000 0xffffffffffffffff
+
+Linker script and memory map
+
+                0x0000000080000000                . = 0x80000000
+
+.text           0x0000000080000000      0x114
+ *(.text.init)
+ .text.init     0x0000000080000000      0x114 /tmp/ccBtdrnZ.o
+                0x0000000080000000                _start
+                0x00000000800000e8                good_trap
+ *(.text)
+ .text          0x0000000080000114        0x0 /tmp/ccBtdrnZ.o
+
+.data           0x0000000080000114        0x0
+ .data          0x0000000080000114        0x0 /tmp/ccBtdrnZ.o
+                0x0000000080001000                . = 0x80001000
+
+.tohost         0x0000000080001000        0x4
+                0x0000000080001000        0x4 LONG 0x0
+
+.bss            0x0000000080001010      0x100
+ *(.bss)
+ .bss           0x0000000080001010      0x100 /tmp/ccBtdrnZ.o
+ *(COMMON)
+LOAD /tmp/ccBtdrnZ.o
+OUTPUT(/nvme_data1/richard/learning_rv64_cpu/notes/units/evidence/smoke/kunminghu-ssstateen-hs-vs-gates-20261014/kunminghu-fixture-20261014T125358Z-b10452454932/fixture.elf elf64-littleriscv)
+
+.riscv.attributes
+                0x0000000000000000       0x4d
+ .riscv.attributes
+                0x0000000000000000       0x4d /tmp/ccBtdrnZ.o

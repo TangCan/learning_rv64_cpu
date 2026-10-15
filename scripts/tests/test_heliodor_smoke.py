@@ -93,6 +93,69 @@ def test_sscofpmf_run_metadata_expects_arch_marker() -> None:
     assert runner.expected_arch_marker("v4 rv64ui-add") == "[test_smoke] PASS"
 
 
+def test_sscofpmf_observation_keeps_partial_s_filter_evidence_separate() -> None:
+    observed = runner.sscofpmf_observed_values("mode-filters", {"arch_tohost": 21}, False)
+    assert observed["partial_observations"]["S with SINH=1"].startswith("counter read was zero")
+    assert observed["unverified"] == ["S with SINH=0", "U with UINH=1", "U with UINH=0"]
+    observed = runner.sscofpmf_observed_values("mode-filters", {"arch_tohost": 54}, False)
+    assert observed["partial_observations"]["S with SINH=0"] == "counter read was nonzero"
+    assert observed["partial_observations"]["U with UINH=0"] == "counter read was zero; expected nonzero"
+    observed = runner.sscofpmf_observed_values("mode-filters", {"arch_tohost": 20}, False)
+    assert observed["filter_assertions"]["S/SINH=1 counter remained zero"] is True
+    assert observed["filter_assertions"]["S/SINH=0 counter advanced"] is False
+    assert observed["filter_assertions"]["U/UINH=1 counter remained zero"] is True
+    assert observed["filter_assertions"]["U/UINH=0 counter advanced"] is False
+    assert runner.sscofpmf_observed_values("hardware-overflow", {"arch_tohost": 34}, False) is None
+
+
+def test_run_selects_sscofpmf_fixture_target_and_marker(tmp_path: pathlib.Path,
+                                                       monkeypatch: pytest.MonkeyPatch) -> None:
+    source, _manifest, args = _run_fixture_environment(tmp_path, monkeypatch)
+    args.sscofpmf_case = "hardware-overflow"
+    fixture_rel, source_rel = runner.SSCOFPMF_FIXTURES[args.sscofpmf_case]
+    fixture = runner.ROOT / fixture_rel
+    fixture.parent.mkdir(parents=True)
+    fixture.write_text("00000013\n", encoding="ascii")
+    (runner.ROOT / source_rel).write_text("fixture source\n", encoding="utf-8")
+    (runner.ROOT / runner.SSCOFPMF_LINKER).write_text("fixture linker\n", encoding="utf-8")
+    args.topic = "sscofpmf"
+    calls = []
+    outputs = iter([
+        (0, b"[test_smoke] cy=5000 x10=7 x11=b commit=1\n[test_smoke] x12=4d x13=b\n[test_smoke] PASS\n", b"", ""),
+        (0, b"sscofpmf tohost=00000001 pass=1\nsscofpmf PASS\n", b"", ""),
+    ])
+
+    def execute(command, work, timeout):
+        calls.append(command)
+        return next(outputs)
+
+    monkeypatch.setattr(runner, "execute_test", execute)
+    record = runner.run(args)
+    assert calls[1][-1] == "test_arch_sscofpmf"
+    transformed = (args.archive_dir / record["id"] / "test_arch_common.veryl").read_text(encoding="utf-8")
+    assert f'HEX_FILE  : "{fixture_rel}"' in transformed
+    assert record["expected_marker"] == "sscofpmf PASS"
+    assert record["result"] == "run-pass"
+
+
+def test_heliodor_sscofpmf_mode_fixture_checks_s_and_u_filters() -> None:
+    source = (ROOT / runner.SSCOFPMF_FIXTURES["mode-filters"][1]).read_text(encoding="utf-8")
+    assert "SINH" in source and "UINH" in source
+    assert "slli    t1, t1, 61" in source and "slli    t1, t1, 60" in source
+    assert "li      t0, 0x800" in source and "mret" in source
+    assert "s_inhibit_ok" in source and "s_enabled_ok" in source
+    assert "u_inhibit_ok" in source and "u_enabled_ok" in source
+    assert "matrix_fail" in source and "failure bits" in source
+
+
+def test_heliodor_sscofpmf_mode_case_gets_longer_cycle_budget() -> None:
+    source = (ROOT / "sources/heliodor/tb/test_arch_common.veryl").read_text(encoding="utf-8")
+    transformed = runner.transform_arch_harness(
+        source, target="test_arch_sscofpmf", fixture="experiments/sscofpmf/heliodor-sscofpmf-mode-filters.hex",
+        label="sscofpmf", arch_cycles=1_000_000)
+    assert "clk.next  (1000000);" in transformed
+
+
 def test_sscofpmf_fixture_does_not_software_set_of_and_bounds_unsupported_filters() -> None:
     fixture = (ROOT / "sources/heliodor/test/sscofpmf/sscofpmf_test.S").read_text(encoding="utf-8")
     csr = (ROOT / "sources/heliodor/src/core/csr.veryl").read_text(encoding="utf-8")

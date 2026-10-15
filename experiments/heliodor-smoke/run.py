@@ -31,7 +31,14 @@ ARCH_FIXTURE = "test/riscv-arch-test/build/rv64ui/add.hex"
 SSTC_CASES = ("s-lt", "s-eq", "s-gt", "s-stce-off", "s-tm-off",
               "vs-lt", "vs-eq", "vs-gt", "vs-mstce-off", "vs-hstce-off",
               "vs-mtm-off", "vs-htm-off", "vs-route", "vs-hs-route")
-SSCOFPMF_FIXTURE = "test/sscofpmf/sscofpmf_test.hex"
+SSCOFPMF_CASES = ("hardware-overflow", "mode-filters")
+SSCOFPMF_FIXTURES = {
+    "hardware-overflow": ("experiments/sscofpmf/heliodor-sscofpmf-v4.hex",
+                           "experiments/sscofpmf/heliodor-sscofpmf-v4.S"),
+    "mode-filters": ("experiments/sscofpmf/heliodor-sscofpmf-mode-filters-matrix.hex",
+                     "experiments/sscofpmf/heliodor-sscofpmf-mode-filters-matrix.S"),
+}
+SSCOFPMF_LINKER = "experiments/sscofpmf/heliodor-sscofpmf.ld"
 SSNPM_CASES = ("pmlen0-canonical", "pmlen0-tagged", "pmlen7-canonical", "pmlen7-tagged", "pmlen7-bit56")
 SSNPM_LINKER = ROOT / "experiments/rva23s64-zifencei/fixture.ld"
 SSNPM_TOOL_HASHES = {
@@ -208,13 +215,41 @@ def expected_arch_marker(arch_label: str, *, zifencei_case: bool = False,
     return f"{arch_label} PASS" if zifencei_case or sscofpmf or ssnpm_case or arch_label == "supm" else "[test_smoke] PASS"
 
 
+def sscofpmf_observed_values(case: str, values: dict[str, int], passed: bool) -> dict | None:
+    if passed and case == "hardware-overflow":
+        return {"tohost": 1, "pass": True, "cause13_traps": 2,
+                "fixture_assertions": "MINH filtering, hardware counter wrap, cause 13, OF, scountovf[3], mip.LCOFIP, OF clear, pending withdrawal, and second hardware wrap/interrupt"}
+    if passed and case == "mode-filters":
+        return {"tohost": 1, "pass": True,
+                "fixture_assertions": "S/SINH and U/UINH inhibit and resume phases all passed"}
+    if case == "mode-filters" and values.get("arch_tohost", 0) > 0 and not values["arch_tohost"] & ~0x1e:
+        flags = values["arch_tohost"]
+        return {"filter_assertions": {
+                    "S/SINH=1 counter remained zero": not bool(flags & 2),
+                    "S/SINH=0 counter advanced": not bool(flags & 4),
+                    "U/UINH=1 counter remained zero": not bool(flags & 8),
+                    "U/UINH=0 counter advanced": not bool(flags & 16),
+                }, "failed_assertion_bits": f"0x{flags:02x}"}
+    if case == "mode-filters" and values.get("arch_tohost") == 21:
+        return {"partial_observations": {"S with SINH=1": "counter read was zero; fixture advanced past the inhibit assertion"},
+                "unverified": ["S with SINH=0", "U with UINH=1", "U with UINH=0"]}
+    if case == "mode-filters" and values.get("arch_tohost") == 54:
+        return {"partial_observations": {
+                    "S with SINH=1": "counter read was zero",
+                    "S with SINH=0": "counter read was nonzero",
+                    "U with UINH=1": "counter read was zero",
+                    "U with UINH=0": "counter read was zero; expected nonzero"
+                }, "mismatch": "U-mode counter did not advance after UINH was cleared"}
+    return None
+
+
 def transform_testbench(original: str) -> str:
     if original.count(IMEM_DECL) != 1:
         raise ValueError("pinned test_smoke imem declaration drifted; re-review workaround anchor")
     return original.replace(IMEM_DECL, "    #[allow(initial_assign)]\n" + IMEM_DECL, 1)
 
 
-def transform_arch_harness(original: str, *, target: str = "test_arch_rv64ui_add", fixture: str = ARCH_FIXTURE, label: str = "v4 rv64ui-add", mtime_enable: bool = False) -> str:
+def transform_arch_harness(original: str, *, target: str = "test_arch_rv64ui_add", fixture: str = ARCH_FIXTURE, label: str = "v4 rv64ui-add", mtime_enable: bool = False, arch_cycles: int = 200000) -> str:
     """Keep the ordinary harness and one RV64UI target; omit the debug harness and unrelated tests."""
     if original.count(ARCH_DEBUG_MARKER) != 1 or original.count(ARCH_DRAM_DECL) != 1:
         raise ValueError("pinned arch harness boundary/DRAM declaration drifted; re-review isolation workaround")
@@ -243,6 +278,11 @@ def transform_arch_harness(original: str, *, target: str = "test_arch_rv64ui_add
             raise ValueError(f"pinned {target} HEX_FILE anchor drifted; expected exactly one path")
         selected_target = re.sub(hex_path_pattern, f'HEX_FILE  : "{fixture}"', selected_target, count=1)
         selected_target = selected_target.replace("v4 rv64ui-add", label)
+    if arch_cycles != 200000:
+        selected_target, changed = re.subn(r"clk\.next\s*\(\s*200000\s*\);",
+                                           f"clk.next  ({arch_cycles});", selected_target)
+        if changed != 1:
+            raise ValueError(f"pinned {target} cycle-budget anchor drifted")
     if mtime_enable:
         normal_harness, changed = re.subn(
             r"o_tohost\s*:\s*output\s+logic<32>\s*,",
@@ -344,6 +384,9 @@ def run(args: argparse.Namespace) -> dict:
     zifencei_case = getattr(args, "zifencei_case", None)
     sstc_case = getattr(args, "sstc_case", None)
     sscofpmf = getattr(args, "topic", "smoke") == "sscofpmf"
+    sscofpmf_case = getattr(args, "sscofpmf_case", None) or "hardware-overflow"
+    sscofpmf_fixture, sscofpmf_source = SSCOFPMF_FIXTURES[sscofpmf_case]
+    arch_cycles = 1000000 if sscofpmf and sscofpmf_case == "mode-filters" else 200000
     ssnpm_case = getattr(args, "ssnpm_case", None)
     ssnpm = bool(ssnpm_case)
     arch_target = "test_arch_rv64ui_add"
@@ -358,7 +401,7 @@ def run(args: argparse.Namespace) -> dict:
         arch_target = "test_arch_rv64ui_sstc"
         arch_label = f"sstc {sstc_case}"
     elif sscofpmf:
-        fixture_rel = SSCOFPMF_FIXTURE
+        fixture_rel = sscofpmf_fixture
         arch_target = "test_arch_sscofpmf"
         arch_label = "sscofpmf"
     elif ssnpm:
@@ -384,8 +427,8 @@ def run(args: argparse.Namespace) -> dict:
     archive.mkdir(parents=True, exist_ok=True)
     out = bytearray(); err = bytearray(); exit_code = 1; cpu_started = False
     assertion_failed = False; expected_observed = False; first_stage = "locked-source-preflight"; blocker = ""
-    snapshot_sha = LOCKED_SHA; input_path = ((ROOT / "experiments/rva23s64-zifencei" / f"{zifencei_case}.hex") if zifencei_case else (ROOT / "experiments/sstc/heliodor" / f"{sstc_case}.hex") if sstc_case else (ROOT / fixture_rel) if ssnpm else SOURCE / fixture_rel)
-    archived_arch_fixture = archive / (f"zifencei-{zifencei_case}.hex" if zifencei_case else f"sstc-{sstc_case}.hex" if sstc_case else "sscofpmf.hex" if sscofpmf else f"ssnpm-{ssnpm_case}.hex" if ssnpm else "rv64ui-add.hex")
+    snapshot_sha = LOCKED_SHA; input_path = ((ROOT / "experiments/rva23s64-zifencei" / f"{zifencei_case}.hex") if zifencei_case else (ROOT / "experiments/sstc/heliodor" / f"{sstc_case}.hex") if sstc_case else (ROOT / fixture_rel) if ssnpm or sscofpmf else SOURCE / fixture_rel)
+    archived_arch_fixture = archive / (f"zifencei-{zifencei_case}.hex" if zifencei_case else f"sstc-{sstc_case}.hex" if sstc_case else f"sscofpmf-{sscofpmf_case}.hex" if sscofpmf else f"ssnpm-{ssnpm_case}.hex" if ssnpm else "rv64ui-add.hex")
     ssnpm_build_record: dict = {}
     # Snapshot the exact arch input before source preflight so even blocked runs
     # retain a stable, hash-verifiable input artifact.
@@ -435,7 +478,7 @@ def run(args: argparse.Namespace) -> dict:
         transformed = transform_testbench(original)
         (work / "tb/test_smoke.veryl").write_text(transformed, encoding="utf-8")
         arch_source = SOURCE / "tb/test_arch_common.veryl"
-        transformed_arch = transform_arch_harness(arch_source.read_text(encoding="utf-8"), target=arch_target, fixture=fixture_rel, label=arch_label, mtime_enable=bool(sstc_case))
+        transformed_arch = transform_arch_harness(arch_source.read_text(encoding="utf-8"), target=arch_target, fixture=fixture_rel, label=arch_label, mtime_enable=bool(sstc_case), arch_cycles=arch_cycles)
         (work / "tb/test_arch_common.veryl").write_text(transformed_arch, encoding="utf-8")
         shutil.copy2(smoke_input_path, work / "test/v4_smoke.hex")
         arch_fixture = work / fixture_rel
@@ -453,6 +496,9 @@ def run(args: argparse.Namespace) -> dict:
         shutil.copy2(work / "test/v4_smoke.hex", archive / "v4_smoke.hex")
         shutil.copy2(work / "tb/test_arch_common.veryl", archive / "test_arch_common.veryl")
         shutil.copy2(arch_fixture, archived_arch_fixture)
+        if sscofpmf:
+            shutil.copy2(ROOT / sscofpmf_source, archive / pathlib.Path(sscofpmf_source).name)
+            shutil.copy2(ROOT / SSCOFPMF_LINKER, archive / pathlib.Path(SSCOFPMF_LINKER).name)
         if ssnpm:
             shutil.copy2(ROOT / "experiments/ssnpm/build_heliodor_fixtures.py", archive / "build_heliodor_fixtures.py")
             shutil.copy2(input_path.with_suffix(".S"), archive / f"{ssnpm_case}.S")
@@ -552,13 +598,21 @@ def run(args: argparse.Namespace) -> dict:
             "fixture_build_commands": {"gcc": ssnpm_build_record.get("gcc_argv"), "objcopy": ssnpm_build_record.get("objcopy_argv")},
             "evidence_method": "U-mode fixture stores and reloads through canonical/tagged/boundary pointer; PMLEN0 tagged pass requires cause 5 at tagged_load with matching mtval"} if ssnpm else {}),
         **({"topic": "zifencei", "case": zifencei_case, "fence_i_encoding": {"standard": "0x0000100f", "funct12": "0x0010100f", "rs1": "0x0000900f", "rd": "0x0000108f"}[zifencei_case], "expected_values": {"before_fence_i": 1, "after_fence_i": 42}, "observed_values": {"before_fence_i": 1, "after_fence_i": 42, "evidence_method": "fixture equality checks for a0==1 before patch and a0==42 after FENCE.I; successful tohost/pass marker is reachable only after both checks"} if expected_observed else None, "reserved_field_trap": "no trap prevented the pass marker; trap-cause telemetry unavailable" if expected_observed else "startup/result not established or see run log; harness does not expose trap cause"} if zifencei_case else {}),
-        **({"topic": "sscofpmf", "case": "hardware-overflow-event5-counter3",
-            "expected_controls": {"event_selector": 5, "counter": 3, "counter_width": 64,
+        **({"topic": "sscofpmf", "case": sscofpmf_case,
+            "expected_controls": ({"event_selector": 5, "counter": 3, "counter_width": 64,
                                   "counter_preload": "0xffffffffffffffff", "privilege": "M",
-                                  "filter_phase": "MINH=1 then MINH=0", "expected_trap_cause": 13},
-            "observed_values": {"tohost": 1, "pass": True,
-                                "fixture_assertions": "counter stays zero under MINH, advances after clearing MINH, then hardware event wrap checks cause 13, OF, and scountovf[3]"} if expected_observed else None,
-            "evidence_method": "existing assembly fixture assertions; overflow phase uses hardware mem-port-busy events after counter preload, not software counter wrap"} if sscofpmf else {}),
+                                  "filter_phase": "MINH=1 then MINH=0", "expected_trap_cause": 13,
+                                  "pending": "mip.LCOFIP checked at each cause-13 handler; first pending is cleared separately before re-arm"} if sscofpmf_case == "hardware-overflow" else
+                                  {"event_selector": 5, "counter": 3, "counter_width": 64,
+                                   "privilege_modes": ["S", "U"], "filter_phases": ["SINH=1 then 0", "UINH=1 then 0"],
+                                   "expected_counter_behavior": "zero while inhibited, nonzero after filter clear"}),
+            "observed_values": sscofpmf_observed_values(sscofpmf_case, values, expected_observed),
+            "fixture_build": {"source": sscofpmf_source, "source_sha256": sha256(ROOT / sscofpmf_source),
+                              "linker": SSCOFPMF_LINKER, "linker_sha256": sha256(ROOT / SSCOFPMF_LINKER),
+                              "gcc": "riscv64-unknown-elf-gcc () 15.1.0; sha256 3b2b5d5ad7f9c7821c8ca1b11c6c512f30e3d63dcbdc726836c1c7bc0bceed32",
+                              "objcopy": "GNU objcopy 2.44; sha256 0ed4d26870589f4ba1e5678b62305d66c2df6ee8906da706c830a6f42950c858",
+                              "command": f"riscv64-unknown-elf-gcc -march=rv64imafdc_zicsr -mabi=lp64d -nostdlib -nostartfiles -ffreestanding -T {SSCOFPMF_LINKER} -Wl,--build-id=none -o {pathlib.Path(sscofpmf_source).with_suffix('.elf').name} {pathlib.Path(sscofpmf_source).name} && riscv64-unknown-elf-objcopy -O binary {pathlib.Path(sscofpmf_source).with_suffix('.elf').name} {pathlib.Path(sscofpmf_source).with_suffix('.bin').name} && python3 sources/heliodor/test/c/bin2hex.py {pathlib.Path(sscofpmf_source).with_suffix('.bin').name} {pathlib.Path(sscofpmf_fixture).name}"},
+            "evidence_method": ("Self-checking local assembly; event5 mem-port-busy increments cause hardware wraps; MIP.LCOFIP is read in each cause-13 handler" if sscofpmf_case == "hardware-overflow" else "Self-checking local assembly; event5 mem-port-busy counter reads assert SINH/UINH inhibition and resume in S/U mode")} if sscofpmf else {}),
         **({"topic": "sstc", "case": sstc_case,
             "expected_controls": {**SSTC_CONTROLS.get(sstc_case, {}), "mtime_enabled": True, "mtime_observation": "harness counter increments each cycle; CSR time is mtime_ctr >> 8"},
             "observed_values": sstc_observed,
@@ -567,10 +621,12 @@ def run(args: argparse.Namespace) -> dict:
         "input": str(archived_arch_fixture.relative_to(ROOT)) if archived_arch_fixture.is_file() else str(input_path.relative_to(ROOT)),
         "input_sha256": input_hash,
         "inputs": [{"path": "sources/heliodor/test/v4_smoke.hex", "sha256": smoke_input_hash},
-                   {"path": str(archived_arch_fixture.relative_to(ROOT)) if archived_arch_fixture.is_file() else str(input_path.relative_to(ROOT)), "sha256": input_hash}],
+                   {"path": str(archived_arch_fixture.relative_to(ROOT)) if archived_arch_fixture.is_file() else str(input_path.relative_to(ROOT)), "sha256": input_hash},
+                   *([{"path": sscofpmf_source, "sha256": sha256(ROOT / sscofpmf_source)},
+                      {"path": SSCOFPMF_LINKER, "sha256": sha256(ROOT / SSCOFPMF_LINKER)}] if sscofpmf else [])],
         "configuration": (f"Heliodor test_smoke plus isolated test_arch_rv64ui_ssnpm ({ssnpm_case}); one harness/DUT; U-mode senvcfg.PMM PMLEN/tagged-pointer probe." if ssnpm else
                           f"Heliodor test_smoke plus {arch_target}; one harness/DUT; 5000 smoke cycles and 300000 arch cycles; expected Zifencei old/new return 1/42 and tohost=1." if zifencei_case else
-                          f"Heliodor test_smoke plus {arch_target}; one harness/DUT; 5000 smoke cycles and 200000 Sscofpmf arch cycles; event5 mem-port-busy, counter3 64-bit preload all ones; expected tohost=1 after MINH filtering and hardware overflow/cause/OF/scountovf assertions." if sscofpmf else
+                          f"Heliodor test_smoke plus {arch_target}; one harness/DUT; 5000 smoke cycles and {arch_cycles} Sscofpmf arch cycles; event5 mem-port-busy, counter3; expected tohost=1 after {sscofpmf_case} assertions." if sscofpmf else
                           f"Heliodor test_smoke plus {arch_target}; one harness/DUT; 5000 smoke cycles and 300000 arch cycles; mtime counter increments each cycle and CSR time is mtime_ctr >> 8; controls={SSTC_CONTROLS.get(sstc_case, {})}; expected tohost=1." if sstc_case else
                           "Heliodor test_smoke plus test_arch_rv64ui_add; one harness/DUT; 5000 smoke cycles and 300000 arch cycles; expected x10=7, x11=11, x12=77, x13=11 and tohost=1."),
         "command": json.dumps(([ [sys.executable, str(ROOT / "experiments/ssnpm/build_heliodor_fixtures.py")] ] if ssnpm else []) + commands, ensure_ascii=False) if commands else "preflight not reached",
@@ -591,7 +647,8 @@ def run(args: argparse.Namespace) -> dict:
         "stderr_sha256": sha256(stderr_path),
         "artifacts": [str(p.relative_to(ROOT)) for p in
                       [archive / "run.py", archive / "test_smoke.veryl", archive / "v4_smoke.hex",
-                       archive / "build_heliodor_fixtures.py", archive / f"{ssnpm_case}.S"] if p.is_file()],
+                       archive / "build_heliodor_fixtures.py", archive / f"{ssnpm_case}.S",
+                       *( [archive / pathlib.Path(sscofpmf_source).name, archive / pathlib.Path(SSCOFPMF_LINKER).name] if sscofpmf else [])] if p.is_file()],
         "artifact_sha256": {}, "expected_marker": expected_arch_marker(
             arch_label, zifencei_case=bool(zifencei_case), sscofpmf=sscofpmf, ssnpm_case=ssnpm_case), "blocker": blocker,
         "log_path_warnings": log_persistence_errors,
@@ -661,6 +718,7 @@ def main() -> int:
     parser.add_argument("--case", choices=("standard", "funct12", "rs1", "rd"))
     parser.add_argument("--sstc-case", choices=SSTC_CASES)
     parser.add_argument("--ssnpm-case", choices=SSNPM_CASES)
+    parser.add_argument("--sscofpmf-case", choices=SSCOFPMF_CASES)
     args = parser.parse_args()
     if args.timeout <= 0 or not (args.timeout < float("inf")):
         parser.error("--timeout must be finite and positive")
@@ -668,6 +726,8 @@ def main() -> int:
         parser.error("--sstc-case requires --topic sstc")
     if args.ssnpm_case and args.topic != "ssnpm":
         parser.error("--ssnpm-case requires --topic ssnpm")
+    if args.sscofpmf_case and args.topic != "sscofpmf":
+        parser.error("--sscofpmf-case requires --topic sscofpmf")
     if args.topic == "zifencei":
         if args.case:
             args.zifencei_case = args.case

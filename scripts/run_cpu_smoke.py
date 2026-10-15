@@ -179,26 +179,32 @@ def validate_record(record: dict[str, Any], label: str) -> list[str]:
             errors.append(f"{label}: input file does not exist: {input_path}")
         elif _file_hash(path) != record["input_sha256"]:
             errors.append(f"{label}: input SHA-256 mismatch")
-    if not isinstance(record.get("result"), str) or record["result"] not in {"blocked", "run-fail", "run-pass"}:
-        errors.append(f"{label}: result must be blocked, run-fail, or run-pass")
+    if not isinstance(record.get("result"), str) or record["result"] not in {"blocked", "run-fail", "run-pass", "unverified"}:
+        errors.append(f"{label}: result must be blocked, run-fail, run-pass, or unverified")
     elif isinstance(record.get("exit_code"), int) and isinstance(record.get("cpu_started"), bool):
-        try:
-            derived = classify(
-                cpu_started=record["cpu_started"], exit_code=record["exit_code"],
-                assertion_failed=record["assertion_failed"],
-                expected_observed=record["expected_observed"],
-            )
-            if record["result"] != derived:
-                errors.append(f"{label}: result {record['result']} conflicts with derived {derived}")
-            if derived == "run-pass":
-                try:
-                    output_text = _repo_path(record["output"]).read_text(encoding="utf-8", errors="replace")
-                    if record["expected_marker"] not in output_text:
-                        errors.append(f"{label}: expected success marker is absent from output")
-                except (TypeError, OSError):
-                    pass
-        except ValidationError as exc:
-            errors.append(f"{label}: {exc}")
+        if record["result"] == "unverified":
+            if record["assertion_failed"] or record["expected_observed"]:
+                errors.append(f"{label}: unverified result cannot claim a failed assertion or expected observation")
+            if not isinstance(record.get("blocker"), str) or "unverified" not in record["blocker"].lower():
+                errors.append(f"{label}: unverified result requires an explicit unverified explanation")
+        else:
+            try:
+                derived = classify(
+                    cpu_started=record["cpu_started"], exit_code=record["exit_code"],
+                    assertion_failed=record["assertion_failed"],
+                    expected_observed=record["expected_observed"],
+                )
+                if record["result"] != derived:
+                    errors.append(f"{label}: result {record['result']} conflicts with derived {derived}")
+                if derived == "run-pass":
+                    try:
+                        output_text = _repo_path(record["output"]).read_text(encoding="utf-8", errors="replace")
+                        if record["expected_marker"] not in output_text:
+                            errors.append(f"{label}: expected success marker is absent from output")
+                    except (TypeError, OSError):
+                        pass
+            except ValidationError as exc:
+                errors.append(f"{label}: {exc}")
     if record.get("cpu_started") is False and record.get("result") == "run-fail":
         errors.append(f"{label}: CPU-start failure cannot be classified run-fail")
     if record.get("cpu_started") is False and record.get("expected_observed") is True:

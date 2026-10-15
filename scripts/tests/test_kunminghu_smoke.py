@@ -177,6 +177,15 @@ def test_sscofpmf_fixture_covers_all_five_filters_and_hardware_overflow():
     assert "clear_and_rearm:" in source
     assert "csrr    t0, mip" in source
     assert "csrw    mhpmcounter3, t0           /* next OF must come from a hardware event */" in source
+    assert "second_wrap_wait:" in source and "mret                                /* restore MIE so the second LCOFI is delivered */" in source
+    assert "each wrap must set LCOFIP" in source
+
+
+def test_sscofpmf_observed_claims_require_a_successful_fixture():
+    assert runner.sscofpmf_observed_values("hardware-filter", False) is None
+    assert runner.sscofpmf_observed_values("access-route", False) is None
+    assert "two cause-13 traps" in runner.sscofpmf_observed_values("hardware-filter", True)["fixture_assertions"]
+    assert "sie.LCOFIE" in runner.sscofpmf_observed_values("access-route", True)["delegation_probe"]
 
 
 def test_sscofpmf_access_route_fixture_checks_scounter_gates_and_delegation():
@@ -191,6 +200,7 @@ def test_sscofpmf_access_route_fixture_checks_scounter_gates_and_delegation():
     assert "csrr    t2, sip" in source
     assert "csrw    mcounteren, t0              /* keep scountovf[3] visible in S trap */" in source
     assert "csrs    sstatus, t0" in source
+    assert "csrr    t0, sie" in source and "delegated LCOFIE enable is visible in S" in source
     assert "0x800000000000000d" in source
 
 
@@ -222,6 +232,7 @@ def test_sscofpmf_fixtures_repeatable_without_official_evidence_writes():
             assert runs[0]["result"] == "run-pass"
             assert runs[0]["expected_observed"] is True
             assert runs[0]["case"] == expected_record_case
+        assert run_cpu_smoke.validate_manifest(manifest) == []
     finally:
         shutil.rmtree(temp_root, ignore_errors=True)
 
@@ -260,10 +271,12 @@ def test_sscofpmf_act4_sail_blockers_are_explicit():
 
 
 def test_sscofpmf_topic_is_available_and_misplaced_sstc_controls_are_rejected(monkeypatch):
-    monkeypatch.setattr(sys, "argv", [str(RUNNER_PATH), "--topic", "sscofpmf", "--sstc-case", "s-eq"])
-    with pytest.raises(SystemExit) as exc:
-        runner.main()
-    assert exc.value.code == 2
+    for argv in (("--topic", "sscofpmf", "--sstc-case", "s-eq"),
+                 ("--topic", "fixture", "--sscofpmf-case", "hardware-filter")):
+        monkeypatch.setattr(sys, "argv", [str(RUNNER_PATH), *argv])
+        with pytest.raises(SystemExit) as exc:
+            runner.main()
+        assert exc.value.code == 2
 
 
 def test_sstc_cli_requires_a_supported_case_and_topic(monkeypatch):
@@ -307,6 +320,8 @@ def _prepare_main(tmp_path, monkeypatch, *, post_run_errors=None, pre_append_err
     monkeypatch.setattr(runner, "ROOT", root)
     monkeypatch.setattr(runner, "SOURCE", source)
     monkeypatch.setattr(runner, "LINKER", linker)
+    monkeypatch.setattr(runner, "SSSTATEEN_SOURCE", source)
+    monkeypatch.setattr(runner, "SSSTATEEN_LINKER", linker)
     monkeypatch.setattr(runner, "CHECKOUT", checkout)
     monkeypatch.setattr(runner, "EMULATOR", emulator)
     monkeypatch.setattr(runner, "NEMU", nemu)
@@ -488,6 +503,93 @@ def test_non_finite_or_nonpositive_timeout_is_rejected(tmp_path, monkeypatch):
         runner.main()
     assert exc.value.code == 2
     assert not evidence.exists()
+
+
+def test_max_instr_is_positive_and_recorded_in_runner_command(tmp_path, monkeypatch, capsys):
+    _root, manifest_path, evidence = _prepare_main(tmp_path, monkeypatch)
+    monkeypatch.setattr(sys, "argv", [str(RUNNER_PATH), "--manifest", str(manifest_path),
+                                      "--evidence-dir", str(evidence), "--topic", "ssstateen",
+                                      "--ssstateen-case", "m-hs-gates-diff", "--max-instr", "25000"])
+    assert runner.main() == 0
+    record = json.loads(manifest_path.read_text(encoding="utf-8"))["snapshots"][0]["runs"][0]
+    assert "--max-instr=25000" in record["command"]
+
+    monkeypatch.setattr(sys, "argv", [str(RUNNER_PATH), "--manifest", str(manifest_path),
+                                      "--evidence-dir", str(evidence), "--topic", "ssstateen",
+                                      "--ssstateen-case", "m-hs-gates-diff", "--max-instr", "0"])
+    with pytest.raises(SystemExit) as exc:
+        runner.main()
+    assert exc.value.code == 2
+
+
+def test_ssstateen_cli_requires_matching_case_and_no_diff_mode(monkeypatch):
+    invalid_args = (
+        ("--topic", "ssstateen"),
+        ("--topic", "ssstateen", "--ssstateen-case", "m-hs-selfcheck"),
+        ("--topic", "fixture", "--ssstateen-case", "m-hs-gates-diff"),
+        ("--topic", "ssstateen", "--ssstateen-case", "m-hs-gates-diff", "--ssstateen-no-diff"),
+        ("--topic", "fixture", "--no-diff"),
+    )
+    for args in invalid_args:
+        monkeypatch.setattr(sys, "argv", [str(RUNNER_PATH), *args])
+        with pytest.raises(SystemExit) as exc:
+            runner.main()
+        assert exc.value.code == 2
+
+
+def test_ssstateen_topic_uses_fixed_fixture_and_classifies_run_failure(monkeypatch):
+    monkeypatch.setattr(sys, "argv", [str(RUNNER_PATH), "--topic", "ssstateen",
+                                      "--ssstateen-case", "m-hs-gates-diff"])
+    # main's topic configuration is applied after argument validation; assert the source contract
+    # directly and verify the shared classifier preserves CPU-started architectural failures.
+    assert runner.SSSTATEEN_SOURCE == ROOT / "experiments/ssstateen/kunminghu_probe_operation_ids.S"
+    assert runner.SSSTATEEN_LINKER == ROOT / "experiments/ssstateen/ssstateen_probe.ld"
+    result = runner.classify_output(
+        "The image is probe.bin\n" + runner.FIRST_COMMIT + "\nABORT at pc = 0x800002b8",
+        1, expected_start_pc=0x80000000, expected_image="probe.bin")
+    assert result["cpu_started"] is True
+    assert result["result"] == "run-fail"
+    assert result["assertion_failed"] is True
+    limited = runner.classify_ssstateen_no_diff("Core-0 instrCnt = 10,001\n", 0,
+                                                 runner.classify_output("", 0))
+    assert limited["cpu_started"] is True
+    assert limited["result"] == "unverified"
+    assert limited["assertion_failed"] is False
+
+
+def test_ssstateen_manifest_case_classification_is_explicit(tmp_path):
+    source = runner.SSSTATEEN_SOURCE.read_text(encoding="utf-8")
+    assert "mstateen" in source and "hs_blocked:" in source and "hs_enabled:" in source
+    assert "li      t6, 21" in source and "ecall" in source
+    # The manifest schema accepts topic/case extensions while still validating required evidence.
+    for name in ("transcript.log", "stdout.log", "stderr.log"):
+        (tmp_path / name).write_text("recorded evidence\n", encoding="utf-8")
+    evidence_hash = hashlib.sha256(b"recorded evidence\n").hexdigest()
+    record = {"id": "ssstateen-case", "snapshot_sha": "c" * 40,
+              "input_sha256": hashlib.sha256(runner.SSSTATEEN_SOURCE.read_bytes()).hexdigest(), "output_sha256": evidence_hash,
+              "stdout_sha256": evidence_hash, "stderr_sha256": evidence_hash,
+              "tools": {"emulator": "pinned"}, "configuration": "Kunminghu ssstateen",
+              "command": "runner --topic ssstateen", "working_directory": ".",
+              "input": "experiments/ssstateen/kunminghu_probe_operation_ids.S", "output": str(tmp_path / "transcript.log"),
+              "stdout": str(tmp_path / "stdout.log"), "stderr": str(tmp_path / "stderr.log"), "result": "run-fail",
+              "exit_code": 1, "cpu_started": True, "assertion_failed": True,
+              "expected_observed": False, "expected": "self-check result", "observed": "DUT mismatch",
+              "blocker": "NEMU differential mismatch", "expected_marker": runner.GOOD_TRAP,
+              "artifact_sha256": {}, "artifacts": []}
+    record.update(topic="ssstateen", case="m-hs-gates-diff", differential_enabled=True)
+    assert validate_record(record, "ssstateen-test") == []
+    record.update(result="unverified", assertion_failed=False, expected_observed=False,
+                  blocker="instruction cap without terminal marker; result is unverified")
+    assert validate_record(record, "ssstateen-unverified-test") == []
+
+
+def test_no_diff_skips_nemu_dependency_but_keeps_other_prerequisites(tmp_path):
+    emulator = tmp_path / "emu"
+    emulator.touch()
+    assert runner.missing_dependencies("gcc", "objcopy", emulator,
+                                       pathlib.Path("missing-nemu"), require_nemu=False) == []
+    assert runner.missing_dependencies("gcc", "objcopy", emulator,
+                                       pathlib.Path("missing-nemu")) == ["missing-nemu"]
 
 
 def test_evidence_directory_must_resolve_inside_project(tmp_path, monkeypatch):

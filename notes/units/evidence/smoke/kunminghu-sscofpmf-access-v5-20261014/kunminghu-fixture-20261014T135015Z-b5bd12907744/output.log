@@ -1,0 +1,16 @@
+Kunminghu fixture runner
+snapshot_sha=unknown
+configuration=KunminghuV2Config NUM_CORES=1
+working_directory=/nvme_data1/richard/learning_rv64_cpu
+linked_start=0x80000000
+expected_good_trap_pc=unknown
+
+first_failed_stage=locked source and manifest preflight
+exit_code=1
+cpu_started=false
+result=blocked
+blocker=locked source and manifest preflight: kunminghu-v2/kunminghu-fixture-20261014T134946Z-b5bd12907744: artifact SHA-256 mismatch: experiments/sscofpmf/kunminghu-sscofpmf-access-route-v5.S; kunminghu-v2/kunminghu-fixture-20261014T134946Z-b5bd12907744: input SHA-256 mismatch; post-run source/manifest integrity: kunminghu-v2/kunminghu-fixture-20261014T134946Z-b5bd12907744: artifact SHA-256 mismatch: experiments/sscofpmf/kunminghu-sscofpmf-access-route-v5.S; kunminghu-v2/kunminghu-fixture-20261014T134946Z-b5bd12907744: input SHA-256 mismatch
+
+--- stdout ---
+
+--- stderr ---

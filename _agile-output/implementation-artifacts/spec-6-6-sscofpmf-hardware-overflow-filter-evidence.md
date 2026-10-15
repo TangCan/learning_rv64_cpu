@@ -62,9 +62,9 @@ context:
 
 ## Implementation Notes
 
-- Kunminghu fixture `kunminghu-sscofpmf-complete-v4.S` 在锁定配置上通过硬件 event2/counter3 wrap；逐项断言五种 xINH 抑制/恢复、cause 13、OF/scountovf 置位与清除、独立 LCOFIP 清除及第二次硬件回绕投递。E9 的完整 record 在 toolchain manifest，完整输出另存 run log。
-- Heliodor 隔离 `test_arch_sscofpmf` 通过 event5/counter3 的 MINH 与首次硬件 wrap/cause13/OF/scountovf 案例；测试台变换只作用于隔离副本。未观察 OF 清除/re-arm、LCOFIP 独立清除、S/VS 可见性或 delegation。
-- 回归测试验证 CPU 未启动、启动后断言不匹配、fixture 未软件预置 OF、Heliodor VS/VU filter 未实现以及 ACT4/Sail 缺少 Sscofpmf 的边界。全量 `scripts/tests` 150 项通过；覆盖检查器为 valid，manifest validator 通过，`git diff --check` 通过。
+- Kunminghu fixture `kunminghu-sscofpmf-complete-v5.S` 在锁定配置上通过硬件 event2/counter3 wrap；逐项断言五种 xINH 抑制/恢复、cause 13、OF/scountovf 置位与清除、独立 LCOFIP 清除及第二次硬件回绕投递。E9 的完整 record 在 toolchain manifest，完整输出另存 run log。
+- Heliodor 原始隔离 `test_arch_sscofpmf`（E8）通过 event5/counter3 的 MINH 与首次硬件 wrap/cause13/OF/scountovf 案例；测试台变换只作用于隔离副本。扩展 v2–v4 尝试单独观察 MIP.LCOFIP、OF 清除/re-arm；最新 v4 CPU-started `run-fail`，cause 13 已进入但 OF 断言失败，记录为 E12，不覆盖 E8 的历史 pass。最新 S/U 矩阵 E14 对 event5/counter3 分别运行 S/SINH 与 U/UINH 的置位及清除阶段：两个置位阶段 counter 均为 0，清除阶段仍为 0，两个清除断言失败；这只表明该配置下结果不符合 fixture 预期，不外推至其他事件源。Heliodor 的 S/VS `scountovf` 可见性和 delegation 仍无动态证据。
+- 回归测试验证 CPU 未启动、启动后断言不匹配、fixture 未软件预置 OF、Heliodor VS/VU filter 未实现以及 ACT4/Sail 缺少 Sscofpmf 的边界。全量 `scripts/tests` 178 项通过、1 项 opt-in Kunminghu integration skipped；覆盖检查器为 valid，manifest validator 通过，`git diff --check` 通过。
 - 所有有限运行结果仅描述所记录快照、配置、事件和访问路径。Kunminghu 已覆盖 counter3 的 S/VS `scountovf` gate 与 S-mode delegation；Heliodor 的对应权限矩阵和 delegation、同拍 clear/overflow 优先级及 ACT4/Sail 专题运行仍未覆盖；不构成 RVA23 符合性或认证结论。
 
 ### E9/E10 evidence matrices and reproduction notes
@@ -73,10 +73,13 @@ context:
 - **E9 Kunminghu xINH matrix:** event2/`ifu_req`, counter3, 64-bit all-ones preload. M `MINH=1` expects no increments and `MINH=0` expects increments; S/SINH, U/UINH, VS/VSINH, VU/VUINH each expect no increments with the bit set and increments after clearing it. Assembly reads counter values and branches on each result; reaching good-trap means all assertions passed. The run does not print each raw CSR value. The unit's E9 matrix links the immutable input, log, and manifest record.
 - **E10 Kunminghu access/delegation matrix:** with OF set by hardware, M expects `scountovf[3]=1`; S expects 0/1 with `mcounteren[3]` off/on; VS expects 0 when either `hcounteren[3]` or `mcounteren[3]` is off and 1 when both are on. Then `mideleg[13]`, delegated LCOFIE and SIE are enabled; the S handler asserts interrupt cause 13, `scountovf[3]=1`, and `sip.LCOFIP=1`. These are fixture branch assertions, not per-case raw CSR values printed in the log. The unit links the immutable input, log, and manifest record.
 - E8's complete `run-metadata.json`, archive directory, and output log are linked from the unit evidence table. Heliodor's VS/VU static filter gap is at `sources/heliodor/src/core/csr.veryl:1213–1222` (E3); E7 directly links the ACT4 DUT and Sail config files. Manifest validation ran as `python3 scripts/run_cpu_smoke.py validate --manifest notes/units/evidence/cpu-validation-toolchain-v1.yaml` with Python 3.12.3.
-- Kunminghu exploratory access-route runs `101412`, `101612`, `101753`, and `101845` ended in CPU run-fail while diagnosing trap enable and fixture ordering. Their separate fixture inputs/logs remain because manifest records bind their SHA-256 hashes. They are diagnostic history, not acceptance evidence; only E10 `101934` is the passing access-route case. E9 `complete-v4.S` is the accepted five-filter case; earlier variants remain immutable where recorded.
+- Kunminghu exploratory access-route runs `101412`, `101612`, `101753`, and `101845` ended in CPU run-fail while diagnosing trap enable and fixture ordering. Their separate fixture inputs/logs remain because manifest records bind their SHA-256 hashes. They are diagnostic history, not acceptance evidence; E10 `101934` and E11 `135231` pass the access-route assertions, including S-visible `sie.LCOFIE`. E9 `complete-v5.S` is the accepted five-filter case; the v5 access-route first compile attempt remains bound to its archived original input, while the corrected v6 fixture passes as E11 and checks S-visible `sie.LCOFIE`. Earlier variants remain immutable where recorded.
+- Latest manual reruns: Kunminghu access-route v6 ID `kunminghu-fixture-20261014T135231Z-a88d5b9d673c` is `run-pass`; Heliodor extended v4 ID `heliodor-core-20261014T135548Z-3090096` is `run-fail` at OF readback after cause-13 entry; E13 is an incomplete diagnostic run, superseded for S/U acceptance evidence by E14 ID `heliodor-core-20261014T142410Z-3235815`, a CPU-started `run-fail` with both S/U clear-phase assertions failing (`tohost=0x14`). Its matrix fixture, manifest record and output log are archived. Manifest validation succeeds after restoring the v5 failed-build source hash and pinning the corrected fixture at v6.
 - `RUN_KUNMINGHU_SSCOFPMF_REGRESSION=1 uv run --no-cache pytest -q scripts/tests/test_kunminghu_smoke.py -k fixtures_repeatable` runs both `hardware-filter` and `access-route` with a temporary manifest and separate evidence directories under the repository, then removes them. It does not write to the official manifest or evidence directory.
 
 ## Spec Change Log
+
+- 2026-10-14：Story 由 `review` 收尾为 `done`。Kunminghu access-route v6 通过并增加 `sie.LCOFIE` 读回断言；Heliodor E12/E14 的 CPU-started 断言失败作为有界行为观察保留，原始 E8 pass 不被覆盖。E14 补齐 S/U inhibit-on/off 动态观察；结项不要求 DUT 通过每个架构预期，但要求失败、未覆盖和工具边界均可追溯，且不外推为符合性结论。
 
 ## Review Triage Log
 
@@ -94,6 +97,8 @@ context:
 | BH10: fixture variants and diagnostic runs lack a retention explanation | **low** — added run IDs, failure purpose, and explanation that fixture input/log hashes are manifest-bound; only E9/E10 passing cases count as acceptance evidence. | patch |
 | Edge1: SSCOFPMF expected marker uses generic smoke marker | **low** — current runner record builder used `[test_smoke] PASS` although the arch target emits `sscofpmf PASS`; fixed selection and added a unit test. | patch |
 | Verification1: no repeatable Kunminghu CPU fixture regression check | **medium** — source-only tests did not prove either selected case still runs. Added opt-in test that runs both `hardware-filter` and `access-route`, checks each manifest result/case, and cleans its temporary manifest/evidence tree. | patch |
+| Acceptance: Heliodor LCOFIP was not independently read and clear/re-arm had no evidence | **bounded run-fail recorded** — local v2–v4 fixtures added MIP checks and a second-wrap path; v4 started the CPU but failed its OF assertion (E12). The evidence task is closed as a documented outcome; this does not claim the extension passed. | done with explicit behavior boundary |
+| Acceptance: Heliodor S/U filter paths lacked dynamic evidence | **bounded run-fail recorded** — E14 runs both S/SINH and U/UINH inhibit-on and inhibit-off phases. Both inhibit-on checks observed counter=0; both inhibit-off checks also observed counter=0 and are encoded as failed assertion bits (`tohost=0x14`). E13 remains diagnostic history only. The evidence is limited to event5/counter3 and does not establish behavior for other events. | done with explicit behavior boundary |
 
 ## Verification
 
@@ -101,8 +106,9 @@ context:
 - `python3 experiments/kunminghu-smoke/run.py --help` 与 `python3 experiments/heliodor-smoke/run.py --help` -- 新增参数可发现，原参数兼容。
 - `python3 scripts/check_rva23_coverage.py` -- 覆盖状态、链接和派生计数一致。
 - `uv run --no-cache pytest -q scripts/tests` -- 相关项目脚本测试通过。
-- `PATH="/nvme_data1/richard/.local/share/veryl/toolchains/latest:$PATH" uv run --no-cache pytest -q scripts/tests/test_heliodor_smoke.py scripts/tests/test_kunminghu_smoke.py` -- 81 passed, 1 skipped (opt-in Kunminghu CPU integration check).
-- `RUN_KUNMINGHU_SSCOFPMF_REGRESSION=1 uv run --no-cache pytest -q scripts/tests/test_kunminghu_smoke.py -k fixtures_repeatable` -- 1 passed, 49 deselected; both fixture cases recorded run-pass in a temporary manifest, then the temporary evidence tree was removed.
+- `PATH="/nvme_data1/richard/.local/share/veryl/toolchains/latest:$PATH" uv run --no-cache pytest -q scripts/tests` -- current result 178 passed, 1 skipped (opt-in Kunminghu CPU integration check).
+- Latest manual reruns: Kunminghu access-route v6 ID `kunminghu-fixture-20261014T135231Z-a88d5b9d673c` is `run-pass`; Heliodor extended v4 ID `heliodor-core-20261014T135548Z-3090096` is `run-fail` at OF readback after cause-13 entry; Heliodor S/U matrix E14 ID `heliodor-core-20261014T142410Z-3235815` is CPU-started `run-fail`, `tohost=0x14`, with both clear-phase counter assertions failing. E13 is retained as incomplete diagnostic history. Manifest validation succeeds after restoring the v5 failed-build source hash and pinning the corrected fixture at v6.
+- `RUN_KUNMINGHU_SSCOFPMF_REGRESSION=1 PATH=/nvme_data1/richard/.local/share/veryl/toolchains/latest:$PATH uv run --no-cache pytest -q scripts/tests/test_kunminghu_smoke.py -k fixtures_repeatable` -- 1 passed, 56 deselected; both fixture cases recorded run-pass in a temporary manifest, whose evidence hashes validated, then the temporary evidence tree was removed.
 - `python3 scripts/run_cpu_smoke.py validate --manifest notes/units/evidence/cpu-validation-toolchain-v1.yaml` -- valid, Python 3.12.3.
 - `python3 scripts/check_doc_links.py` -- 38 documents valid.
 - `python3 scripts/check_rva23_coverage.py` -- valid: 92 profile rows, 184 status cells.

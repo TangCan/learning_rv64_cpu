@@ -1,0 +1,88 @@
+{
+  "id": "kunminghu-fixture-20261014T120904Z-120ea6a650ed",
+  "snapshot_sha": "unknown",
+  "input": "notes/units/evidence/smoke/kunminghu-ssstateen-runner-20261014/kunminghu-fixture-20261014T120904Z-120ea6a650ed/input.S",
+  "input_sha256": "unavailable",
+  "linker_script": "experiments/ssstateen/ssstateen_probe.ld",
+  "linker_script_sha256": "unavailable",
+  "configuration": "KunminghuV2Config; NUM_CORES=1; RV64IMA_Zicsr Ssstateen M/HS probe; NEMU difftest.",
+  "topic": "ssstateen",
+  "case": "m-hs-gates-diff",
+  "differential_enabled": true,
+  "expected_controls": {
+    "CSR": [
+      "sstateen0-3",
+      "hstateen0-3"
+    ],
+    "mode": "M then HS",
+    "gate_clear": "M SE0/SE and ENVCFG clear; expect illegal-instruction traps",
+    "reset": "capture reset-visible values without assuming unspecified values",
+    "selfcheck": "M reset-zero checks, RO-zero assertions, 20 gate traps with IDs and final ecall; completion only on GOODTRAP"
+  },
+  "observed_values": {
+    "first_commit_observed": false,
+    "terminal_marker": "none",
+    "difftest_enabled": true,
+    "matrix_status": "see captured trap/readback trace; incomplete unless GOODTRAP observed"
+  },
+  "evidence_method": "Kunminghu smoke runner preflight, fixed fixture build, linker-map inspection, emulator classification, and manifest append; fixture reports CSR operation trap IDs in its memory trace",
+  "command": "preflight only; no build or simulator command executed",
+  "working_directory": ".",
+  "tools": {
+    "cross_gcc": "riscv64-unknown-elf-gcc () 15.1.0",
+    "cross_objcopy": "GNU objcopy (GNU Binutils) 2.44",
+    "emulator": "emu compiled at Oct 14 2026, 10:53:44; binary sha256 21f0700203205870403df50eadf2afd182e33573afdeee9a264a49b328f9e897",
+    "nemu": "locked ready-to-run reference library; binary sha256 3e9d63c31d2cd68ec68d55fa9df56ec990ce9a9fd3a8e59709ecb92f21176c40",
+    "mill": "0.12.3; java -cp /tmp/mill-dist-0.12.3-assembly.jar mill.runner.MillMain (jar sha256 336346091edc69b248c306ca51aaccb73d888d8bf525ce45e02df89db449b41d)",
+    "java": "OpenJDK 17.0.20.1 (Ubuntu; /usr/lib/jvm/java-17-openjdk-amd64)",
+    "verilator": "5.050 2026-07-01; upstream tag v5.050, commit 0a24d49771fa57c36ff667272bf7b5c6705e4df0; binary sha256 fb2cc573b1055cf096c90e1efc9966fe56bdb4b265c83590cf2a49f7a0defcdf",
+    "cxx": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0; gcc same version",
+    "mill_launcher_sha256": "7f086728571afda31d433f7875a2df610f3c9f8e9c76e5bd13f97c3e564c53a4",
+    "verilator_build_cxx": "Ubuntu 22.04 GCC/G++ 11.4.0 in image sha256:829f6df217bcbae2b371026e81711d1a787c61b2967ad09d015063663ebafbf7"
+  },
+  "exit_code": 1,
+  "cpu_started": false,
+  "result": "blocked",
+  "output": "notes/units/evidence/smoke/kunminghu-ssstateen-runner-20261014/kunminghu-fixture-20261014T120904Z-120ea6a650ed/output.log",
+  "output_sha256": "c9322f60d57ff84656762a230f12e683eb94d7abdefb0fe1b2239dba8cb0afa4",
+  "stdout": "notes/units/evidence/smoke/kunminghu-ssstateen-runner-20261014/kunminghu-fixture-20261014T120904Z-120ea6a650ed/stdout.log",
+  "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderr": "notes/units/evidence/smoke/kunminghu-ssstateen-runner-20261014/kunminghu-fixture-20261014T120904Z-120ea6a650ed/stderr.log",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "artifacts": [
+    "notes/units/evidence/smoke/kunminghu-ssstateen-runner-20261014/kunminghu-fixture-20261014T120904Z-120ea6a650ed/input.S",
+    "experiments/ssstateen/ssstateen_probe.ld"
+  ],
+  "expected_artifacts": [
+    "notes/units/evidence/smoke/kunminghu-ssstateen-runner-20261014/kunminghu-fixture-20261014T120904Z-120ea6a650ed/input.S",
+    "experiments/ssstateen/ssstateen_probe.ld",
+    "notes/units/evidence/smoke/kunminghu-ssstateen-runner-20261014/kunminghu-fixture-20261014T120904Z-120ea6a650ed/fixture.elf",
+    "notes/units/evidence/smoke/kunminghu-ssstateen-runner-20261014/kunminghu-fixture-20261014T120904Z-120ea6a650ed/fixture.map",
+    "notes/units/evidence/smoke/kunminghu-ssstateen-runner-20261014/kunminghu-fixture-20261014T120904Z-120ea6a650ed/fixture.bin"
+  ],
+  "missing_artifacts": [
+    "notes/units/evidence/smoke/kunminghu-ssstateen-runner-20261014/kunminghu-fixture-20261014T120904Z-120ea6a650ed/fixture.elf",
+    "notes/units/evidence/smoke/kunminghu-ssstateen-runner-20261014/kunminghu-fixture-20261014T120904Z-120ea6a650ed/fixture.map",
+    "notes/units/evidence/smoke/kunminghu-ssstateen-runner-20261014/kunminghu-fixture-20261014T120904Z-120ea6a650ed/fixture.bin"
+  ],
+  "artifact_sha256": {
+    "notes/units/evidence/smoke/kunminghu-ssstateen-runner-20261014/kunminghu-fixture-20261014T120904Z-120ea6a650ed/input.S": "807b6cecfc658b83dabcdff92e12943e9065024d721f84dfbcf82d666ce59fc0",
+    "experiments/ssstateen/ssstateen_probe.ld": "dc959e6ad562d5b0782261f21d5d982080943f72cae1058c510c70acb1a95f87"
+  },
+  "assertion_failed": false,
+  "expected_observed": false,
+  "expected": "Ssstateen fixture built by the locked Kunminghu runner; first instruction commits; self-check GOODTRAP required for pass.",
+  "observed": "image load not observed; first instruction commit not observed",
+  "expected_good_trap_pc": "unknown",
+  "blocker": "locked source and manifest preflight: kunminghu-v2/ssstateen-kunminghu-run-20261014: artifact SHA-256 mismatch: experiments/ssstateen/kunminghu_probe.S; post-run source/manifest integrity: kunminghu-v2/ssstateen-kunminghu-run-20261014: artifact SHA-256 mismatch: experiments/ssstateen/kunminghu_probe.S",
+  "expected_marker": "HIT GOOD TRAP",
+  "resources": {
+    "disk_free_bytes": 914990022656,
+    "memory_available_bytes": 154591555584,
+    "logical_cpu_count": 64,
+    "build_command_timeout_seconds": 120,
+    "emulator_timeout_seconds": 120.0
+  },
+  "next_environment_change": "Restore the manifest and locked source/gitlinks to a valid, clean state, then rerun preflight.",
+  "first_failed_stage": "locked source and manifest preflight"
+}

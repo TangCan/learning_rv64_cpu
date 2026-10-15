@@ -1,0 +1,14 @@
+[compile and link]
+[raw image generation]
+[emulator CPU run]
+emu compiled at Oct 14 2026, 10:53:44
+[INFO] init for constantin: loaded from init.
+Using simulated 1048576B flash
+Core  0's Commit SHA is: c098f996bf, dirty: 0
+Using simulated 8386560MB RAM
+The image is /nvme_data1/richard/learning_rv64_cpu/notes/units/evidence/smoke/kunminghu-ssstateen-no-diff-30000-20261014/kunminghu-fixture-20261014T123559Z-0e54369fa670/fixture.bin
+Core 0: [33mEXCEEDING CYCLE/INSTR LIMIT at pc = 0x8000158e
+[0m[35mCore-0 instrCnt = 29,242, cycleCnt = 100,000, IPC = 0.292420
+[0m[34mSeed=0 Guest cycle spent: 100,006 (this will be different from cycleCnt if emu loads a snapshot)
+[0m[34mHost time spent: 78,847ms
+[0m

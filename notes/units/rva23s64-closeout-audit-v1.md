@@ -53,6 +53,20 @@ Epic 4 目录当前为 U64 34 行、S64 58 行，共 92 profile 行、184 个实
 | 5.5：PMLEN=0/7、enabled/disabled、tag transform、U 与 VS/VU，以及 load/store、atomic、FP、compressed、cache、vector、hypervisor 显式访问族 | 有限 RTL/地址路径静态检查；案例与地址族未运行。 | 现有 M-mode Supm 与 Ssnpm 不同；`test_arch_supm` 在 testbench check 退出 1，未运行 CPU。 | 所有 S/U/guest 变换观察、vector、CMO、地址边界保持未验证。Profile PDF 的 PME 与架构规范/RTL 的 PMM 原样保留；根据固定 profile 源和 PMM 定义记录为同一控制要求的拼写差异。见 [5.5 E1–E6](rva23s64-ssnpm-v1.md#证据表)。 |
 | 5.6：`sstateen0–3`/`hstateen0–3` reset/readback/WARL，M/H/S/VS/VU 允许与阻断访问 | 构建在缺少 `mill` 处退出，未启动 CPU。 | 原仓库无专用 test target；共享 harness check 被 `$readmemh` 阻断。隔离 M/HS harness 实际运行：八个 stateen 写全 1 后读回全零；关闭 gate 时没有预期 20 个 CSR trap；只观察到 HS `ecall` cause 9；tohost `0x02`，预期 `0x2B`，因此 `run-fail`。 | 这是固定 Heliodor 路径的 M/HS 功能失败证据；不扩展到 VS/VU、逐字段 WARL 或其他集成。Kunminghu 实际行为和两边 U/VU protected-state 访问未测；见 [5.6 E7–E9](rva23s64-ssstateen-v1.md#evidence-table)。 |
 
+## Epic 6 与项目整体结项（2026-10-15）
+
+Epic 5 retrospective 完成后，项目又执行 Epic 6 的八个故事，补充五专题的双核运行入口和受控 CPU 案例。Epic 6 的正式回顾为 **accepted-with-open-items（criteria: profiled）**；8 个故事均为 `done`，其证据和后续行动见 [Epic 6 retrospective](../../_agile-output/implementation-artifacts/epic-6-retro-2026-10-15.md)。
+
+Epic 6 确实产出了 CPU 行为结果，但结果不能概括为五个主题全部通过：Zifencei 的代表性案例、Sstc 部分 S/VS 比较、Sscofpmf 部分 overflow/filter、Ssnpm 部分访问输入以及 Kunminghu Ssstateen 适用路径有运行通过记录；Heliodor Sstc gate、Sscofpmf 部分过滤和 Ssstateen gate 有运行失败；Ssnpm 的 tagged DRAM alias 和未覆盖访问族仍有限制。完整逐项状态以 [Epic 6 单元记录](rva23s64-ssstateen-v1.md)及其他专题单元、CPU manifest 为准。此前 Epic 5 只有一个 Heliodor Ssstateen M/HS `run-fail`，Epic 6 新增了更多动态观察；历史 Epic 5 的结果表不被追溯改写。
+
+### 项目级结论
+
+**可以结束本轮“RV64 CPU 学习项目”交付。** 六个 Epic、33 个 Story 均为 `done`；Epic 5 与 Epic 6 retrospective 均已完成；PRD 中本轮学习范围已通过固定源码路径、需求映射、双核比较、运行/静态证据与限制说明形成可追溯交付。此结论仅针对规划的学习目标和代表性案例。
+
+**不能据此宣布两个 CPU 完成 RVA23 全量验证或符合性认证。** Epic 6 明确留下 CPU 行为未验证、运行失败、运行器分类/集成测试改进以及归档维护行动。行动项是后续质量改进，不阻止本次学习项目结项；若要继续实现验证，应另行启动明确的验证项目。
+
+交付状态仍有仓库发布方面的工作：当前本地分支领先 `origin/master` 25 个提交，Epic 6 Story 6.8 完成物及回顾/审计更新还在工作树。应在提交这些文档、状态与必要证据后再推送，远端空仓库尚未收到最终结项记录。本轮仅完成本地审计和回顾，没有创建提交或推送。
+
 ## 检查器与 sprint 记录
 
 以下命令均在项目根目录执行。Checker 报告目录状态，不判断 CPU 行为。

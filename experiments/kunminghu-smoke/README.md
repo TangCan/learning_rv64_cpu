@@ -34,3 +34,7 @@ check `manifest_persisted`, `manifest_durable`, and any associated error field
 before treating the result as fully recorded. The regression suite also requires the locked
 toolchain, emulator and NEMU library so its arithmetic test cannot silently skip;
 provision them using Story 6.1 before running `pytest`.
+
+`--max-instr` sets a positive simulator instruction limit (default `10000`).
+The runner records the selected value in the manifest command. A larger limit
+does not make a run pass without the fixture's terminal marker and assertions.

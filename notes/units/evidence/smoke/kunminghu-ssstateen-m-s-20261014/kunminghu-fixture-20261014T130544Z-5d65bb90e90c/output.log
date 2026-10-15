@@ -1,0 +1,22 @@
+Kunminghu fixture runner
+snapshot_sha=c098f996bf4d301b88693b20315486d31e93bc9d
+configuration=KunminghuV2Config NUM_CORES=1
+working_directory=/nvme_data1/richard/learning_rv64_cpu
+linked_start=0x80000000
+expected_good_trap_pc=unknown
+$ /home/richard/richard_opt/riscv/bin/riscv64-unknown-elf-gcc -march=rv64ima_zicsr -mabi=lp64 -nostdlib -nostartfiles -Wl,--build-id=none -Wl,-T,/nvme_data1/richard/learning_rv64_cpu/experiments/ssstateen/ssstateen_probe.ld -Wl,-Map,/nvme_data1/richard/learning_rv64_cpu/notes/units/evidence/smoke/kunminghu-ssstateen-m-s-20261014/kunminghu-fixture-20261014T130544Z-5d65bb90e90c/fixture.map -o /nvme_data1/richard/learning_rv64_cpu/notes/units/evidence/smoke/kunminghu-ssstateen-m-s-20261014/kunminghu-fixture-20261014T130544Z-5d65bb90e90c/fixture.elf /nvme_data1/richard/learning_rv64_cpu/experiments/ssstateen/kunminghu_probe_m_s.S
+$ /home/richard/richard_opt/riscv/bin/riscv64-unknown-elf-objcopy -O binary /nvme_data1/richard/learning_rv64_cpu/notes/units/evidence/smoke/kunminghu-ssstateen-m-s-20261014/kunminghu-fixture-20261014T130544Z-5d65bb90e90c/fixture.elf /nvme_data1/richard/learning_rv64_cpu/notes/units/evidence/smoke/kunminghu-ssstateen-m-s-20261014/kunminghu-fixture-20261014T130544Z-5d65bb90e90c/fixture.bin
+first_failed_stage=link map inspection
+exit_code=1
+cpu_started=false
+result=blocked
+blocker=link map inspection: _start must map to 0x80000000 and good_trap must be present
+
+--- stdout ---
+[compile and link]
+[raw image generation]
+
+--- stderr ---
+[compile and link]
+/nvme_data2/richard/riscv/bin/../lib/gcc/riscv64-unknown-elf/15.1.0/../../../../riscv64-unknown-elf/bin/ld: warning: /nvme_data1/richard/learning_rv64_cpu/notes/units/evidence/smoke/kunminghu-ssstateen-m-s-20261014/kunminghu-fixture-20261014T130544Z-5d65bb90e90c/fixture.elf has a LOAD segment with RWX permissions
+[raw image generation]

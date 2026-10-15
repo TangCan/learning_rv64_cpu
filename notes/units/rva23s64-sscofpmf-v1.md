@@ -59,8 +59,8 @@ Kunminghu `src/test/` 有界搜索和 readiness 记录未找到该专题的定�
 | 字段 | 规范含义 | Kunminghu 静态路径 | Heliodor 静态路径 | 本故事动态覆盖 |
 |---|---|---|---|---|
 | `MINH` | 抑制 M | `countingEn` 显式检查 | M 逻辑检查该位 | Kunminghu 验证过滤/解除过滤；Heliodor 验证 M-mode 过滤 |
-| `SINH` | 抑制 HS/S | `countingEn` 显式检查 | S 逻辑检查该位 | Kunminghu 验证过滤/解除过滤；Heliodor 未运行 |
-| `UINH` | 抑制 HU/U | `countingEn` 显式检查 | U 逻辑检查该位 | Kunminghu 验证过滤/解除过滤；Heliodor 未运行 |
+| `SINH` | 抑制 HS/S | `countingEn` 显式检查 | S 逻辑检查该位 | Kunminghu 验证过滤/解除过滤；Heliodor event5/counter3 用例中 SINH=1 时计数为 0，清除 SINH 后仍为 0（E14），清除路径断言失败 |
+| `UINH` | 抑制 HU/U | `countingEn` 显式检查 | U 逻辑检查该位 | Kunminghu 验证过滤/解除过滤；Heliodor event5/counter3 用例中 UINH=1 时计数为 0，清除 UINH 后仍为 0（E14），清除路径断言失败 |
 | `VSINH` | 抑制 VS | `countingEn` 显式检查 | 注释称 unused，未见逻辑使用 | Kunminghu 验证过滤/解除过滤；Heliodor 静态缺口 |
 | `VUINH` | 抑制 VU | `countingEn` 显式检查 | 注释称 unused，未见逻辑使用 | Kunminghu 验证过滤/解除过滤；Heliodor 静态缺口 |
 
@@ -70,7 +70,7 @@ Kunminghu `src/test/` 有界搜索和 readiness 记录未找到该专题的定�
 
 | 核 | 固定快照 | 用例/配置 | 结果 | 已观察边界 |
 |---|---|---|---|---|
-| Heliodor | `94e9c5821c24a8941c3ddc3b76daddc7124a855a` | `test_arch_sscofpmf`，单 DUT；counter3/event5；64-bit 全 1 预载；M-mode；MINH 置位/清除各 64 次 load；200000 arch clocks | `run-pass`，CPU started，exit 0，tohost=1/pass=1 | fixture 断言 MINH 阶段 counter=0、清除后 counter 非零、硬件 event wrap 后 M cause 13、OF=1、scountovf[3]=1。未单独读取 LCOFIP，也未测 OF 清除/re-arm、S/VS 门控、委托或其余过滤模式。隔离 harness 只对副本的 dram 声明加 Veryl `initial_assign` 局部 allow，并排除未实例化 debug harness；原始 fixture 与源哈希归档。见 E8。 |
+| Heliodor | `94e9c5821c24a8941c3ddc3b76daddc7124a855a` | 原始 `test_arch_sscofpmf` 通过 E8；本地扩展 fixture 另测 MIP.LCOFIP、OF 清除和二次 wrap | E8 `run-pass`；扩展 v4 `run-fail`，CPU started，tohost=34 | E8 只证明 MINH 与首次硬件 wrap/cause/OF/scountovf 的既有断言。v4 follow-up 到达 cause 13 handler，但 OF 读值断言失败；不能将扩展清除/re-arm 路径算作通过。见 E12。 |
 | Kunminghu V2 | `c098f996bf4d301b88693b20315486d31e93bc9d` | 单核 `KunminghuV2Config`；counter3/event2 (`ifu_req`)；64-bit 全 1 预载；逐项测试五个 xINH；100000 cycle/10000 instruction 上限 | `run-pass`，CPU started，exit 0，good trap | 五种模式均检查抑制时无计数、解除后硬件事件计数；另检查硬件 wrap、cause 13、OF/scountovf set/clear、单独清 LCOFIP、第二次硬件 wrap/trap。S/VS `scountovf` 门控与 S delegation 另见 E10。 |
 
 ACT4/Sail 对照未运行：E7 所记 Heliodor ACT 配置未启用 Sscofpmf、Sail 配置标记 unsupported，且无可用专题 coverpoint；属于模型/工具环境边界，不影响 Heliodor CPU 的 `run-pass` 分类。
@@ -112,7 +112,7 @@ OF 先由 event2/counter3 的硬件增量置位。fixture 随后从 M/S/VS 读�
 
 ## Heliodor 定向测试与运行记录
 
-Heliodor 入口为 `test/sscofpmf/sscofpmf_test.S` 和 `tb/test_arch_common.veryl` 的 `test_arch_sscofpmf`。该例选择 counter 3/event 5 (`mem-port-busy`)，检查 MINH 过滤/恢复，再以硬件事件回绕检查 M cause 13、OF、`scountovf[3]`。Story 6.6 E8 已运行此有限案例。Kunminghu fixture `experiments/sscofpmf/kunminghu-sscofpmf-complete-v4.S` 使用 selector 2 (`ifu_req`)，逐项检查五个 xINH 的过滤/解除过滤，并检查硬件 overflow、OF/scountovf 清除、LCOFIP 独立清除及第二次硬件 wrap/trap。其运行上限为 100000 cycles/10000 instructions。E10 补充案验证 Kunminghu S/VS `scountovf` 权限组合与 S-mode delegation；Heliodor 未运行这些组合。
+Heliodor 入口为 `test/sscofpmf/sscofpmf_test.S` 和 `tb/test_arch_common.veryl` 的 `test_arch_sscofpmf`。原始 fixture 的 E8 运行通过，覆盖 MINH 和首次硬件 wrap/cause/OF/scountovf。之后本地 v2–v4 扩展尝试独立读取 `mip.LCOFIP`、清 OF 并二次布防；E12 记录 v4 的 CPU-started `run-fail`（cause 13 到达但 OF 断言失败），不覆盖 E8，也不算清除/re-arm 通过。E13 的单独 S/U 过滤用例仅留下 S/SINH=1 的部分观察，fixture 未完成；S 清除和 U 的开/关仍未验证。Kunminghu fixture 使用 selector 2 (`ifu_req`)，逐项检查五个 xINH 的过滤/解除过滤，并检查硬件 overflow、OF/scountovf 清除、LCOFIP 清除及第二次硬件 wrap/trap。E10/E11 补充案验证 Kunminghu S/VS `scountovf` 权限组合、S-mode delegation 和 S-mode `sie.LCOFIE` 可见性。
 
 Story 5.4 曾在上游 checkout 原样尝试，并因 Veryl 对 `dram` `$readmemh` 的 `invalid_initial_assign` 阻断；该历史结果保留如下。Story 6.6 则在隔离副本应用局部 lint allow 后重新运行。
 
@@ -159,6 +159,10 @@ Kunminghu 与 Heliodor 均观察到有限硬件事件 overflow 案例通过。Ku
 | E8 | Heliodor Story 6.6 隔离 Sscofpmf CPU 运行 | test-run | run-pass | ID `heliodor-core-20261014T093231Z-2273768`；snapshot `94e9c5821c24a8941c3ddc3b76daddc7124a855a`；counter3/event5、64-bit preload `0xffffffffffffffff`、M-mode、MINH on/off；Veryl 0.22.0 / Verilator 5.020 / g++ 13.3；CPU started，exit 0，fixture assertions pass，tohost=1；[完整 run metadata](evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T093231Z-2273768/run-metadata.json)、[归档目录](evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T093231Z-2273768/)（隔离输入/harness SHA、命令和产物哈希）及 [run log](evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261014T093231Z-2273768/output.log)。只证明该有限案例；LCOFIP 独立读取及 clear/re-arm、S/VS access/delegation、其他 xINH 未覆盖。 |
 | E9 | Kunminghu Story 6.6 五模式过滤与 overflow/clear/re-arm CPU 运行 | test-run | run-pass | ID `kunminghu-fixture-20261014T095905Z-3e81181d1d02`；snapshot `c098f996bf4d301b88693b20315486d31e93bc9d`；counter3/event2 (`ifu_req`)，64-bit 全 1；五个 xINH 分别检查抑制/解除；硬件 wrap 检查 cause 13、OF、scountovf[3]；清 OF 后独立写 mip 清 LCOFIP、验证清除并观察第二次硬件 wrap/cause 13；CPU started、exit 0、good trap。完整记录在 [toolchain manifest](evidence/cpu-validation-toolchain-v1.yaml)，运行输出见 [run log](evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T095905Z-3e81181d1d02/output.log)。S/VS gate 与 S delegation 见 E10；同拍 clear/overflow 竞争未覆盖。 |
 | E10 | Kunminghu Story 6.6 `scountovf` access matrix 与 S-delegated LCOFI | test-run | run-pass | ID `kunminghu-fixture-20261014T101934Z-3e81181d1d02`；snapshot `c098f996bf4d301b88693b20315486d31e93bc9d`；counter3/event2 (`ifu_req`)，64-bit counter；OF 由硬件事件置位。fixture 检查 M always-visible、S `mcounteren[3]` off/on、VS `hcounteren[3]` off / `mcounteren[3]` off / both on；随后写 `mideleg[13]`、启用 LCOFIE/SIE，并在 S handler 断言 cause 13、`scountovf[3]` 和 `sip.LCOFIP`。GCC 15.1、Verilator 5.050、锁定 emulator/NEMU hashes；CPU started、exit 0、good trap。输入、命令及输出/工件哈希在 [toolchain manifest](evidence/cpu-validation-toolchain-v1.yaml) 与 [run log](evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T101934Z-3e81181d1d02/output.log)。仅限该事件和配置。 |
+| E11 | Kunminghu access-route 增加 S-mode `sie.LCOFIE` 读回断言 | test-run | run-pass | ID `kunminghu-fixture-20261014T135231Z-a88d5b9d673c`；snapshot `c098f996bf4d301b88693b20315486d31e93bc9d`；输入 [v6 fixture](evidence/smoke/kunminghu-sscofpmf-access-v6-20261014/kunminghu-fixture-20261014T135231Z-a88d5b9d673c/input.S)，命令和输入/产物哈希在 [manifest](evidence/cpu-validation-toolchain-v1.yaml)，运行日志在 [output](evidence/smoke/kunminghu-sscofpmf-access-v6-20261014/kunminghu-fixture-20261014T135231Z-a88d5b9d673c/output.log)。CPU started、exit 0、good trap；S handler 断言 cause 13、`sie.LCOFIE`、`scountovf[3]` 与 `sip.LCOFIP`。 |
+| E12 | Heliodor 扩展的 MIP/OF 清除和 re-arm fixture | test-run | run-fail | ID `heliodor-core-20261014T135548Z-3090096`；snapshot `94e9c5821c24a8941c3ddc3b76daddc7124a855a`；本地 v4 fixture、event5/counter3、64-bit 全 1 预载、4096 次过滤恢复负载循环；CPU started，`test_arch_sscofpmf` 失败，tohost=34。cause 13 handler 已进入，但 OF 断言未通过；详见 [metadata](evidence/smoke/heliodor-sscofpmf-v4-20261014/heliodor-core-20261014T135548Z-3090096/run-metadata.json) 和 [log](evidence/smoke/heliodor-sscofpmf-v4-20261014/heliodor-core-20261014T135548Z-3090096/output.log)。扩展清除/re-arm 尚无通过证据。 |
+| E13 | Heliodor S/U filter fixture 的部分动态观察 | test-run | fixture-incomplete | ID `heliodor-core-20261014T141101Z-3184091`；本地 `mode-filters` fixture、counter3/event5；CPU started，tohost=21。phase marker 21 仅在 S-mode `HPMCOUNTER3` 读回为 0 后写入，证明该 `SINH=1` 抑制断言通过；用例未到 terminal pass，S 清除阶段及 U/UINH 两阶段未验证。记录见 [metadata](evidence/smoke/heliodor-sscofpmf-mode-filters-marker3-20261014/heliodor-core-20261014T141101Z-3184091/run-metadata.json) 与 [log](evidence/smoke/heliodor-sscofpmf-mode-filters-marker3-20261014/heliodor-core-20261014T141101Z-3184091/output.log)。此结果是 fixture 未完成，不单独作为 CPU 行为失败。 |
+| E14 | Heliodor S/U 模式过滤/解除对照 | test-run | run-fail | ID `heliodor-core-20261014T142410Z-3235815`；固定 snapshot `94e9c5821c24a8941c3ddc3b76daddc7124a855a`；event5/counter3、每阶段 4096 次 load；CPU started，tohost=`0x14`（断言位 `S clear=0x04`、`U clear=0x10`）。S `SINH=1` 与 U `UINH=1` 阶段 counter 读回 0；清除各自 inhibit 后 counter 仍为 0，预期非零，因此两项断言失败。分阶段断言位、fixture/build 哈希和运行输出见 [manifest](evidence/cpu-validation-toolchain-v1.yaml) 与 [log](evidence/smoke/heliodor-sscofpmf-mode-filters-matrix-verified-20261014/heliodor-core-20261014T142410Z-3235815/output.log)。这证明该 event5 配置下抑制/解除断言不匹配，不外推至所有事件源。 |
 
 ## 验证与复现
 
@@ -169,9 +173,9 @@ Kunminghu 硬件过滤回归可在不改写正式证据目录的情况下运行�
 1. 什么才算本单元中的 overflow 证据？所选硬件事件使硬件递增从最大 counter 值回绕，并分别观察 OF、scountovf、LCOFIP 和 trap；仅软件写 counter 不算。
 2. OF 与 LCOFIP 是什么关系？OF 是每 counter sticky 状态；LCOFIP 是中断 pending，可能因 OF 首次硬件置位而请求，但清除/委托/陷阱是独立行为。
 3. 哪些模式过滤必须逐项核对？`MINH`、`SINH`、`UINH`、`VSINH`、`VUINH`。Heliodor 此快照静态只见前三个；VS/VU 不可假定覆盖。
-4. 两侧 CPU 案例各观察了什么？Kunminghu E9 运行五种 xINH、OF/scountovf/LCOFIP 清除及第二次 trap，E10 运行 S/VS 权限组合与 cause-13 S delegation；Heliodor 运行 MINH 和首次硬件 overflow/cause/OF/scountovf。
-5. 仍未验证什么？Heliodor OF 清除/re-arm、scountovf 权限矩阵和 S 委托未运行；Kunminghu 同拍 clear/overflow 竞争未覆盖。Heliodor VS/VU filter 静态实现中未见生效逻辑。
+4. 两侧 CPU 案例各观察了什么？Kunminghu E9 运行五种 xINH、OF/scountovf/LCOFIP 清除及第二次 trap，E10/E11 运行 S/VS 权限组合和 cause-13 S delegation；Heliodor E8 运行 MINH 与首次 overflow，E14 分别运行 S/SINH 和 U/UINH 抑制/解除断言，两个清除阶段没有观察到计数增长。
+5. 仍未验证什么？Heliodor event5 在 S/U 清除对应 inhibit 位后仍未增长，其他事件源和条件仍需复核；OF 清除/re-arm、scountovf 权限矩阵和 S delegation 尚未形成通过观察。Kunminghu 同拍 clear/overflow 竞争未覆盖；Heliodor VS/VU filter 静态实现中未见生效逻辑。
 
 ## 总结与限制
 
-完成双核活动路径静态映射和各自有限 CPU 运行。Kunminghu 观察五种 xINH、硬件 wrap、OF/scountovf 清除、LCOFIP 独立清除/重触发、S/VS `scountovf` 权限组合及 cause-13 S delegation；Heliodor 观察 event5/MINH/首次硬件 wrap/cause 13/OF/scountovf。Heliodor VS/VU filter 静态路径未发现，其权限矩阵与 delegation 未运行。结论仅适用于所记录输入，不构成 RVA23 符合性或认证。ACT4/Sail 未运行；现有配置/模型没有该专题的可用对照。
+完成双核活动路径静态映射和有限 CPU 运行。Kunminghu 观察五种 xINH、硬件 wrap、OF/scountovf 清除、LCOFIP 清除/重触发、S/VS `scountovf` 权限组合、cause-13 S delegation 与 S-mode `sie.LCOFIE` 可见性。Heliodor 原始 E8 用例通过 event5/MINH/首次硬件 wrap/cause 13/OF/scountovf；E12 的扩展 overflow 用例在读取 OF 时失败；E14 的 mode-filter 用例动态检查 S/SINH 与 U/UINH 两种模式的抑制/解除，两个 inhibit=1 阶段读回 0，但对应清除阶段读回仍为 0，结果 `run-fail`。VS/VU filter 静态路径未发现；OF 清除/re-arm、权限矩阵和 delegation 尚无通过证据。结论仅适用于所记录输入，不构成 RVA23 符合性或认证。ACT4/Sail 未运行；现有配置/模型没有该专题的可用对照。
