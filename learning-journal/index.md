@@ -24,7 +24,7 @@
 | 状态 | 主题 | 过程日志 | 知识记录 |
 | --- | --- | --- | --- |
 | 已完成前置勘察 | Kunminghu 与 Heliodor 的 load/store/fault 案例可行性 | [访存案例可行性勘察](../_agile-output/specs/spec-rv64-load-store-deep-dive/feasibility.md) | [后续阶段 Spec](../_agile-output/specs/spec-rv64-load-store-deep-dive/SPEC.md) |
-| 计划中 | `LD` 微架构路径复习与补充 | 待写 | [`load-v1.md`](../notes/units/load-v1.md) |
+| 已完成本次复核 | `LD` 微架构路径复习与补充 | [双核 LD 路径复核](2026-10-15-ld-path-review.md) | [`load-v2.md`](../notes/units/load-v2.md)；基线 [`load-v1.md`](../notes/units/load-v1.md) 保留 |
 | 计划中 | `SD` 从派发到提交及写入可见边界 | 待写 | `notes/units/store-v1.md`（待建立） |
 | 计划中 | Sv39 非规范 `LD` fault 双核路径 | 待写 | [`sv39-load-fault-v1.md`](../notes/units/sv39-load-fault-v1.md) |
 | 计划中 | 双核访存路径综合比较 | 待写 | 后续对照记录待定 |

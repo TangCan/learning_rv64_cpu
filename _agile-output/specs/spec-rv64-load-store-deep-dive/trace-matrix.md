@@ -26,3 +26,12 @@
 - `test-inspected` 不表示测试已运行。`test-run` 的结论仅适用于记录的输入和配置；`blocked` 说明环境/工具阻止推进，`unverified` 表示缺少该行为的证据。
 
 不得由日志中的启动标记推断某个内部阶段已发生；内部路径只有在源码或可解释 trace 明确支持时才记为已追踪。当前勘察只证明源码路径可追踪，不证明任何新案例已运行。
+
+## Story 1.1：LD 路径记录
+
+共同案例：RV64I `LD`、自然 8 字节对齐、M-mode Bare、无异常、DCache hit、无更老重叠 store。这些场景条件均未由本次运行确认，作为 `assumption` 保留；实际命中、结果与退休状态为 `unverified`。终点是源码支持的写回及退休条件，不表示本案例动态到达该终点。
+
+| 核与起点 | 路径及证据支持终点 | 固定快照 | 证据 ID | type | status | 假设与边界 |
+| --- | --- | --- | --- | --- | --- | --- |
+| Kunminghu V2：整数 load issue | `LoadUnit` 由源操作数和符号扩展立即数形成 VA；DTLB 响应提供 PA 后发 DCache 读请求；`LoadPipe` hit 响应经偏移/宽度选择形成 `ldout.data`，经 MemBlock/XSCore 写回接口进入 backend；load 返回状态进入 LoadQueue。ROB 可提交头项时退休，`RenameTableWrapper` 按 commit 条件更新整数 architectural map。源码终点为写回及退休条件。 | `xiangshan-kunminghu-v2-20261012`，`c098f996bf4d301b88693b20315486d31e93bc9d` | [`LD2-E2`–`LD2-E6`、`LD2-E14`](../../../notes/units/load-v2.md#证据表) | `source` | `inspected` | M-mode Bare、自然对齐、无异常、DCache hit、无更老重叠 store 均为案例假设；没有运行观察实际 hit、值或退休。 |
+| Heliodor：`decoder` / AGU 发射路径 | `LOAD` decode 后由 AGU 形成地址；Bare 下 `dmem_mmu` 直通，Stage A 锁存请求，Stage B 读 DCache；hit 数据经 LSU 选为 64-bit `LD` 结果并写 CDB/PRF、记录 ROB。ROB head 完成后产生 `rob_commit_valid`；`rob_commit_ack` 移除 head 并门控 `rat_arch` 更新，`arch_regs` 调试镜像另由 `rob_commit_valid` 门控。源码终点为写回及退休条件。 | `heliodor-master-20261012`，`94e9c5821c24a8941c3ddc3b76daddc7124a855a` | [`LD2-E7`–`LD2-E11`、`LD2-E15`](../../../notes/units/load-v2.md#证据表) | `source` | `inspected` | 同上；`rat_arch` 与 `arch_regs` 是不同状态，分别受 ack 和 commit-valid 门控。没有运行观察本案例实际 hit、值或退休。 |
