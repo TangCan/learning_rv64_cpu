@@ -1,0 +1,53 @@
+---
+title: RV64 双核访存微架构学习计划
+status: draft
+created: 2026-10-15
+updated: 2026-10-15
+---
+
+# RV64 双核访存微架构学习计划
+
+## 学习目标
+
+对照 `sources.lock` 固定的 Kunminghu V2 与 Heliodor 快照，理解普通 RV64 标量 load、store 和一个共同访存 fault 如何经过各自微架构，直至结果提交或精确异常状态。学习记录要让读者既能按时间回顾探索过程，也能直接查阅整理后的技术结论。
+
+本计划是原 RVA23 学习项目结项后的独立后续学习，不重开原 Epic/sprint，不修改上游 RTL，也不构成 RVA23 全量验证或 CPU 符合性证明。
+
+## 学习顺序
+
+| 阶段 | 主题与问题 | 学习活动 | 过程日志 | 知识沉淀 | 完成门槛 |
+| --- | --- | --- | --- | --- | --- |
+| A | 回顾已完成的六阶段学习历程 | 依据已有 Epic 记录、单元笔记、复盘和运行证据整理时间线；不虚构缺少依据的过程细节 | `learning-journal/index.md` 已建；阶段回顾文章待写 | 既有 `notes/units/` 记录与 `notes/units/evidence/` | 每篇回顾都链接现有资料，并区分历史事实与事后总结 |
+| B | 建立日志规则和路线导航 | 使用首页按阶段/时间组织文章；约定文章结构、证据状态和链接方式 | `learning-journal/index.md` 已建 | 沿用[学习记录与证据约定](../_agile-output/specs/spec-learning_rv64_cpu/learning-record-conventions.md) | 日志能链接到知识单元、固定快照和证据文件；计划/进行中/完成状态清楚 |
+| 1 | `LD`：数据如何从指令到达目的寄存器并退休？ | 复核两侧译码、地址生成、地址转换、缓存响应、写回与退休路径；标出静态证据和未观察状态 | 一篇 `LD` 探索日志（待写） | 复用并按需修订[`load-v1.md`](../notes/units/load-v1.md) | 每个阶段都有来源；源码结构描述不写成动态运行结论 |
+| 2 | `SD`：数据何时提交，何时对后续观察者可见？ | 对照 StoreUnit/StoreQueue/ROB 和 Heliodor commit-store 路径；追踪普通对齐 DRAM `SD`，厘清提交、缓存写入和更低层可见性的边界 | 一篇 `SD` 探索日志（待写） | 新建 `notes/units/store-v1.md`（待写） | 两侧证据支持完整静态路径；写入可见性边界和未知项明确；不把早期 tag probe 当实际写入 |
+| 3 | 共同 fault：Sv39 非规范地址 `LD` 如何成为精确异常？ | 固定 S-mode、V=0、Sv39、非规范 VA 的普通 `LD`；追踪 fault 检测、ROB 保留、cause 与 trap 更新 | 一篇 fault 探索日志（待写） | 复用并按需修订[`sv39-load-fault-v1.md`](../notes/units/sv39-load-fault-v1.md) | 对照两边静态路径；明确 `medeleg[13]=0` 等配置假设；两侧未运行的案例标为未验证 |
+| 4 | 总结：相同架构行为为何有不同实现路径？ | 汇总阶段日志和知识单元，比较两种设计的路径、提交边界和证据缺口 | 一篇总结日志（待写） | 更新 [`trace-matrix.md`](../_agile-output/specs/spec-rv64-load-store-deep-dive/trace-matrix.md) 与 `notes/units/index.md`（待更新） | 主要结论可由双侧证据追溯；遗留问题列出后续触发条件 |
+
+## 每篇日志的结构
+
+1. **本次问题**：这次想回答什么，为什么接着上次继续。
+2. **探索过程**：检查了哪些规范章节、源码路径、测试源码或运行产物。
+3. **发现**：分别记录已证实结论、反例/差异和未解问题。
+4. **证据链接**：引用固定 snapshot ID、文件路径/行号、精确命令及产物路径（如有）。
+5. **知识沉淀**：链接到稳定的 `notes/units/` 记录；博客日志保留过程，不复制整份技术结论。
+6. **下一步**：写下自然引出的下一个问题，并链接到计划阶段。
+
+## 证据规则
+
+- 每项证据用两个独立字段记录：证据类型（`spec`、`design-doc`、`source`、`test-inspected`、`test-run`、`experiment`）和验证状态（`inspected`、`run-pass`、`run-fail`、`blocked`、`unverified`、`not-applicable`）。例如实际测试通过写作 `test-run` + `run-pass`；检查测试源码写作 `test-inspected` + `inspected`。
+- 不从测试入口存在推断测试通过，不从启动日志推断内部微架构阶段实际发生。
+- 记录输入、命令和运行输出到 `notes/units/evidence/`；知识结论保存在学习单元，过程反思保存在日志。
+- 所有源码比较引用 [`sources.lock`](../sources.lock) 中的快照。若快照改变，先记录比较边界再继续。
+- 只有当静态路径无法回答新的学习问题、且动态观察是必要目标时，才另行评估隔离 trace harness；本计划当前不要求新增 harness。
+
+## 范围外
+
+不穷举所有访存宽度、未对齐访问、原子/向量访问、缓存一致性、性能表现和页表组合；不修改上游 RTL；不把学习记录表述成 RVA23 符合性结论。
+
+## 当前状态
+
+- 计划：已建立草案。
+- 前置勘察：已完成，结论见 [`feasibility.md`](../_agile-output/specs/spec-rv64-load-store-deep-dive/feasibility.md)。
+- 日志首页和路线导航：已建立；既有历程文章尚待依据现有材料回顾。
+- 新的 `LD`、`SD`、fault 与综合阶段：尚未开始。
