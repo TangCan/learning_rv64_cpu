@@ -1,0 +1,7 @@
+rustc 1.98.1 (48a229cea 2026-09-01)
+cargo 1.98.1 (797e8a9bc 2026-08-05)
+/home/richard/.cargo/bin/rustc
+/home/richard/.cargo/bin/cargo
+bitloom v1.2.4:
+    cargo-bitloom
+4cbab1d25260c50a3e0e1f3a4e0ea2af5343a32944ca43999ea1c2d618239370  target/bitloom-cli/bin/cargo-bitloom

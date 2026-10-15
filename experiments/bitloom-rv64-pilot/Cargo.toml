@@ -1,0 +1,12 @@
+[package]
+name = "bitloom_rv64_pilot"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.97.1"
+publish = false
+
+[dependencies]
+bitloom-prelude = "=1.2.4"
+
+[dev-dependencies]
+bitloom-sim = "=1.2.4"

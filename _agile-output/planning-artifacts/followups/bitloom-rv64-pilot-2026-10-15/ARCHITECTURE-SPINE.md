@@ -34,9 +34,9 @@
 - **Decision:** Compare retirement-visible PC/register/memory effects for the same deterministic instruction and data inputs. Keep each core's own test/build path and report coverage per reference independently.
 - **Prevents:** False equivalence claims between different microarchitectures or conflating architectural agreement with cycle-level identity.
 
-## AD-6 — Bound vector support to one explicit RVV case
+## AD-6 — Bound vector support and verify generated RTL at full width
 
-- **Decision:** Implement only 128-bit VLEN `vadd.vv` with SEW=32, LMUL=1, VL=4 for the pilot. Treat other vector configurations and instructions as unsupported.
+- **Decision:** Implement only 128-bit VLEN `vadd.vv` with SEW=32, LMUL=1, VL=4 for the pilot. Verify its lane values by simulating generated Verilog with a width-capable HDL simulator; use `bitloom-sim` only for values up to 64 bits. Treat other vector configurations and instructions as unsupported.
 - **Prevents:** A single vector demonstration from being generalized into full RVV support.
 
 ## AD-7 — Gate Verilog/PPA claims on tool evidence
