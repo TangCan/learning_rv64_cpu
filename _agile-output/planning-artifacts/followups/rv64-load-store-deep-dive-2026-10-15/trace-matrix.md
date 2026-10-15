@@ -1,0 +1,1 @@
+../../../specs/spec-rv64-load-store-deep-dive/trace-matrix.md
