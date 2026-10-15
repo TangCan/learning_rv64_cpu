@@ -4,7 +4,7 @@
 
 ## Goal
 
-建立一套可按时间回顾、又能按主题复习的双核 RV64 访存学习记录：用 Kunminghu V2 与 Heliodor 的固定源码快照，对照普通 `LD`、DRAM `SD` 和 Sv39 非规范地址 load page fault 的实现路径。技术结论、探索日志与原始运行产物各有归属并互相链接；每项主张都标明证据及其验证边界，使未知和未运行部分保持明确，而不影响静态源码路径学习目标。
+建立可按时间回顾的学习日志，并完成 Kunminghu V2 与 Heliodor 的标量 `LD`、`SD` 和 Sv39 非规范地址 fault 对照。每项技术结论都应能追溯到固定源码快照、测试材料或运行产物，并明确证据覆盖范围；无法确认的阶段和历史信息保留为未知。本规划目录未包含独立 PRD、架构、产品简报或学习计划文件，以下约束依据 epics 与现有 SD 决策记录整理。
 
 ## Stories
 
@@ -16,20 +16,22 @@
 
 ## Requirements & Constraints
 
-- 覆盖三类案例在两个实现上的路径；比较同一架构场景，但按各自微架构术语描述，不强行对齐内部阶段。LD 从译码/发射到写回和退休；SD 到证据支持的写入接受终点；fault 到证据支持的 trap 状态更新。六条路径在追踪矩阵中各占一行，缺失阶段或证据保留为 `unknown`、`blocked` 或 `unverified`。
-- 每项实现主张使用锁定快照及 `sources.lock` 中稳定 ID 和完整 SHA。证据类型与验证状态分别记录；比较缺一侧则标为 `partial`，不能据此声称两侧等价。实际运行结论必须能追溯输入、命令、配置、输出和产物位置；检查过测试源码不代表执行过测试。
-- 学习单元是技术结论的唯一正式归属，已发布版本不可原地修改；修订生成新版本并更新 `notes/units/index.md`。日期日志记录问题、查阅来源/动作、发现及状态、相关链接和下一步，不复制大段结论，也不补造无法还原的历史。
-- 使用中文 Markdown、现有 Git 与仓库链接；无需部署博客或增加生成服务。不得修改上游 RTL，不扩大为 RVA23 符合性证明；动态运行不是本阶段必需门槛。Follow-up 产物与已完成的 RVA23 阶段保持隔离。
+- `LD` 两侧采用相同场景：自然对齐 8 字节访问、M-mode Bare、无异常、DCache hit、无更老重叠 store。追踪译码/发射至地址生成、转换、缓存响应、写回和退休；假设和未确认阶段要明确标注。
+- `SD` 两侧采用同一自然对齐普通 DRAM 场景，并说明指令提交、缓存/缓冲接受和更低层可见性之间的区别。不得仅凭 commit、StoreQueue drain 或早期 tag probe 推断 DRAM 可见或持久。
+- fault 案例固定为 S-mode、V=0、Sv39、RV64I `LD`、VA `0x0000008000000000`、`medeleg[13]=0`。追踪检测、异常保留、cause 13、故障 PC/`mepc`、`mtval`、M-mode trap target 及有证据支持的状态更新。
+- 比较结论须有两侧证据；缺侧时明确标记 `partial`，并将缺失部分标为 `unverified`、`blocked` 或 `unknown`。证据 `type` 与验证 `status` 分列；源码检查或测试条目不代表实际运行。
+- 运行结论需保留精确输入、命令、配置、输出和产物路径。源码证据须使用 `sources.lock` 中的稳定 snapshot ID 与完整 SHA；快照不匹配的证据不计入验收，基线变化后重查受影响结论。
+- 已发布学习单元保持不可变；修订创建新版本并更新单元索引。日志记录日期、问题、来源/动作、带证据类型和状态的发现、学习单元/证据链接及下一步。不得补写无法还原的历史细节。
+- 不要求动态运行或新增 trace harness；不修改上游 RTL，不作 RVA23 一致性声明。中文 Markdown 通过本地 Git/GitHub 阅读，不引入博客服务或生成器。
 
 ## Technical Decisions
 
-- 固定比较对象为 `sources.lock` 中的 Kunminghu V2、Heliodor 快照；快照变化时记录新基线并重核受影响主张。
-- LD 共用场景为 RV64I、自然 8 字节对齐、M-mode Bare、无异常、DCache hit、无更老重叠 store。无法从来源或配置确认的条件标作 assumption。
-- SD 使用自然对齐的普通 DRAM 目标；在解释路径前，先在故事与决策日志中确定两侧共用 tuple 及来源可支持的写入接受终点。明确区分指令提交、缓存/缓冲接受和更低层可见性；不能由 commit 单独推断 DRAM 可见或持久。
-- Fault 共用场景为 S-mode、V=0、`satp.MODE=Sv39`、普通 RV64I `LD`、VA `0x0000008000000000`、`medeleg[13]=0`。追踪 cause 13、故障 PC/`mepc`、`mtval`、M-mode trap target 和有来源支持的状态更新；实现选择不明时保留未知。
-- `notes/units/` 保存版本化技术单元，`learning-journal/` 保存时间线，原始运行产物位于 `notes/units/evidence/`，追踪矩阵连接两侧案例与证据。遵循现有学习记录约定中的证据类型/状态词汇。
+- 技术结论归 `notes/units/`，探索时间线归 `learning-journal/`，原始运行产物归 `notes/units/evidence/`。
+- 两个实现按各自源码阶段名称描述；只比较等价架构场景，不强行对齐微架构阶段。
+- 追踪矩阵覆盖 LD、SD、fault 在两核上的六条路径行。每行记录起点、证据支持的终点、证据引用，或明确标出 `unknown`/`blocked`。
+- SD 共同 tuple 为 `SD x11, 0(x10)`，`x10=0x80004000`、`x11=0x1122334455667788`、M-mode Bare、8 字节对齐；这些输入和配置属于 assumption/unverified，非运行观察。Kunminghu 终点为 uncached/MMIO request handshake；Heliodor 终点为 eligible store 进入 committed store buffer (`sb_push`)。两个终点时序不同，均不证明 DRAM 可见或持久。
 
 ## Cross-Story Dependencies
 
-- Story 1.1–1.3 产出三类路径、技术单元及日志，并更新追踪矩阵对应行；Story 1.2 必须先完成 SD tuple/终点决策。
-- Story 1.4 审核前述六行路径、证据标识和快照 SHA；Story 1.5 综合前三类发现并检查索引/README 导航及已发布链接。Story 1.5 对历史只做可由留存材料支持的回顾。
+- Story 1.2 的 SD tuple 与接受终点由其决策记录固定，路径记录应遵循该边界。
+- Story 1.4 核验 Story 1.1–1.3 建立的六条路径、证据字段和快照一致性；Story 1.5 汇总三类案例并完成日志索引/README 导航，依赖前述学习单元、日志和追踪矩阵。
