@@ -30,7 +30,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 # - Retrospective appends its action items to action_items; the status view surfaces open ones
 generated: 10-15-2026 16:38
-last_updated: 10-15-2026 17:12
+last_updated: 10-15-2026 17:18
 project: learning_rv64_cpu
 project_key: NOKEY
 tracking_system: file-system
@@ -38,7 +38,7 @@ story_location:
   _agile-output/implementation-artifacts/followups/rv64-load-store-deep-dive-2026-10-15
 development_status:
   epic-1: in-progress
-  1-1-复核并记录双核-ld-路径: review
+  1-1-复核并记录双核-ld-路径: done
   1-2-追踪普通-dram-sd-的提交与写入边界: backlog
   1-3-追踪-sv39-非规范地址-ld-fault: backlog
   1-4-核验三类案例的证据与快照: backlog
