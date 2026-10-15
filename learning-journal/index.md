@@ -17,7 +17,7 @@
 | 3 | 比较普通访存、原子操作和地址异常 | [Stage 3 回顾](2026-10-15-stage-3-memory-atomic-fault-retrospective.md)；[`load-v2.md`](../notes/units/load-v2.md)、[`store-v1.md`](../notes/units/store-v1.md)、[`amoadd-d-v1.md`](../notes/units/amoadd-d-v1.md)、[`sv39-load-fault-v3.md`](../notes/units/sv39-load-fault-v3.md)（历史版本见单元记录） | 已回顾（原 Epic 3 与后续静态补充） |
 | 4 | 建立 RVA23 必选项映射和覆盖边界 | [Stage 4 回顾](2026-10-15-stage-4-rva23-coverage-retrospective.md)；[`rva23-coverage.md`](../notes/rva23-coverage.md)、[`rva23-mandatory-coverage-audit-v1.md`](../notes/units/rva23-mandatory-coverage-audit-v1.md) 及专题记录 | 已回顾（映射与审计，不代表符合性验证） |
 | 5 | 深入比较 RVA23S64 专题与学习交付证据 | [Stage 5 回顾](2026-10-15-stage-5-rva23s64-deep-dive-retrospective.md)；[`rva23s64-closeout-audit-v1.md`](../notes/units/rva23s64-closeout-audit-v1.md) | 已回顾（基于 Epic 5、专题单元和结项审计） |
-| 6 | 增加固定快照上的代表性 CPU 运行验证 | 各 RVA23S64 专题记录及 `notes/units/evidence/` | 待根据运行证据回顾 |
+| 6 | 增加固定快照上的代表性 CPU 运行验证 | [Stage 6 回顾](2026-10-15-stage-6-rva23s64-cpu-validation-retrospective.md)；各 RVA23S64 专题记录及 `notes/units/evidence/` | 已回顾（代表性 CPU 案例；有失败和未验证范围） |
 
 ## 后续学习
 
