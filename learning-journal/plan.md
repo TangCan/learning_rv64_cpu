@@ -17,7 +17,7 @@ updated: 2026-10-15
 
 | 阶段 | 主题与问题 | 学习活动 | 过程日志 | 知识沉淀 | 完成门槛 |
 | --- | --- | --- | --- | --- | --- |
-| A | 回顾已完成的六阶段学习历程 | 依据已有 Epic 记录、单元笔记、复盘和运行证据整理时间线；不虚构缺少依据的过程细节 | [Stage 1](2026-10-15-stage-1-add-pilot-retrospective.md)、[Stage 2](2026-10-15-stage-2-ooo-and-branch-retrospective.md)、[Stage 3](2026-10-15-stage-3-memory-atomic-fault-retrospective.md)、[Stage 4](2026-10-15-stage-4-rva23-coverage-retrospective.md) 回顾已完成；Stage 5–6 待回顾 | 既有 `notes/units/` 记录与 `notes/units/evidence/` | 每篇回顾都链接现有资料，并区分历史事实与事后总结 |
+| A | 回顾已完成的六阶段学习历程 | 依据已有 Epic 记录、单元笔记、复盘和运行证据整理时间线；不虚构缺少依据的过程细节 | [Stage 1](2026-10-15-stage-1-add-pilot-retrospective.md)、[Stage 2](2026-10-15-stage-2-ooo-and-branch-retrospective.md)、[Stage 3](2026-10-15-stage-3-memory-atomic-fault-retrospective.md)、[Stage 4](2026-10-15-stage-4-rva23-coverage-retrospective.md)、[Stage 5](2026-10-15-stage-5-rva23s64-deep-dive-retrospective.md) 回顾已完成；Stage 6 待回顾 | 既有 `notes/units/` 记录与 `notes/units/evidence/` | 每篇回顾都链接现有资料，并区分历史事实与事后总结 |
 | B | 建立日志规则和路线导航 | 使用首页按阶段/时间组织文章；约定文章结构、证据状态和链接方式 | `learning-journal/index.md` 已建 | 沿用[学习记录与证据约定](../_agile-output/specs/spec-learning_rv64_cpu/learning-record-conventions.md) | 日志能链接到知识单元、固定快照和证据文件；计划/进行中/完成状态清楚 |
 | 1 | `LD`：数据如何从指令到达目的寄存器并退休？ | 已复核两侧译码、地址生成、地址转换、缓存响应、写回与退休路径；区分源码结构和未观察状态 | [双核 LD 路径复核](2026-10-15-ld-path-review.md) | [`load-v2.md`](../notes/units/load-v2.md)，保留 [`load-v1.md`](../notes/units/load-v1.md) | 本次静态源码复核完成；案例运行仍未验证 |
 | 2 | `SD`：何时提交，何时被写入路径接受？ | 已对照 StoreUnit/StoreQueue/ROB 与 Heliodor commit-store 路径，追踪普通对齐 DRAM `SD`；DRAM 可见性边界仍未验证 | [双核 SD 提交与写入边界](2026-10-15-sd-commit-write-boundary.md) | [`store-v1.md`](../notes/units/store-v1.md) | 本次静态路径追踪完成；案例未运行，未声称下游可见 |
@@ -48,11 +48,11 @@ updated: 2026-10-15
 ## 当前状态
 
 - 计划：已建立草案。
-- 历史阶段回顾：Stage 1 ADD 试点、Stage 2 乱序依赖/分支恢复、Stage 3 访存/原子/fault、Stage 4 RVA23 必选项映射均已于 2026-10-15 基于现有记录回顾；Stage 5–6 待回顾。
+- 历史阶段回顾：Stage 1 ADD 试点、Stage 2 乱序依赖/分支恢复、Stage 3 访存/原子/fault、Stage 4 RVA23 必选项映射均已于 2026-10-15 基于现有记录回顾；Stage 5 已于 2026-10-15 基于现有记录回顾；Stage 6 待回顾。
 - 前置勘察：已完成，结论见 [`feasibility.md`](../_agile-output/specs/spec-rv64-load-store-deep-dive/feasibility.md)。
-- 日志首页和路线导航：已建立；Stage 1–4 历程文章已完成，Stage 5–6 尚待依据现有材料回顾。
+- 日志首页和路线导航：已建立；Stage 1–5 历程文章已完成；Stage 6 尚待依据现有材料回顾。
 - `LD`：已完成本次静态源码复核，日志与 load-v2 已发布；案例未运行。
 - `SD`：已完成本次静态源码追踪，日志与 store-v1 已发布；案例未运行，DRAM 可见性未验证。
 - `Sv39` 非规范 `LD` fault：已完成固定 tuple 的双核静态复核，审计日志与不可变 v3 已发布，v1/v2 保留；动态案例仍未验证。
 - Story 1.4：六条路径、活动 ID、证据状态和固定快照已审计；fault v3 将 ACT 测试比较明确为 partial，见[审计日志](2026-10-15-three-case-evidence-audit.md)。
-- 综合阶段：已完成静态综合和导航；双核差异为 LD 写回/退休门控、SD 接受终点及 fault 检测/异常保留路径各有实现，具体证据见[综合日志](2026-10-15-load-store-fault-synthesis.md)。当前未验证边界包括 LD hit/值/退休、SD 实际接受及 DRAM 可见性、fault 的动态 cause/CSR/redirect；fault 测试材料比较为 partial。下一步可依据现存证据回顾一项旧阶段（保留其余阶段 pending），或先规划新主题；如需运行结论，须另行记录固定输入、配置、命令和产物。
+- 综合阶段：已完成静态综合和导航；双核差异为 LD 写回/退休门控、SD 接受终点及 fault 检测/异常保留路径各有实现，具体证据见[综合日志](2026-10-15-load-store-fault-synthesis.md)。当前未验证边界包括 LD hit/值/退休、SD 实际接受及 DRAM 可见性、fault 的动态 cause/CSR/redirect；fault 测试材料比较为 partial。下一步是依据现存证据回顾 Stage 6；若之后需要新的运行结论或扩大案例范围，再另行记录固定输入、配置、命令和产物。
