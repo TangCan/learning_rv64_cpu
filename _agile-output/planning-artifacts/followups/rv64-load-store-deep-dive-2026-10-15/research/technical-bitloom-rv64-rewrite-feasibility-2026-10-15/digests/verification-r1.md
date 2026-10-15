@@ -1,0 +1,12 @@
+# Landing verification — normal level
+
+Accessed 2026-10-15. Fresh-context verifier spot-checked load-bearing claims using independent pages where available.
+
+- **Current release:** Bitloom version 1.2.4 is corroborated by the exact docs.rs package page (`https://docs.rs/crate/bitloom/1.2.4`) and the GitHub release list (`https://github.com/TangCan/bitloom/releases`), which lists 1.2.4 tags released Oct 15. The verifier's separate `docs.rs/bitloom/latest` route returned stale 1.0.0 documentation; preserve this as a docs.rs route/cache inconsistency. We cite the exact versioned page and release list.
+- **CPU examples:** the RV32-only scope and tutorial exclusions appear in TangCan's own docs; no independent source retrieved. Status: unverified as a general capability boundary; verified only as the project's published tutorial scope. Source: https://docs.rs/crate/bitloom/1.2.4 and https://github.com/TangCan/bitloom (TangCan; accessed 2026-10-15).
+- **Chisel import:** docs.rs published `bitloom-firrtl` source confirms the documented FIRRTL path and Chisel-emission interface; no direct Scala parsing path was found. This verifies the documented contract, not whether Kunminghu's full output imports. Source: https://docs.rs/bitloom-firrtl/latest/src/bitloom_firrtl/chisel.rs.html (docs.rs / Bitloom; accessed 2026-10-15; no date shown).
+- **Kunminghu:** XiangShan User Guide independently confirms V2R2 RV64/RVV/MMU/cache/TLB scope. Retrieved source does not independently verify the full V3 scope; branch README warns it is evolving. Status: partially verified. Sources: https://docs.xiangshan.cc/projects/user-guide/en/kunminghu-v3/introduction/ and https://github.com/OpenXiangShan/XiangShan/tree/kunminghu-v3 (XiangShan / OpenXiangShan; README date 2026-06-30; accessed 2026-10-15).
+- **Heliodor:** Veryl project post independently confirms Veryl, RVA23, multicore OoO, vector/H/MMU/cache architecture and validation. Status: verified for the stated public scope. Source: https://veryl-lang.org/blog/heliodor-rva23/ (Veryl project; published 2026-06-24; accessed 2026-10-15).
+- **Overall conclusion:** no source demonstrates a full Bitloom RV64/RVA23 rewrite or performance/synthesis equivalence. Status remains unverified; only a representative implementation pilot can resolve it.
+
+Open discrepancy: docs.rs `latest` routes may display older crate docs, while exact versioned package/release records show 1.2.4. Pin exact published crate versions and resolve API docs against them.

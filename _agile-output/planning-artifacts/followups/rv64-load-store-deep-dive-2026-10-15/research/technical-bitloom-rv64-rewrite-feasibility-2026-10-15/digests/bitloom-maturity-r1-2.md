@@ -1,0 +1,9 @@
+# Bitloom maturity and examples — round 1
+
+Accessed 2026-10-15. Primary sources; metadata counts are point-in-time observations, not proof of quality or bus factor.
+
+- `bitloom-sim` docs.rs is at 1.2.4 and lists 1.2.1–1.2.4 published Oct 13–15, after 1.2.0 on Sep 23 and 1.1.x on Sep 14–18: rapid release activity; reproducible dependency pinning matters. Source: https://docs.rs/crate/bitloom-sim/latest (docs.rs/crates.io; versions through 2026-10-15; high; observed release metadata). Independently consistent official tags/release records: https://github.com/TangCan/bitloom/releases (TangCan/GitHub; 1.2.4 packages released Oct 15; high).
+- Public repo shows 593 commits, one star and zero forks; issue page currently shows no open issues. This is an active project with limited visible external adoption. These counts cannot establish quality, defect rate or support longevity. Sources: https://github.com/TangCan/bitloom and https://github.com/TangCan/bitloom/issues (TangCan/GitHub; accessed 2026-10-15; high for observed metadata).
+- Public processor evidence is educational RV32I: trimmed single-cycle and five-stage pipelined examples. The same README calls cache/MMU/Linux, dynamic prediction and full privileged/arch-test support tutorial non-goals. No published RV64 or RVA23 CPU claim found. Source: https://github.com/TangCan/bitloom (TangCan; accessed 2026-10-15; high for stated scope; medium for absence).
+
+Conclusion: project activity and a broad feature set reduce the risk that Bitloom is a toy stub, but absence of independently demonstrated RV64 CPU-scale usage leaves full-core suitability unverified. The public examples establish only a small RV32 learning path. Further direct issue/release-history analysis unnecessary for this decision; missing third-party experience remains an open ecosystem question.
