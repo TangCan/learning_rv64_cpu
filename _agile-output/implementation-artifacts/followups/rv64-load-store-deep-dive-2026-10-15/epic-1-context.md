@@ -4,7 +4,7 @@
 
 ## Goal
 
-建立可按时间回顾的学习日志，并完成 Kunminghu V2 与 Heliodor 的标量 `LD`、`SD` 和 Sv39 非规范地址 fault 对照。每项技术结论都应能追溯到固定源码快照、测试材料或运行产物，并明确证据覆盖范围；无法确认的阶段和历史信息保留为未知。本规划目录未包含独立 PRD、架构、产品简报或学习计划文件，以下约束依据 epics 与现有 SD 决策记录整理。
+建立可按时间回顾的学习日志，并完成 Kunminghu V2 与 Heliodor 的标量 `LD`、`SD` 和 Sv39 非规范地址 fault 对照。每项技术结论都应能追溯到固定源码快照、测试材料或运行产物，并明确证据覆盖范围；无法确认的阶段和历史信息保留为未知。本 follow-up 专属规划目录仅包含 `epics.md` 与 SD 决策记录；项目级 PRD 位于 `_agile-output/planning-artifacts/prds/prd-rv64-load-store-deep-dive-2026-10-15/prd.md`，架构位于 `_agile-output/planning-artifacts/architecture/architecture-rv64-load-store-deep-dive-2026-10-15/ARCHITECTURE-SPINE.md`，学习计划与记录约定分别位于 `learning-journal/plan.md` 和 `_agile-output/specs/spec-learning_rv64_cpu/learning-record-conventions.md`。追踪矩阵位于 `_agile-output/specs/spec-rv64-load-store-deep-dive/trace-matrix.md`。以下约束结合这些项目级材料、epics 与 SD 决策记录整理。重新编译本 context 时，应检查专属目录及项目级规划材料，区分文件不存在与文件位于其他规划范围。
 
 ## Stories
 

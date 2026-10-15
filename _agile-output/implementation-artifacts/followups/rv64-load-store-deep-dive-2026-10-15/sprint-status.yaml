@@ -30,7 +30,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 # - Retrospective appends its action items to action_items; the status view surfaces open ones
 generated: 10-15-2026 16:38
-last_updated: 10-15-2026 18:02
+last_updated: 10-15-2026 18:05
 project: learning_rv64_cpu
 project_key: NOKEY
 tracking_system: file-system
@@ -49,11 +49,11 @@ action_items:
     epic: 1
     action: "修正 Epic context 中已过期的规划文件盘点，并增加生成或刷新时核对当前规划目录的步骤。"
     owner: "Tang Can"
-    status: open
+    status: done
     ref: "_agile-output/implementation-artifacts/followups/rv64-load-store-deep-dive-2026-10-15/epic-1-retro-2026-10-15.md"
   - id: "epic-1-retro-item-2-拆分或重标三类案例证据审计中混合-source-与-test-inspected"
     epic: 1
     action: "拆分或重标三类案例证据审计中混合 source 与 test-inspected 的发现行，保持每行证据类型与状态准确。"
     owner: "Tang Can"
-    status: open
+    status: done
     ref: "_agile-output/implementation-artifacts/followups/rv64-load-store-deep-dive-2026-10-15/epic-1-retro-2026-10-15.md"

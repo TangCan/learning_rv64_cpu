@@ -16,8 +16,10 @@
 | --- | --- | --- |
 | 六条路径均从选定指令/TLB request 起始，追到各自有源码支持的终点，并链接活动证据 ID、源码位置、锁定快照。 | `source` | `inspected` |
 | LD 两侧终点是写回及退休条件；SD 两侧终点分别为 Kunminghu uncached request handshake 和 Heliodor committed store-buffer `sb_push`。终点只代表源码条件，不代表本例运行或 DRAM 可见。 | `source` | `inspected` |
-| Sv39 两侧静态 fault 到 M-mode trap 逻辑可追踪；ACT README 只证明 Heliodor 有一般标签/修复文字，不能证明本案例输入或断言，且未检查底层测试产物。Kunminghu 对应测试材料未核实；C3 是可用测试材料的 `partial` 比较，缺侧 `unverified`，不代表测得的案例覆盖。 | `test-inspected` | `inspected` |
-| 六个 LD/SD/fault 动态案例均没有本次运行产物；`run-pass`、实际运行字段及硬件观察均未声称。LD 命中/退休、SD 接受/可见性、fault cause/CSR/redirect 仍为 `unverified`。 | `test-run` | `unverified` |
+| Sv39 两侧静态 fault 到 M-mode trap 逻辑可追踪。 | `source` | `inspected` |
+| Heliodor ACT README 含一般标签/修复文字，但不能证明本案例输入或断言；底层测试产物未检查。 | `test-inspected` | `inspected` |
+| Kunminghu 对应测试材料是否存在/适用未核实。C3 因此仅是可用测试材料的 `partial` 比较，不能代表本案例覆盖。 | `test-inspected` | `unverified` |
+| 六个 LD/SD/fault 动态案例均没有本次运行产物；未声称 `run-pass`、实际运行或硬件观察。LD 命中/退休、SD 接受/可见性、fault cause/CSR/redirect 仍为 `unverified`。 | `test-run` | `unverified` |
 | 活动 ID 范围为 `LD2-E1`–`LD2-E15`、`SD1-E1`–`SD1-E8`、`SF1-E1`–`SF1-E12`；逐行检查三段定义，跨段重复检测未发现重复 ID。历史 v1/v2 的局部引用不纳入活动集合。 | `source` | `inspected` |
 
 ## 知识沉淀与边界
