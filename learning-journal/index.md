@@ -14,7 +14,7 @@
 | --- | --- | --- | --- |
 | 1 | 建立双核源码基线与学习记录方法，以 `ADD` 作为试点 | [`add-v1.md`](../notes/units/add-v1.md)、[`add-pilot-retrospective.md`](../notes/units/add-pilot-retrospective.md) | 待根据现有记录回顾 |
 | 2 | 学习乱序依赖和分支错预测恢复 | [`dependency-v1.md`](../notes/units/dependency-v1.md)、[`branch-recovery-v1.md`](../notes/units/branch-recovery-v1.md) | 待根据现有记录回顾 |
-| 3 | 比较普通访存、原子操作和地址异常 | [`load-v1.md`](../notes/units/load-v1.md)、[`amoadd-d-v1.md`](../notes/units/amoadd-d-v1.md)、[`sv39-load-fault-v1.md`](../notes/units/sv39-load-fault-v1.md) | 待根据现有记录回顾 |
+| 3 | 比较普通访存、原子操作和地址异常 | [`load-v2.md`](../notes/units/load-v2.md)、[`store-v1.md`](../notes/units/store-v1.md)、[`amoadd-d-v1.md`](../notes/units/amoadd-d-v1.md)、[`sv39-load-fault-v2.md`](../notes/units/sv39-load-fault-v2.md)（历史版 [`v1`](../notes/units/sv39-load-fault-v1.md)） | 静态记录已完成；各案例运行边界见单元记录 |
 | 4 | 建立 RVA23 必选项映射和覆盖边界 | [`rva23-mandatory-coverage-audit-v1.md`](../notes/units/rva23-mandatory-coverage-audit-v1.md) 及 RVA23 专题记录 | 待根据现有记录回顾 |
 | 5 | 深入比较 RVA23S64 专题与学习交付证据 | [`rva23s64-closeout-audit-v1.md`](../notes/units/rva23s64-closeout-audit-v1.md) | 待根据现有记录回顾 |
 | 6 | 增加固定快照上的代表性 CPU 运行验证 | 各 RVA23S64 专题记录及 `notes/units/evidence/` | 待根据运行证据回顾 |
@@ -26,7 +26,7 @@
 | 已完成前置勘察 | Kunminghu 与 Heliodor 的 load/store/fault 案例可行性 | [访存案例可行性勘察](../_agile-output/specs/spec-rv64-load-store-deep-dive/feasibility.md) | [后续阶段 Spec](../_agile-output/specs/spec-rv64-load-store-deep-dive/SPEC.md) |
 | 已完成本次复核 | `LD` 微架构路径复习与补充 | [双核 LD 路径复核](2026-10-15-ld-path-review.md) | [`load-v2.md`](../notes/units/load-v2.md)；基线 [`load-v1.md`](../notes/units/load-v1.md) 保留 |
 | 已完成本次静态追踪 | `SD` 从派发到提交及写入接受边界 | [双核 SD 提交与写入边界](2026-10-15-sd-commit-write-boundary.md) | [`store-v1.md`](../notes/units/store-v1.md)；DRAM 可见性未验证 |
-| 计划中 | Sv39 非规范 `LD` fault 双核路径 | 待写 | [`sv39-load-fault-v1.md`](../notes/units/sv39-load-fault-v1.md) |
+| 已完成静态复核 | Sv39 非规范 `LD` fault 双核路径 | [Sv39 非规范地址 LD fault](2026-10-15-sv39-noncanonical-ld-fault.md) | [`sv39-load-fault-v2.md`](../notes/units/sv39-load-fault-v2.md)；[历史版 v1](../notes/units/sv39-load-fault-v1.md) 保留；固定案例动态行为未验证 |
 | 计划中 | 双核访存路径综合比较 | 待写 | 后续对照记录待定 |
 
 新日志按 `YYYY-MM-DD-主题.md` 命名，并从本页按时间顺序添加。先写已有证据支持的回顾；如果历史材料不能还原过程，就明确写“基于现有记录回顾”，不虚构当时的探索细节。

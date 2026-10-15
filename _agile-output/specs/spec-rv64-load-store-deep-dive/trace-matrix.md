@@ -23,7 +23,7 @@
 - 类型：`spec`、`design-doc`、`source`、`test-inspected`、`test-run`、`experiment`。
 - 状态：`inspected`、`run-pass`、`run-fail`、`blocked`、`unverified`、`not-applicable`。
 - 示例：源码推导为 `source` + `inspected`；检查了测试代码为 `test-inspected` + `inspected`；实际测试通过为 `test-run` + `run-pass`。
-- `test-inspected` 不表示测试已运行。`test-run` 的结论仅适用于记录的输入和配置；`blocked` 说明环境/工具阻止推进，`unverified` 表示缺少该行为的证据。
+- `test-inspected` 不表示测试已运行；README 中出现测试标签也不能证明该测试输入或断言范围。`test-run` 的结论仅适用于记录的输入和配置；`blocked` 说明环境/工具阻止推进，`unverified` 表示缺少该行为的证据。
 
 不得由日志中的启动标记推断某个内部阶段已发生；内部路径只有在源码或可解释 trace 明确支持时才记为已追踪。当前勘察只证明源码路径可追踪，不证明任何新案例已运行。
 
@@ -44,3 +44,14 @@
 | --- | --- | --- | --- | --- | --- | --- |
 | Kunminghu V2：`SD` StoreUnit 输入 | `SD` 译码为 StoreUnit/S-immediate；StoreUnit 形成 base+imm 地址、`rs2` 数据和 mask，DTLB response 提供 PA/PMA 属性。默认配置中该地址落在 Pmem 范围，R/W 开放且 PMA `c=false`，走 StoreQueue uncached/MMIO 分支。store 到达 ROB head/pending 后，StoreQueue 用本例的 PA、`rs2` data、mask 请求 Uncache（`StoreQueue.scala:908-911`），`io.uncache.req.fire` 为接受终点。response 的 denied/corrupt 会记录异常并经 writeback（`StoreQueue.scala:868-895`），之后才 retirement；handshake 不证明成功写入。终点为 request handshake。 | `xiangshan-kunminghu-v2-20261012`，`c098f996bf4d301b88693b20315486d31e93bc9d` | [`SD1-E1`–`SD1-E4`](../../../notes/units/store-v1.md#证据表) | `source` | `inspected` | 默认配置应用、M-mode Bare、寄存器 tuple、实际 commit/handshake 均未验证。Tag probe 不是数据写入；uncache handshake 不证明 DRAM 可见/持久。 |
 | Heliodor：decoder / AGU 与 ROB head commit-store | STORE/S-immediate 解码，AGU 形成地址，ROB 保存地址、`rs2` 与 funct3；commit-store 产生 SD `0xff` mask。`0x80004000` 满足 DRAM predicate 且避开 `0x80000000–0x80003fff` 和 `0x80008000` tohost 排除页。eligible head store 在 buffer 可 merge 或未满时 `sb_push`；本例 entry 用 `sb_pa`、`st_wdata`、`st_wstrb`（`heliodor_core.veryl:6707,6851-6852`）保存地址、数据和 mask，作为接受终点；之后的 DCache drain 是另一个阶段。 | `heliodor-master-20261012`，`94e9c5821c24a8941c3ddc3b76daddc7124a855a` | [`SD1-E5`–`SD1-E8`](../../../notes/units/store-v1.md#证据表) | `source` | `inspected` | 地址、Bare/DRAM 配置与 `sb_push` 实际发生均未验证。Buffer push / DCache drain ack 不证明下游事务、他方可见或 DRAM 持久。 |
+
+## Story 1.3：Sv39 非规范 `LD` fault
+
+共同案例（假设，非运行观察）：S-mode、V=0、`satp.MODE=Sv39`、普通 RV64I `LD`，VA `0x0000008000000000`，`medeleg[13]=0`，`mtvec` 有效。该值等于 `1<<39`，bit 38=0、bit 39=1，因此不满足 `[63:39]` 等于 bit 38 的符号扩展。两侧源码终点是 fault 身份/地址进入精确异常及 M-mode trap CSR/target 选择逻辑；没有观察到本例 fault、寄存器值或 redirect。
+
+| 核与起点 | 路径及证据支持终点 | 固定快照 | 证据 ID | type | status | 假设与边界 |
+| --- | --- | --- | --- | --- | --- | --- |
+| Kunminghu V2：普通 load 的 TLB `checkfullva` 请求 | Sv39 `pf39` 检查完整 VA 并保留响应 fault VA；LoadUnit 将 `pf.ld` 送入 uop exception vector；ROB 在 head exception 路径输出故障 uop PC/vector。后端当前 `backend/fu/wrapper/CSR.scala` 接 ROB exception 与 memory exception VA 至 `NewCSR`；`TrapHandleModule` 按 cause/delegation 选择 M-mode，`TrapEntryMEvent` 提供 `mepc/mcause/mtval`、M 状态和 trap target 输入。源码支持终点为 M trap 更新/target 选择逻辑，非动态到达。 | `xiangshan-kunminghu-v2-20261012`，`c098f996bf4d301b88693b20315486d31e93bc9d` | [`SF1-E3`–`SF1-E6`](../../../notes/units/sv39-load-fault-v2.md#证据表) | `source` | `inspected` | 固定 tuple、fault 到达 head、cause/CSR 值、`mtval` 表示和 redirect 均未运行验证；v1 指向旧 CSR 文件的路径已在 v2 按当前 wrapper/NewCSR 集成复核。 |
+| Heliodor：普通 load 的 dmem MMU request | `va_noncanonical` 在 V=0/Sv39/非 M-mode 下检测地址并使 fault 在 request 上给出；`alu_wrap` 分类 load fault 并携带 AGU VA，ROB 保存 fault 身份/VA 并于 commit 提供 head fault PC/VA。Core 选择普通 load fault cause 13、按 `medeleg[13]=0` 选择 M trap；CSR 接收 trap PC/cause/tval 并提供 target 选择逻辑。ACT README 的静态检查见 SF1-E11：仅证明标签 `sv39_canonical` 与 README 中 non-canonical fault handling 修复文字存在，不证明测试输入或断言内容。固定案例动态运行见 SF1-E12，尚未验证。 | `heliodor-master-20261012`，`94e9c5821c24a8941c3ddc3b76daddc7124a855a` | [`SF1-E7`–`SF1-E10`](../../../notes/units/sv39-load-fault-v2.md#证据表)，README [`SF1-E11`](../../../notes/units/sv39-load-fault-v2.md#证据表)，tuple [`SF1-E12`](../../../notes/units/sv39-load-fault-v2.md#证据表) | `source` | `inspected` | 固定 tuple、cause/CSR 值和 redirect 均未运行验证；SF1-E11 仅为 README 检查，精确运行 tuple SF1-E12 未验证。 |
+
+两行共用输入 tuple；非规范性是静态位值推导。动态 fault、精确 `PC_LD`、`mcause/mepc/mtval` 内容、trap target 和执行时序均为 `unverified`。架构预期 cause 13、S-mode 与 `medeleg[13]=0` 下的 M-mode trap、`mtval` 的零/WARL 规则与实现静态逻辑分别记录于 [`sv39-load-fault-v2.md`](../../../notes/units/sv39-load-fault-v2.md#架构行为与子案例)。该结论不代表整体 profile 符合性。

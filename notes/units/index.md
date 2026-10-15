@@ -10,7 +10,7 @@
 | `load` | 阶段 3 | RV64I `LD` 普通访存路径双核对照 | [`notes/units/load-v2.md`](load-v2.md) | v2 已完成源码复核；案例未运行验证 |
 | `store` | 阶段 3 | RV64I `SD` 提交与写入接受边界双核对照 | [`notes/units/store-v1.md`](store-v1.md) | 静态源码追踪完成；案例未运行验证 |
 | `amoadd-d` | 阶段 3 | RV64A `AMOADD.D` 原子读改写双核对照 | [`notes/units/amoadd-d-v1.md`](amoadd-d-v1.md) | 单元记录完成；测试被工具链阻止，动态行为未验证 |
-| `sv39-load-fault` | 阶段 3 | Sv39 非规范 `LD` page fault 与 M-mode trap 双核对照 | [`notes/units/sv39-load-fault-v1.md`](sv39-load-fault-v1.md) | 单元记录完成；源码已检查，动态行为未验证 |
+| `sv39-load-fault` | 阶段 3 | Sv39 非规范 `LD` page fault 与 M-mode trap 双核对照 | [`notes/units/sv39-load-fault-v2.md`](sv39-load-fault-v2.md)；[历史版 v1](sv39-load-fault-v1.md) | v2 固定案例静态复核完成；动态行为未验证 |
 | `rva23u64-scalar` | Epic 4 / Story 4.2 | RVA23U64 基础整数与标量要求双核映射 | [`rva23u64-scalar-v1.md`](rva23u64-scalar-v1.md) | 单元记录完成；本次仅静态源码/测试材料检查，未运行测试 |
 | `rva23u64-floating-point` | Epic 4 / Story 4.3 | RVA23U64 F、D、Zfhmin、Zfa 标量浮点要求双核映射 | [`rva23u64-floating-point-v1.md`](rva23u64-floating-point-v1.md) | 单元记录完成；静态源码/测试材料检查，未运行测试；舍入、NaN-box、异常 flags 与 FS 边界未验证 |
 | `rva23u64-vector` | Epic 4 / Story 4.4 | RVA23U64 基础向量 V 要求双核映射 | [`rva23u64-vector-v1.md`](rva23u64-vector-v1.md) | 单元记录完成；静态源码/测试材料检查，未运行测试；完整指令、参数组合、异常/重启及 mask/tail 边界未验证 |
