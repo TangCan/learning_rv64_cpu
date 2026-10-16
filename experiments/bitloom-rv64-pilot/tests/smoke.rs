@@ -321,6 +321,33 @@ fn synchronous_ld_sd_round_trip_keeps_read_metadata_aligned() {
 }
 
 #[test]
+fn store_then_addi_retire_in_pc_order_once_each() {
+    let mut program = BTreeMap::new();
+    program.insert(0, sd(0, 0, 0));
+    program.insert(4, addi(1, 0, 7));
+    let mut sim = reset();
+    let mut retired_pcs = Vec::new();
+    for _ in 0..12 {
+        let pc = sim.ports().get("fetch_pc").unwrap_or(0);
+        let mut inputs = PortValues::default();
+        inputs.set("rst", 0);
+        inputs.set("instruction_in", u64::from(*program.get(&pc).unwrap_or(&0x13)));
+        inputs.set("debug_reg_addr", 0);
+        sim.set_inputs(inputs);
+        sim.tick();
+        if sim.ports().get("retire_valid") == Some(1) {
+            retired_pcs.push(sim.ports().get("retire_pc").unwrap());
+        }
+    }
+    assert_eq!(retired_pcs.iter().filter(|&&pc| pc == 0).count(), 1);
+    assert_eq!(retired_pcs.iter().filter(|&&pc| pc == 4).count(), 1);
+    assert!(
+        retired_pcs.iter().position(|&pc| pc == 0) < retired_pcs.iter().position(|&pc| pc == 4),
+        "retirement order: {retired_pcs:?}"
+    );
+}
+
+#[test]
 fn consecutive_load_responses_keep_their_pc_and_destination() {
     let mut program = BTreeMap::new();
     program.insert(0, addi(1, 0, 0));

@@ -1,6 +1,6 @@
 # Bitloom RV64 learning pilot; independent from completed project/follow-up tracking.
 generated: 2026-10-15
-last_updated: 10-16-2026 11:39
+last_updated: 10-16-2026 13:07
 project: bitloom-rv64-pilot
 
 development_status:
@@ -21,11 +21,11 @@ action_items:
     epic: 1
     action: "修复 SD 与紧邻普通指令的退休仲裁，并加入有序退休 PC 回归用例。"
     owner: "Richard"
-    status: open
+    status: done
     ref: "_agile-output/implementation-artifacts/followups/bitloom-rv64-pilot-2026-10-15/epic-1-retro-2026-10-16.md"
   - id: "epic-1-retro-item-2-将向量-rtl-icarus-testbench-接入常规验证入口"
     epic: 1
     action: "将向量 RTL Icarus testbench 接入常规验证入口。"
     owner: "Richard"
-    status: open
+    status: done
     ref: "_agile-output/implementation-artifacts/followups/bitloom-rv64-pilot-2026-10-15/epic-1-retro-2026-10-16.md"
