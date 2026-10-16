@@ -1,0 +1,6 @@
+Bitloom CLI: 1.2.4
+bitloom-prelude/builder/hir/macro/vlog: 1.2.4
+Rustc used by cargo-bitloom: 1.97.1
+Cargo used by cargo-bitloom: 1.97.1
+Icarus Verilog: 12.0 (stable)
+Yosys: 0.33 (git sha1 2584903a060)

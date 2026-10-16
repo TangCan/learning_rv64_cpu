@@ -1,0 +1,4 @@
+c41723f9eaf56c8012746e79343c5c8c83d38d0477023aeeeaae30089aa76615  notes/units/evidence/bitloom-rv64-pilot/story-1-5-2026-10-16/BitloomRv64Pilot.v
+b7957e82d2d81e95da83d276921c8074c8343d71e24ad87645406856158a9a3a  notes/units/evidence/bitloom-rv64-pilot/story-1-5-2026-10-16/BitloomVectorCase.v
+37566683f49a02d44617b918f3485ec0dff3aada085a913f43c3bc5dd484a99e  notes/units/evidence/bitloom-rv64-pilot/story-1-5-2026-10-16/core-host-Cargo.lock
+222a58da1a8b6554c517e519e810427eaa31ee5e483aa87f0820e0581618886a  notes/units/evidence/bitloom-rv64-pilot/story-1-5-2026-10-16/vector-host-Cargo.lock

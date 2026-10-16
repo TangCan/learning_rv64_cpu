@@ -52,3 +52,13 @@ Bitloom HIR 实现 IF、ID、EX、WB 四阶段、64 位 x0–x31 架构寄存器
 `wb_valid/wb_pc/wb_rd/wb_data` 用于观察寄存器写回；`retire_valid/retire_pc` 观察本切片的提交 PC，`store_valid/store_pc/store_addr/store_data` 观察存储事务。依赖访存结果的程序必须自行插入 NOP；本切片不处理转发、停顿或访存异常。
 
 确定性输入程序与期望结果放在 [`tests/smoke.rs`](tests/smoke.rs)：覆盖 ADDI 的符号扩展边界、ADD/SUB/AND/OR/XOR、x0、BEQ/BNE 的跳转与顺序路径、正负分支/JAL 偏移、错误路径 flush、LUI/AUIPC 结果及非法 opcode/funct 编码告警。所有结果来自 Bitloom 周期仿真；Kunminghu 和 Heliodor 的固定流程拒绝自定义输入，因此参考差分仍未验证。
+
+## Story 1.4：受限 128 位向量案例
+
+独立包 [`experiments/bitloom-vector-case`](../bitloom-vector-case/) 实现四个 32 位 lane 的 `vadd.vv` 写回示例。配置输入只接受 `VL=4`、`SEW=32`（编码 2）、`LMUL=1`（编码 0）；其他配置令 `vector_unsupported` 拉高且不更新目的寄存器。源向量寄存器由 `vector_init` 加载，`vector_wb_data` 是 128 位目的向量寄存器状态。每 lane 独立截断到 32 位，不传播进位。
+
+该包与 RV64 核心分开，以保留 Bitloom `Sim` 的单模块限制。使用 `cargo bitloom build` 生成 Verilog，再用 Icarus 测试平台检查结果；不使用 `bitloom-sim` 作为 128 位 oracle。两组有溢出的向量用例与不支持配置检查、工具版本和生成 RTL 哈希保存在 [`story-1-4-2026-10-16`](../../notes/units/evidence/bitloom-rv64-pilot/story-1-4-2026-10-16/)。Kunminghu/Heliodor 固定流程没有向量案例入口，因此本项结果是 RTL 自检，不是参考核差分。
+
+## Story 1.5：导出与阶段决策
+
+核心与向量设计均已保存生成 Verilog；Icarus 解析和 Yosys 0.33 通用综合检查通过。由于没有目标工艺库和时序约束，不报告 PPA。项目阶段决策为停止当前 Bitloom 试点，不启动完整核心重写或扩大 ISA/RVV 范围；LD/SD 和向量行为仍缺少 Kunminghu/Heliodor 对应运行差分。完整命令、报告、哈希与结论见 [`story-1-5-2026-10-16`](../../notes/units/evidence/bitloom-rv64-pilot/story-1-5-2026-10-16/) 和 [Story 1.5 spec](../../_agile-output/implementation-artifacts/followups/bitloom-rv64-pilot-2026-10-15/spec-1-5-verilog-and-stage-decision.md)。

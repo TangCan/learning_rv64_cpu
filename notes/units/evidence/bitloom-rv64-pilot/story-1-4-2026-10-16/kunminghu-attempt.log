@@ -1,0 +1,10 @@
+usage: run.py [-h] [--topic {fixture,zifencei,sstc,sscofpmf,ssnpm,ssstateen}]
+              [--manifest MANIFEST] [--evidence-dir EVIDENCE_DIR]
+              [--case {standard,funct12,rs1,rd}]
+              [--sstc-case {s-lt,s-eq,s-gt,s-stce-off,s-tm-off}]
+              [--sscofpmf-case {hardware-filter,access-route}]
+              [--ssnpm-case {pmlen0-canonical,pmlen0-tagged,pmlen7-canonical,pmlen7-tagged,pmlen7-bit56}]
+              [--ssstateen-case {m-hs-gates-diff,m-hs-selfcheck,hs-vs-valid,hs-vs-gates,hs-vu-fcsr,m-s-gates}]
+              [--no-diff] [--timeout TIMEOUT] [--max-instr MAX_INSTR]
+run.py: error: argument --topic: invalid choice: 'vector-case' (choose from 'fixture', 'zifencei', 'sstc', 'sscofpmf', 'ssnpm', 'ssstateen')
+kunminghu_exit=2

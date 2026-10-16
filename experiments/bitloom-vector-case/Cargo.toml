@@ -1,0 +1,14 @@
+[package]
+name = "bitloom_vector_case"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.97.1"
+publish = false
+
+[dependencies]
+bitloom-prelude = "=1.2.4"
+# Pin the CLI-generated host shim's shared semver dependencies to 1.2.4.
+bitloom-builder = "=1.2.4"
+bitloom-hir = "=1.2.4"
+bitloom-macro = "=1.2.4"
+bitloom-vlog = "=1.2.4"
