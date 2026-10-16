@@ -14,6 +14,24 @@ python3 experiments/kunminghu-smoke/run.py \
   --manifest notes/units/evidence/cpu-validation-toolchain-v1.yaml
 ```
 
+The `ld` topic builds the shared `experiments/rv64-ld-probe/ld.S` fixture with
+the Heliodor probe's linker script. It checks the native commit trace against
+the linked target PC, instruction, effective address, `rd`, and expected 64-bit
+value, then requires the fixture's self-checking NEMU good trap:
+
+```sh
+python3 experiments/kunminghu-smoke/run.py --topic ld \
+  --manifest notes/units/evidence/cpu-validation-toolchain-v1.yaml
+```
+
+The same assembly source and linker produce the byte-identical raw image used
+by Heliodor's `--topic ld-probe` (4104 bytes; SHA-256
+`f19127caaf66f2101b299459c2c10355a15f9b12a26490e4a3ff2d1f9701f50f`); the two
+runners execute it independently under different simulators. The runner does
+not expose whether the target
+access hit in DCache, so cache-hit status remains unverified. This is not an
+RVA23 profile result.
+
 The runner requires the locked `sources/xiangshan` checkout and direct
 gitlinks, the existing single-hart `KunminghuV2Config` emulator, its NEMU
 reference library, and `riscv64-unknown-elf-gcc`/`objcopy`. It does not rebuild

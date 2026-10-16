@@ -38,6 +38,31 @@ def test_success_requires_image_commit_and_good_trap():
     assert result["expected_observed"] is True
 
 
+def test_ld_commit_requires_exact_instruction_address_register_and_value():
+    output = ("[00] commit pc 0000000080000000 inst 00000297 wen 1 dst 05 data 0000000080001000 idx 000\n"
+              "[01] commit pc 0000000080000004 inst 0002b303 wen 1 dst 06 data 123456789abcdef0 idx 001\n")
+    observed = runner.parse_ld_commit(output, 0x80000004, 0x80001000)
+    assert observed == {
+        "pc": 0x80000004, "instruction": 0x0002B303, "write_enable": 1,
+        "rd": 6, "value": 0x123456789ABCDEF0, "effective_address": 0x80001000,
+        "data_address": 0x80001000, "naturally_aligned": True, "cache_hit": "unobserved",
+        "matched_expected_ld_commit": True,
+    }
+    wrong_value = output.replace("123456789abcdef0", "123456789abcdef1")
+    assert runner.parse_ld_commit(wrong_value, 0x80000004, 0x80001000)["matched_expected_ld_commit"] is False
+    wrong_address = output.replace("0000000080001000 idx 000", "0000000080001008 idx 000")
+    assert runner.parse_ld_commit(wrong_address, 0x80000004, 0x80001000)["matched_expected_ld_commit"] is False
+    assert runner.parse_ld_commit(output, 0x80000008, 0x80001000) is None
+
+
+def test_ld_fixture_prewarm_target_and_has_no_older_store():
+    source = (ROOT / "experiments/rv64-ld-probe/ld.S").read_text(encoding="utf-8")
+    assert source.count("\n    ld ") == 1
+    assert ".globl ld_target\nld_target:\n    ld t1, 0(t0)" in source
+    assert ".balign 8" in source and ".dword 0x123456789abcdef0" in source
+    assert "sd " not in source and "sd\t" not in source
+
+
 def test_missing_first_commit_is_blocked():
     output = "The image is fixture.bin\n" + runner.GOOD_TRAP
     result = runner.classify_output(output, 0)

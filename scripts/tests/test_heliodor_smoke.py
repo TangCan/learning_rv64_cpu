@@ -49,6 +49,104 @@ def test_sscofpmf_success_requires_arch_cpu_marker_and_pass_output() -> None:
                                      "arch_tohost": 0x220, "arch_pass": 0}, False, True)
 
 
+def test_ld_suite_success_is_arch_marker_based_and_labeled_partial() -> None:
+    smoke = ("[test_smoke] cy=5000 x10=7 x11=b commit=1651\n"
+             "[test_smoke] x12=4d x13=b\n[test_smoke] PASS\n")
+    label = "v4 rv64ui-ld"
+    output = smoke + f"{label} tohost=00000001 pass=1\n{label} PASS\n"
+    assert runner.observe(output, 0, label) == (
+        True, {"x10": 7, "x11": 11, "x12": 77, "x13": 11,
+               "arch_tohost": 1, "arch_pass": 1}, True, False)
+    assert runner.observe(smoke, 0, label)[0] is False
+    assert runner.expected_arch_marker(label) == f"{label} PASS"
+
+
+def test_ld_probe_requires_single_exact_retirement_record() -> None:
+    record = "ld-retire count=00000001 pc=0000000080000008 rd_valid=1 rd=06 data=123456789abcdef0"
+    assert runner.ld_retirement(record, 0x80000008) == {
+        "count": 1, "pc": 0x80000008, "rd_valid": 1, "rd": 6,
+        "data": 0x123456789ABCDEF0}
+    assert runner.ld_retirement(record + "\n" + record, 0x80000008) is None
+    assert runner.ld_retirement(record.replace("rd=06", "rd=05"), 0x80000008) is None
+
+
+def test_ld_cache_probe_requires_one_target_request_and_one_outcome() -> None:
+    assert runner.ld_cache_probe("ld-cache-probe req=1 hit=1 miss=0") == {
+        "request_seen": True, "hit_seen": True, "miss_seen": False}
+    assert runner.ld_cache_probe("ld-cache-probe req=1 hit=0 miss=1") == {
+        "request_seen": True, "hit_seen": False, "miss_seen": True}
+    assert runner.ld_cache_probe("ld-cache-probe req=1 hit=1 miss=1") == {
+        "request_seen": True, "hit_seen": True, "miss_seen": True}
+    assert runner.ld_cache_probe("ld-cache-probe req=0 hit=0 miss=0") is None
+    assert runner.ld_cache_probe("ld-cache-probe req=1 hit=1 miss=0\nld-cache-probe req=1 hit=1 miss=0") is None
+
+
+def test_ld_probe_passes_on_target_cache_hit_when_retirement_port_misses_it() -> None:
+    hit = {"request_seen": True, "hit_seen": True, "miss_seen": False}
+    miss = {"request_seen": True, "hit_seen": False, "miss_seen": True}
+    assert runner.ld_probe_passes(True, None, hit)
+    assert runner.ld_probe_passes(True, {"count": 1}, miss)
+    assert not runner.ld_probe_passes(True, None, miss)
+    assert not runner.ld_probe_passes(False, None, hit)
+
+
+def test_ld_probe_build_record_is_bound_to_source_linker_and_hex(tmp_path: pathlib.Path) -> None:
+    fixture = tmp_path / runner.LD_PROBE_FIXTURE
+    source = tmp_path / "experiments/rv64-ld-probe/ld.S"
+    linker = tmp_path / "experiments/rv64-ld-probe/fixture.ld"
+    for path in (fixture, source, linker):
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("fixture input\n", encoding="utf-8")
+    record = {"source": source.relative_to(tmp_path).as_posix(),
+              "source_sha256": runner.sha256(source),
+              "linker": linker.relative_to(tmp_path).as_posix(),
+              "linker_sha256": runner.sha256(linker),
+              "fixture_sha256": runner.sha256(fixture),
+              "target_pc": "0x80000008", "data_address": "0x80000050"}
+    fixture.with_suffix(".build.json").write_text(json.dumps(record), encoding="utf-8")
+    assert runner.load_ld_probe_build(tmp_path) == record
+    source.write_text("changed source\n", encoding="utf-8")
+    with pytest.raises(ValueError, match="source differs"):
+        runner.load_ld_probe_build(tmp_path)
+    source.write_text("fixture input\n", encoding="utf-8")
+    linker.write_text("changed linker\n", encoding="utf-8")
+    with pytest.raises(ValueError, match="linker differs"):
+        runner.load_ld_probe_build(tmp_path)
+    linker.write_text("fixture input\n", encoding="utf-8")
+    record["target_pc"] = "0x80000009"
+    fixture.with_suffix(".build.json").write_text(json.dumps(record), encoding="utf-8")
+    with pytest.raises(ValueError, match="invalid target/data addresses"):
+        runner.load_ld_probe_build(tmp_path)
+    record["target_pc"] = "0x80000008"
+    fixture.with_suffix(".build.json").write_text(json.dumps(record), encoding="utf-8")
+    fixture.write_text("changed fixture\n", encoding="utf-8")
+    with pytest.raises(ValueError, match="HEX differs"):
+        runner.load_ld_probe_build(tmp_path)
+
+
+def test_ld_probe_transformation_captures_latched_retirement_fields() -> None:
+    source = (runner.SOURCE / "tb/test_arch_common.veryl").read_text(encoding="utf-8")
+    transformed = runner.transform_arch_harness(
+        source, target="test_arch_rv64ui_ld", fixture=runner.LD_PROBE_FIXTURE,
+        label="v4 rv64ui-ld", ld_probe_pc=0x80000008)
+    assert "RETIRE_PC: logic<64> = 64'd0" in transformed
+    assert "probe_pc = ret_pc" in transformed
+    assert "o_retire_pc = probe_pc" in transformed
+    assert 'ld-retire count=%h pc=%h' in transformed
+    assert "o_ld_probe_hit: ld_probe_hit" in transformed
+    assert "ld_probe_hit_seen = 1'b1" in transformed
+    assert transformed.count("assign o_ld_probe_hit = ld_probe_hit;") == 1
+
+
+def test_ld_probe_core_qualifies_safe_hit_and_fill_start_by_target_pc() -> None:
+    source = (runner.SOURCE / "src/core/heliodor_core.veryl").read_text(encoding="utf-8")
+    transformed = runner.transform_ld_probe_core(source)
+    assert "param LD_PROBE_PC: u64 = 0," in transformed
+    assert "lsr_drive && lsr_pc_q == LD_PROBE_PC" in transformed
+    assert "o_dbg_ld_probe_hit = o_dbg_ld_probe_req && dc_hit_safe" in transformed
+    assert "o_dbg_ld_probe_miss = o_dbg_ld_probe_req && dc_miss_valid" in transformed
+
+
 def test_arch_marker_with_idle_tohost_does_not_prove_cpu_start() -> None:
     assert runner.observe("sscofpmf tohost=00000000 pass=0\n", 1, "sscofpmf") == (
         False, {"arch_tohost": 0, "arch_pass": 0}, False, False)
@@ -153,6 +251,37 @@ def test_run_selects_sscofpmf_fixture_target_and_marker(tmp_path: pathlib.Path,
     assert record["expected_marker"] == "sscofpmf PASS"
     assert record["result"] == "run-pass"
     assert record["case"] == case
+
+
+def test_run_selects_locked_ld_suite_and_records_its_evidence_limit(
+        tmp_path: pathlib.Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    _source, _manifest, args = _run_fixture_environment(tmp_path, monkeypatch)
+    args.topic = "ld"
+    fixture = runner.SOURCE / runner.LD_ARCH_FIXTURE
+    fixture.parent.mkdir(parents=True, exist_ok=True)
+    fixture.write_text("00000013\n", encoding="ascii")
+    calls = []
+    outputs = iter([
+        (0, b"[test_smoke] cy=5000 x10=7 x11=b commit=1\n[test_smoke] x12=4d x13=b\n[test_smoke] PASS\n", b"", ""),
+        (0, b"v4 rv64ui-ld tohost=00000001 pass=1\nv4 rv64ui-ld PASS\n", b"", ""),
+    ])
+
+    def execute(command, work, timeout):
+        calls.append(command)
+        return next(outputs)
+
+    monkeypatch.setattr(runner, "execute_test", execute)
+    record = runner.run(args)
+    transformed = (args.archive_dir / record["id"] / "test_arch_common.veryl").read_text(encoding="utf-8")
+    assert calls[1][-1] == "test_arch_rv64ui_ld"
+    assert f'HEX_FILE  : "{runner.LD_ARCH_FIXTURE}"' in transformed
+    assert "v4 rv64ui-ld" in transformed
+    assert record["input"].endswith("rv64ui-ld.hex")
+    assert record["expected_marker"] == "v4 rv64ui-ld PASS"
+    assert record["result"] == "run-pass"
+    assert record["topic"] == "rv64ui-ld-suite"
+    assert "suite-level" in record["evidence_scope"]
+    assert "no per-instruction retirement PC or rd value" in record["evidence_scope"]
 
 
 def test_run_blocks_when_arch_target_reports_only_idle_tohost(tmp_path: pathlib.Path,

@@ -1,0 +1,83 @@
+{
+  "id": "kunminghu-fixture-20261016T101144Z-3e81181d1d02",
+  "snapshot_sha": "unknown",
+  "input": "experiments/rv64-ld-probe/ld.S",
+  "input_sha256": "unavailable",
+  "linker_script": "experiments/rva23s64-zifencei/fixture.ld",
+  "linker_script_sha256": "unavailable",
+  "configuration": "KunminghuV2Config; NUM_CORES=1; one naturally aligned M-mode Bare LD at 0x80000000; NEMU difftest; cache-hit state not observed.",
+  "topic": "ld",
+  "target_pc": null,
+  "target_data_address": null,
+  "expected_controls": {
+    "instruction": "ld t1, 0(t0)",
+    "encoding": "0x0002b303",
+    "destination_register": "x6",
+    "value": "0x123456789abcdef0",
+    "natural_alignment": true,
+    "older_overlapping_store": false,
+    "privilege": "M-mode Bare (SATP reset state)",
+    "cache_hit": "unobserved"
+  },
+  "observed_values": null,
+  "evidence_method": "linked target symbol matched one native commit trace record; instruction, effective address from committed x5, x6 writeback value, and GOODTRAP self-check were required",
+  "command": "preflight only; no build or simulator command executed",
+  "working_directory": ".",
+  "tools": {
+    "cross_gcc": "riscv64-unknown-elf-gcc () 15.1.0",
+    "cross_objcopy": "GNU objcopy (GNU Binutils) 2.44",
+    "emulator": "emu compiled at Oct 14 2026, 10:53:44; binary sha256 21f0700203205870403df50eadf2afd182e33573afdeee9a264a49b328f9e897",
+    "nemu": "locked ready-to-run reference library; binary sha256 3e9d63c31d2cd68ec68d55fa9df56ec990ce9a9fd3a8e59709ecb92f21176c40",
+    "mill": "0.12.3; java -cp /tmp/mill-dist-0.12.3-assembly.jar mill.runner.MillMain (jar sha256 336346091edc69b248c306ca51aaccb73d888d8bf525ce45e02df89db449b41d)",
+    "java": "OpenJDK 17.0.20.1 (Ubuntu; /usr/lib/jvm/java-17-openjdk-amd64)",
+    "verilator": "5.050 2026-07-01; upstream tag v5.050, commit 0a24d49771fa57c36ff667272bf7b5c6705e4df0; binary sha256 fb2cc573b1055cf096c90e1efc9966fe56bdb4b265c83590cf2a49f7a0defcdf",
+    "cxx": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0; gcc same version",
+    "mill_launcher_sha256": "7f086728571afda31d433f7875a2df610f3c9f8e9c76e5bd13f97c3e564c53a4",
+    "verilator_build_cxx": "Ubuntu 22.04 GCC/G++ 11.4.0 in image sha256:829f6df217bcbae2b371026e81711d1a787c61b2967ad09d015063663ebafbf7"
+  },
+  "exit_code": 1,
+  "cpu_started": false,
+  "result": "blocked",
+  "output": "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261016T101144Z-3e81181d1d02/output.log",
+  "output_sha256": "96e6bb4a371c7994b65ba39ddae1dd8c6565a0b39abba80c7a59d6c14a8f36cf",
+  "stdout": "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261016T101144Z-3e81181d1d02/stdout.log",
+  "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderr": "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261016T101144Z-3e81181d1d02/stderr.log",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "artifacts": [
+    "experiments/rv64-ld-probe/ld.S",
+    "experiments/rva23s64-zifencei/fixture.ld"
+  ],
+  "expected_artifacts": [
+    "experiments/rv64-ld-probe/ld.S",
+    "experiments/rva23s64-zifencei/fixture.ld",
+    "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261016T101144Z-3e81181d1d02/fixture.elf",
+    "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261016T101144Z-3e81181d1d02/fixture.map",
+    "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261016T101144Z-3e81181d1d02/fixture.bin"
+  ],
+  "missing_artifacts": [
+    "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261016T101144Z-3e81181d1d02/fixture.elf",
+    "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261016T101144Z-3e81181d1d02/fixture.map",
+    "notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261016T101144Z-3e81181d1d02/fixture.bin"
+  ],
+  "artifact_sha256": {
+    "experiments/rv64-ld-probe/ld.S": "f6ca50b2779d71b3204ebdad8503515807e1c174d21d2a98b3c8d99a14f882b2",
+    "experiments/rva23s64-zifencei/fixture.ld": "ef98d55689874a6db2ff6e180c0df0372ae7324e67245c0b3846f18d71b89714"
+  },
+  "assertion_failed": false,
+  "expected_observed": false,
+  "expected": "Kunminghu LD fixture commits the exact aligned LD with x6=0x123456789abcdef0 and reaches the checked NEMU good trap.",
+  "observed": "image load not observed; first instruction commit not observed",
+  "expected_good_trap_pc": "unknown",
+  "blocker": "locked source and manifest preflight: kunminghu-v2/kunminghu-fixture-20261016T075949Z-3e81181d1d02: artifact does not exist or match a path pattern: experiments/kunminghu-smoke/ld.S; kunminghu-v2/kunminghu-fixture-20261016T075949Z-3e81181d1d02: input file does not exist: experiments/kunminghu-smoke/ld.S; post-run source/manifest integrity: kunminghu-v2/kunminghu-fixture-20261016T075949Z-3e81181d1d02: artifact does not exist or match a path pattern: experiments/kunminghu-smoke/ld.S; kunminghu-v2/kunminghu-fixture-20261016T075949Z-3e81181d1d02: input file does not exist: experiments/kunminghu-smoke/ld.S",
+  "expected_marker": "HIT GOOD TRAP",
+  "resources": {
+    "disk_free_bytes": 888958943232,
+    "memory_available_bytes": 211930112000,
+    "logical_cpu_count": 64,
+    "build_command_timeout_seconds": 120,
+    "emulator_timeout_seconds": 120.0
+  },
+  "next_environment_change": "Restore the manifest and locked source/gitlinks to a valid, clean state, then rerun preflight.",
+  "first_failed_stage": "locked source and manifest preflight"
+}

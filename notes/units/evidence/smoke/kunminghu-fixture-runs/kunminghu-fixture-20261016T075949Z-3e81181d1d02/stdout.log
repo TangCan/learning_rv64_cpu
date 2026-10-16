@@ -1,0 +1,32 @@
+[compile and link]
+[raw image generation]
+[emulator CPU run]
+emu compiled at Oct 14 2026, 10:53:44
+[INFO] init for constantin: loaded from init.
+Using simulated 1048576B flash
+Core  0's Commit SHA is: c098f996bf, dirty: 0
+Using simulated 8386560MB RAM
+The image is /nvme_data1/richard/learning_rv64_cpu/notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261016T075949Z-3e81181d1d02/fixture.bin
+The reference model is /nvme_data1/richard/learning_rv64_cpu/sources/xiangshan/ready-to-run/riscv64-nemu-interpreter-so
+The first instruction of core 0 has commited. Difftest enabled. 
+[00] commit pc 0000000010000000 inst 74446073 wen 0 dst 00 data 0000000000000000 idx 000
+[01] commit pc 0000000010000004 inst 0010029b wen 1 dst 05 data 0000000000000001 idx 001
+[02] commit pc 0000000010000008 inst 02a29313 wen 1 dst 06 data 0000040000000000 idx 002
+[03] commit pc 000000001000000c inst 30033073 wen 0 dst 00 data 0000040000000000 idx 003
+[04] commit pc 0000000010000010 inst 01f29293 wen 1 dst 05 data 0000000080000000 idx 004
+[05] commit pc 0000000010000014 inst 00028067 wen 0 dst 00 data 0000000080000000 idx 005
+[06] commit pc 0000000080000000 inst 00000297 wen 1 dst 05 data 0000000080000000 idx 006
+[07] commit pc 0000000080000004 inst 04028293 wen 1 dst 05 data 0000000080000040 idx 007
+[08] commit pc 0000000080000008 inst 0002b303 wen 1 dst 06 data 123456789abcdef0 idx 008 (00)
+[09] commit pc 000000008000000c inst 002473b7 wen 1 dst 07 data 00000000002468ad idx 009
+[10] commit pc 0000000080000014 inst 00e39393 wen 1 dst 07 data 000000091a2b4000 idx 00a
+[11] commit pc 0000000080000016 inst c4d38393 wen 1 dst 07 data 000000091a2b3c4d idx 00b
+[12] commit pc 000000008000001c inst 5e738393 wen 1 dst 07 data 000091a2b3c4d5e7 idx 00c
+[13] commit pc 0000000080000020 inst 00d39393 wen 1 dst 07 data 123456789abce000 idx 00d
+[14] commit pc 0000000080000026 inst 00731563 wen 0 dst 10 data 123456789abcdef0 idx 00e
+[15] commit pc 000000008000002a inst 00000513 wen 1 dst 10 data 0000000000000000 idx 00f
+Core 0: [32mHIT GOOD TRAP at pc = 0x8000002c
+[0m[35mCore-0 instrCnt = 19, cycleCnt = 4,197, IPC = 0.004527
+[0m[34mSeed=0 Guest cycle spent: 4,203 (this will be different from cycleCnt if emu loads a snapshot)
+[0m[34mHost time spent: 3,504ms
+[0m

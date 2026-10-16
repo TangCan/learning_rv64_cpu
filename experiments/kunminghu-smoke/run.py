@@ -20,7 +20,11 @@ from collections.abc import Callable
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 SOURCE = ROOT / "experiments/kunminghu-smoke/fixture.S"
+LD_SOURCE = ROOT / "experiments/rv64-ld-probe/ld.S"
+LD_LINKER = ROOT / "experiments/rv64-ld-probe/fixture.ld"
 LINKER = ROOT / "experiments/kunminghu-smoke/fixture.ld"
+LD_EXPECTED_INSTRUCTION = 0x0002B303  # ld t1, 0(t0)
+LD_EXPECTED_VALUE = 0x123456789ABCDEF0
 SSTC_SOURCE = ROOT / "experiments/sstc/kunminghu-full-matrix.S"
 SSCOFPMF_SOURCE = ROOT / "experiments/sscofpmf/kunminghu-sscofpmf-complete-v5.S"
 SSCOFPMF_ACCESS_SOURCE = ROOT / "experiments/sscofpmf/kunminghu-sscofpmf-access-route-v6.S"
@@ -106,6 +110,43 @@ def classify_output(output: str, exit_code: int, *, timed_out: bool = False,
             "HIT GOOD TRAP" if good and not bad else "HIT BAD TRAP" if bad else "good trap not observed"
         ) if started else "first instruction commit not observed"),
     }
+
+
+def parse_ld_commit(output: str, target_pc: int, data_address: int) -> dict[str, object] | None:
+    """Match the fixture's LD retirement and recover its base from committed state."""
+    registers: dict[int, int] = {}
+    matches = []
+    pattern = re.compile(
+        r"commit pc\s+([0-9a-fA-F]{16}) inst\s+([0-9a-fA-F]{8}) "
+        r"wen\s+(\d+) dst\s+([0-9a-fA-F]{2}) data\s+([0-9a-fA-F]{16})")
+    for line in output.splitlines():
+        match = pattern.search(line)
+        if not match:
+            continue
+        pc, instruction, rd, value = (int(match.group(i), 16) for i in (1, 2, 4, 5))
+        wen = int(match.group(3), 10)
+        if pc == target_pc:
+            rs1 = (instruction >> 15) & 0x1F
+            immediate = (instruction >> 20) & 0xFFF
+            if immediate & 0x800:
+                immediate -= 0x1000
+            base = registers.get(rs1)
+            matches.append({
+                "pc": pc, "instruction": instruction, "write_enable": wen,
+                "rd": rd, "value": value,
+                "effective_address": base + immediate if base is not None else None,
+            })
+        if wen and rd:
+            registers[rd] = value
+    if len(matches) != 1:
+        return None
+    result = matches[0]
+    instruction = result["instruction"]
+    valid = (instruction == LD_EXPECTED_INSTRUCTION and result["write_enable"] == 1
+             and result["rd"] == 6 and result["effective_address"] == data_address
+             and data_address % 8 == 0 and result["value"] == LD_EXPECTED_VALUE)
+    return {**result, "data_address": data_address, "naturally_aligned": data_address % 8 == 0,
+            "cache_hit": "unobserved", "matched_expected_ld_commit": valid}
 
 
 def parse_sstc_trace(output: str, case: str) -> dict[str, object]:
@@ -718,7 +759,7 @@ def missing_dependencies(gcc: str | None, objcopy: str | None,
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--topic", choices=("fixture", "zifencei", "sstc", "sscofpmf", "ssnpm", "ssstateen"), default="fixture")
+    parser.add_argument("--topic", choices=("fixture", "ld", "zifencei", "sstc", "sscofpmf", "ssnpm", "ssstateen"), default="fixture")
     parser.add_argument("--manifest", type=pathlib.Path,
                         default=ROOT / "notes/units/evidence/cpu-validation-toolchain-v1.yaml")
     parser.add_argument("--evidence-dir", type=pathlib.Path,
@@ -768,6 +809,9 @@ def main() -> int:
     if args.topic == "sstc":
         global SOURCE, LINKER
         SOURCE = SSTC_SOURCE
+    elif args.topic == "ld":
+        SOURCE = LD_SOURCE
+        LINKER = LD_LINKER
     elif args.topic == "sscofpmf":
         SOURCE = SSCOFPMF_ACCESS_SOURCE if args.sscofpmf_case == "access-route" else SSCOFPMF_SOURCE
     elif args.topic == "ssnpm":
@@ -835,6 +879,8 @@ def main() -> int:
     commands: list[str] = []
     stages: list[tuple[str, list[str]]] = []
     expected_trap_pc: int | None = None
+    expected_ld_pc: int | None = None
+    expected_ld_data: int | None = None
     failed_stage = ""
     stage_error = ""
     exit_code = 1
@@ -964,6 +1010,16 @@ def main() -> int:
                     exit_code = 1
                     break
                 expected_trap_pc = int(trap_match.group(1), 16)
+                if args.topic == "ld":
+                    target_match = re.search(r"^\s*0x([0-9a-fA-F]+)\s+ld_target$", map_text, re.MULTILINE)
+                    data_match = re.search(r"^\s*0x([0-9a-fA-F]+)\s+ld_data$", map_text, re.MULTILINE)
+                    if not target_match or not data_match:
+                        failed_stage = "link map inspection"
+                        stage_error = "LD fixture target/data symbols are absent from the linked image"
+                        exit_code = 1
+                        break
+                    expected_ld_pc = int(target_match.group(1), 16)
+                    expected_ld_data = int(data_match.group(1), 16)
 
     try:
         from run_cpu_smoke import validate_manifest
@@ -1011,6 +1067,12 @@ def main() -> int:
                                timed_out=timed_out, expected_start_pc=0x80000000,
                                expected_trap_pc=expected_trap_pc,
                                expected_image=str(raw))
+    ld_commit = (parse_ld_commit(stdout_text + "\n" + stderr_text, expected_ld_pc, expected_ld_data)
+                 if args.topic == "ld" and expected_ld_pc is not None and expected_ld_data is not None else None)
+    if args.topic == "ld" and observed["expected_observed"] and not (
+            ld_commit and ld_commit["matched_expected_ld_commit"]):
+        observed.update(result="run-fail", assertion_failed=True, expected_observed=False,
+                        blocker="good trap passed, but the target LD commit PC/encoding/address/rd/value did not match")
     if args.topic == "ssstateen" and args.ssstateen_no_diff:
         observed = classify_ssstateen_no_diff(stdout_text + "\n" + stderr_text, exit_code, observed)
     if observed["result"] == "unverified":
@@ -1079,6 +1141,8 @@ def main() -> int:
                            if args.topic == "sscofpmf" and args.sscofpmf_case == "access-route" else
                            "KunminghuV2Config; NUM_CORES=1; RV64IMA_Zicsr M-mode Sscofpmf fixture at 0x80000000; event selector 2 (Frontend ifu_req), counter 3, 64-bit hardware event wrap; NEMU difftest."
                            if args.topic == "sscofpmf" else
+                           "KunminghuV2Config; NUM_CORES=1; one naturally aligned M-mode Bare LD at 0x80000000; NEMU difftest; cache-hit state not observed."
+                           if args.topic == "ld" else
                            "KunminghuV2Config; NUM_CORES=1; Zifencei self-modifying fixture at 0x80000000; NEMU difftest."
                            if args.topic == "zifencei" else
                            "KunminghuV2Config; NUM_CORES=1; RV64I arithmetic fixture at 0x80000000; NEMU difftest."),
@@ -1098,6 +1162,15 @@ def main() -> int:
                                                 "incomplete: GOODTRAP self-check was not observed")},
             "evidence_method": "Kunminghu smoke runner preflight, fixed fixture build, linker-map inspection, emulator classification, and manifest append; fixture reports CSR operation trap IDs in its memory trace"}
            if args.topic == "ssstateen" else
+           {"topic": "ld", "target_pc": f"0x{expected_ld_pc:x}" if expected_ld_pc is not None else None,
+            "target_data_address": f"0x{expected_ld_data:x}" if expected_ld_data is not None else None,
+            "expected_controls": {"instruction": "ld t1, 0(t0)", "encoding": f"0x{LD_EXPECTED_INSTRUCTION:08x}",
+                                  "destination_register": "x6", "value": f"0x{LD_EXPECTED_VALUE:016x}",
+                                  "natural_alignment": True, "older_overlapping_store": False,
+                                  "privilege": "M-mode Bare (SATP reset state)", "cache_hit": "unobserved"},
+            "observed_values": ld_commit,
+            "evidence_method": "linked target symbol matched one native commit trace record; instruction, effective address from committed x5, x6 writeback value, and GOODTRAP self-check were required"}
+           if args.topic == "ld" else
            {"topic": "ssnpm", "case": args.ssnpm_case,
             "expected_controls": {"effective_privilege": "U", "instruction_families": (["ld"] if args.ssnpm_case == "pmlen0-tagged" else ["ld", "sd", "lr.d", "sc.d", "amoadd.d"]),
                                   "senvcfg.PMM": 2 if args.ssnpm_case.startswith("pmlen7-") else 0,
@@ -1175,7 +1248,9 @@ def main() -> int:
                                  else sha256(ROOT / a)) for a in artifacts},
         "assertion_failed": observed["assertion_failed"],
         "expected_observed": observed["expected_observed"],
-        "expected": ("Ssstateen fixture built by the locked Kunminghu runner; first instruction commits; self-check GOODTRAP required for pass."
+        "expected": ("Kunminghu LD fixture commits the exact aligned LD with x6=0x123456789abcdef0 and reaches the checked NEMU good trap."
+                     if args.topic == "ld" else
+                     "Ssstateen fixture built by the locked Kunminghu runner; first instruction commits; self-check GOODTRAP required for pass."
                      if args.topic == "ssstateen" else
                      "recorded fixture image loaded at 0x80000000; first instruction commits; NEMU good trap."
                      if args.topic != "sscofpmf" or args.sscofpmf_case == "hardware-filter" else

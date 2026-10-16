@@ -1,0 +1,33 @@
+{
+  "source": "experiments/heliodor-smoke/ld-probe.S",
+  "source_sha256": "1d32ba02f775bc606ddf2122bb5233bd56d6c5ccf984d0b0fbebb05411d00186",
+  "linker": "experiments/rva23s64-zifencei/fixture.ld",
+  "linker_sha256": "ef98d55689874a6db2ff6e180c0df0372ae7324e67245c0b3846f18d71b89714",
+  "target_pc": "0x0000000080000008",
+  "data_address": "0x0000000080000060",
+  "gcc_argv": [
+    "/home/richard/richard_opt/riscv/bin/riscv64-unknown-elf-gcc",
+    "-march=rv64imac_zicsr",
+    "-mabi=lp64",
+    "-nostdlib",
+    "-nostartfiles",
+    "-ffreestanding",
+    "-Wl,-T,/nvme_data1/richard/learning_rv64_cpu/experiments/rva23s64-zifencei/fixture.ld",
+    "-Wl,--build-id=none",
+    "-o",
+    "/tmp/heliodor-ld-probe-la5ul689/ld-probe.elf",
+    "/nvme_data1/richard/learning_rv64_cpu/experiments/heliodor-smoke/ld-probe.S"
+  ],
+  "objcopy_argv": [
+    "/home/richard/richard_opt/riscv/bin/riscv64-unknown-elf-objcopy",
+    "-O",
+    "binary",
+    "/tmp/heliodor-ld-probe-la5ul689/ld-probe.elf",
+    "/tmp/heliodor-ld-probe-la5ul689/ld-probe.bin"
+  ],
+  "tool_sha256": {
+    "riscv64-unknown-elf-gcc": "3b2b5d5ad7f9c7821c8ca1b11c6c512f30e3d63dcbdc726836c1c7bc0bceed32",
+    "riscv64-unknown-elf-objcopy": "0ed4d26870589f4ba1e5678b62305d66c2df6ee8906da706c830a6f42950c858",
+    "riscv64-unknown-elf-nm": "efcf80cb84207546bba2dde494b1e6505ed5cc94b11d530a3fc44ea435f1c0d9"
+  }
+}

@@ -28,6 +28,8 @@ ARCH_DEBUG_MARKER = "// Debug variant exposing core internals for stuck-test dia
 ARCH_DRAM_DECL = "    var dram: logic<32> [1048576];"
 ARCH_TARGET_MARKER = "#[test(test_arch_rv64ui_add)]\nmodule test_arch_rv64ui_add"
 ARCH_FIXTURE = "test/riscv-arch-test/build/rv64ui/add.hex"
+LD_ARCH_FIXTURE = "test/riscv-arch-test/build/rv64ui/ld.hex"
+LD_PROBE_FIXTURE = "experiments/heliodor-smoke/ld-probe.hex"
 SSTC_CASES = ("s-lt", "s-eq", "s-gt", "s-stce-off", "s-tm-off",
               "vs-lt", "vs-eq", "vs-gt", "vs-mstce-off", "vs-hstce-off",
               "vs-mtm-off", "vs-htm-off", "vs-route", "vs-hs-route")
@@ -190,7 +192,7 @@ def observe(output: str, exit_code: int, arch_label: str = "v4 rv64ui-add") -> t
     # cannot prove that this separate target began execution. Without an arch
     # result marker, report startup as unobserved (blocked) rather than assert
     # either that the target ran or that it did not.
-    target_only_case = arch_label in {"v4 rv64ui-fence_i", "sscofpmf", "supm"} or arch_label.startswith("ssnpm ")
+    target_only_case = arch_label in {"v4 rv64ui-fence_i", "v4 rv64ui-ld", "sscofpmf", "supm"} or arch_label.startswith("ssnpm ")
     cpu_started = arch_started if target_only_case else (smoke_started or arch_started)
     values: dict[str, int] = {}
     for reg in (10, 11, 12, 13):
@@ -215,10 +217,54 @@ def observe(output: str, exit_code: int, arch_label: str = "v4 rv64ui-add") -> t
     return cpu_started, values, passed, failed
 
 
+def ld_retirement(output: str, target_pc: int) -> dict[str, int] | None:
+    matches = re.findall(r"ld-retire count=([0-9a-fA-F]+) pc=([0-9a-fA-F]+) rd_valid=([0-9a-fA-F]+) rd=([0-9a-fA-F]+) data=([0-9a-fA-F]+)", output)
+    if len(matches) != 1:
+        return None
+    count, pc, rd_valid, rd, data = matches[0]
+    result = {"count": int(count, 16), "pc": int(pc, 16), "rd_valid": int(rd_valid, 16),
+              "rd": int(rd, 16), "data": int(data, 16)}
+    return result if (result == {"count": 1, "pc": target_pc, "rd_valid": 1,
+                                  "rd": 6, "data": 0x123456789ABCDEF0}) else None
+
+
+def ld_cache_probe(output: str) -> dict[str, bool] | None:
+    matches = re.findall(r"ld-cache-probe req=([01]) hit=([01]) miss=([01])", output)
+    if len(matches) != 1:
+        return None
+    req, hit, miss = (value == "1" for value in matches[0])
+    return {"request_seen": req, "hit_seen": hit, "miss_seen": miss} if req and (hit or miss) else None
+
+
+def ld_probe_passes(arch_passed: bool, retirement: dict[str, int] | None,
+                    cache_probe: dict[str, bool] | None) -> bool:
+    return arch_passed and cache_probe is not None and (retirement is not None or cache_probe["hit_seen"])
+
+
+def load_ld_probe_build(root: pathlib.Path, fixture_rel: str = LD_PROBE_FIXTURE) -> dict:
+    fixture = root / fixture_rel
+    record_path = fixture.with_suffix(".build.json")
+    try:
+        record = json.loads(record_path.read_text(encoding="utf-8"))
+        for name in ("source", "linker"):
+            path = (root / record[name]).resolve()
+            if not path.is_relative_to(root.resolve()) or sha256(path) != record[f"{name}_sha256"]:
+                raise ValueError(f"LD probe {name} differs from its build record")
+        if sha256(fixture) != record["fixture_sha256"]:
+            raise ValueError("LD probe HEX differs from its build record")
+        target_pc = int(record["target_pc"], 16)
+        data_address = int(record["data_address"], 16)
+        if target_pc < 0x80000000 or target_pc >= 0x80001000 or target_pc % 4 or data_address % 8:
+            raise ValueError("LD probe build record contains invalid target/data addresses")
+        return record
+    except (OSError, KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
+        raise ValueError(f"invalid LD probe build record: {exc}") from exc
+
+
 def expected_arch_marker(arch_label: str, *, zifencei_case: bool = False,
                          sscofpmf: bool = False, ssnpm_case: str | None = None) -> str:
     """Return the marker that identifies the selected arch target."""
-    return f"{arch_label} PASS" if zifencei_case or sscofpmf or ssnpm_case or arch_label == "supm" else "[test_smoke] PASS"
+    return f"{arch_label} PASS" if zifencei_case or sscofpmf or ssnpm_case or arch_label in {"supm", "v4 rv64ui-ld"} else "[test_smoke] PASS"
 
 
 def sscofpmf_observed_values(case: str, values: dict[str, int], passed: bool) -> dict | None:
@@ -255,7 +301,21 @@ def transform_testbench(original: str) -> str:
     return original.replace(IMEM_DECL, "    #[allow(initial_assign)]\n" + IMEM_DECL, 1)
 
 
-def transform_arch_harness(original: str, *, target: str = "test_arch_rv64ui_add", fixture: str = ARCH_FIXTURE, label: str = "v4 rv64ui-add", mtime_enable: bool = False, arch_cycles: int = 200000) -> str:
+def transform_ld_probe_core(original: str) -> str:
+    param = "    param PMA_FAULT: bit = 0,"
+    port = "    o_dbg_retire_data_a : output logic<64>     ,"
+    anchor = "    assign o_dbg_dmem_vaddr = core_dmem_vaddr;"
+    if any(original.count(value) != 1 for value in (param, port, anchor)):
+        raise ValueError("pinned core LD probe anchors drifted")
+    result = original.replace(param, param + "\n    param LD_PROBE_PC: u64 = 0,", 1)
+    result = result.replace(port, port + "\n    o_dbg_ld_probe_req : output logic,\n    o_dbg_ld_probe_hit : output logic,\n    o_dbg_ld_probe_miss: output logic,", 1)
+    return result.replace(anchor, anchor + "\n"
+        "    assign o_dbg_ld_probe_req = lsr_drive && lsr_pc_q == LD_PROBE_PC;\n"
+        "    assign o_dbg_ld_probe_hit = o_dbg_ld_probe_req && dc_hit_safe;\n"
+        "    assign o_dbg_ld_probe_miss = o_dbg_ld_probe_req && dc_miss_valid;", 1)
+
+
+def transform_arch_harness(original: str, *, target: str = "test_arch_rv64ui_add", fixture: str = ARCH_FIXTURE, label: str = "v4 rv64ui-add", mtime_enable: bool = False, arch_cycles: int = 200000, ld_probe_pc: int | None = None) -> str:
     """Keep the ordinary harness and one RV64UI target; omit the debug harness and unrelated tests."""
     if original.count(ARCH_DEBUG_MARKER) != 1 or original.count(ARCH_DRAM_DECL) != 1:
         raise ValueError("pinned arch harness boundary/DRAM declaration drifted; re-review isolation workaround")
@@ -339,6 +399,36 @@ def transform_arch_harness(original: str, *, target: str = "test_arch_rv64ui_add
         normal_harness, changed = re.subn(r"i_mtime\s*:\s*mtime_ctr\s*,", "i_mtime: mtime_ctr >> 8,", normal_harness, count=1)
         if changed != 1:
             raise ValueError("pinned arch harness lacks the mtime input anchor")
+    if ld_probe_pc is not None:
+        anchors = ("    param MTIME_EN  : bit    = 1'b0,", "    o_tohost: output logic<32>,",
+                   "    var ret_data         : logic<64>     ;", "    var dbg_rename_cnt   : logic<32>     ;",
+                   "    assign o_tohost = tohost_lo;")
+        if any(normal_harness.count(anchor) != 1 for anchor in anchors):
+            raise ValueError("pinned arch harness retirement capture anchors drifted")
+        if selected_target.count("    var tohost: logic<32>;") != 1:
+            raise ValueError("LD target tohost declaration anchor drifted")
+        normal_harness = normal_harness.replace("    param MTIME_EN  : bit    = 1'b0,", "    param MTIME_EN  : bit    = 1'b0,\n    param RETIRE_PC: logic<64> = 64'd0,")
+        normal_harness = normal_harness.replace("    o_tohost: output logic<32>,", "    o_tohost: output logic<32>,\n    o_retire_count: output logic<32>,\n    o_retire_pc: output logic<64>,\n    o_retire_rd_valid: output logic,\n    o_retire_rd: output logic<5>,\n    o_retire_data: output logic<64>,\n    o_ld_probe_req: output logic,\n    o_ld_probe_hit: output logic,\n    o_ld_probe_miss: output logic,")
+        normal_harness = normal_harness.replace("    var ret_data         : logic<64>     ;", "    var ret_data         : logic<64>     ;\n    var probe_count: logic<32>;\n    var probe_pc: logic<64>;\n    var probe_rd_valid: logic;\n    var probe_rd: logic<5>;\n    var probe_data: logic<64>;\n    var ld_probe_req: logic;\n    var ld_probe_hit: logic;\n    var ld_probe_miss: logic;")
+        normal_harness = normal_harness.replace("        PMA_FAULT: 1           ,", "        PMA_FAULT: 1           ,\n        LD_PROBE_PC: RETIRE_PC,")
+        normal_harness = normal_harness.replace("        o_dbg_retire_data_a   : ret_data         ,", "        o_dbg_retire_data_a   : ret_data         ,\n        o_dbg_ld_probe_req: ld_probe_req,\n        o_dbg_ld_probe_hit: ld_probe_hit,\n        o_dbg_ld_probe_miss: ld_probe_miss,")
+        normal_harness = normal_harness.replace("    var dbg_rename_cnt   : logic<32>     ;", "    always_ff (clk, rst) {\n        if_reset { probe_count = 32'd0; probe_pc = 64'd0; probe_rd_valid = 1'b0; probe_rd = 5'd0; probe_data = 64'd0; }\n        else if ret_v && ret_pc == RETIRE_PC { probe_count = probe_count + 32'd1; probe_pc = ret_pc; probe_rd_valid = ret_rdv; probe_rd = ret_rd; probe_data = ret_data; }\n    }\n    var dbg_rename_cnt   : logic<32>     ;")
+        normal_harness = normal_harness.replace("    assign o_tohost = tohost_lo;", "    assign o_tohost = tohost_lo;\n    assign o_retire_count = probe_count;\n    assign o_retire_pc = probe_pc;\n    assign o_retire_rd_valid = probe_rd_valid;\n    assign o_retire_rd = probe_rd;\n    assign o_retire_data = probe_data;\n    assign o_ld_probe_req = ld_probe_req;\n    assign o_ld_probe_hit = ld_probe_hit;\n    assign o_ld_probe_miss = ld_probe_miss;")
+        if any(anchor not in normal_harness for anchor in ("o_retire_count", "probe_count = probe_count +", "o_retire_data = probe_data")):
+            raise ValueError("pinned arch harness retirement capture anchors drifted")
+        selected_target, changed = re.subn(r"TOHOST_IDX\s*:\s*1024\s*,", f"TOHOST_IDX: 1024, RETIRE_PC: 64'h{ld_probe_pc:016x},", selected_target, count=1)
+        if changed != 1:
+            raise ValueError("LD probe target lacks TOHOST_IDX anchor")
+        selected_target = selected_target.replace("    var tohost: logic<32>;", "    var tohost: logic<32>;\n    var retire_count: logic<32>;\n    var retire_pc: logic<64>;\n    var retire_rd_valid: logic;\n    var retire_rd: logic<5>;\n    var retire_data: logic<64>;\n    var ld_probe_req: logic;\n    var ld_probe_hit: logic;\n    var ld_probe_miss: logic;\n    var ld_probe_req_seen: logic;\n    var ld_probe_hit_seen: logic;\n    var ld_probe_miss_seen: logic;")
+        selected_target = selected_target.replace("    inst h: test_arch_common_harness #(", "    always_ff (clk, rst) {\n        if_reset { ld_probe_req_seen = 1'b0; ld_probe_hit_seen = 1'b0; ld_probe_miss_seen = 1'b0; }\n        else {\n            if ld_probe_req { ld_probe_req_seen = 1'b1; }\n            if ld_probe_hit { ld_probe_hit_seen = 1'b1; }\n            if ld_probe_miss { ld_probe_miss_seen = 1'b1; }\n        }\n    }\n    inst h: test_arch_common_harness #(")
+        selected_target, changed = re.subn(r"(o_tohost\s*:\s*tohost\s*,)", r"\1\n        o_retire_count: retire_count, o_retire_pc: retire_pc, o_retire_rd_valid: retire_rd_valid, o_retire_rd: retire_rd, o_retire_data: retire_data,", selected_target, count=1)
+        if changed != 1:
+            raise ValueError("LD target lacks tohost port connection anchor")
+        selected_target = selected_target.replace("o_retire_data: retire_data,", "o_retire_data: retire_data,\n        o_ld_probe_req: ld_probe_req, o_ld_probe_hit: ld_probe_hit, o_ld_probe_miss: ld_probe_miss,")
+        selected_target = selected_target.replace("$display  (\"v4 rv64ui-ld tohost=%h pass=%b\", tohost, pass);", "$display  (\"v4 rv64ui-ld tohost=%h pass=%b\", tohost, pass);\n    $display (\"ld-retire count=%h pc=%h rd_valid=%h rd=%h data=%h\", retire_count, retire_pc, retire_rd_valid, retire_rd, retire_data);")
+        selected_target = selected_target.replace("$display (\"ld-retire count=%h pc=%h rd_valid=%h rd=%h data=%h\", retire_count, retire_pc, retire_rd_valid, retire_rd, retire_data);", "$display (\"ld-retire count=%h pc=%h rd_valid=%h rd=%h data=%h\", retire_count, retire_pc, retire_rd_valid, retire_rd, retire_data);\n    $display (\"ld-cache-probe req=%b hit=%b miss=%b\", ld_probe_req_seen, ld_probe_hit_seen, ld_probe_miss_seen);")
+        if "ld-retire count=" not in selected_target:
+            raise ValueError("LD target result display anchor drifted")
     return normal_harness.rstrip() + "\n\n" + selected_target
 
 
@@ -389,6 +479,8 @@ def next_environment_change(stage: str, blocker: str) -> str:
 def run(args: argparse.Namespace) -> dict:
     zifencei_case = getattr(args, "zifencei_case", None)
     sstc_case = getattr(args, "sstc_case", None)
+    ld_suite = getattr(args, "topic", "smoke") == "ld"
+    ld_probe = getattr(args, "topic", "smoke") == "ld-probe"
     sscofpmf = getattr(args, "topic", "smoke") == "sscofpmf"
     sscofpmf_case = getattr(args, "sscofpmf_case", None) or "hardware-overflow"
     sscofpmf_fixture, sscofpmf_source = SSCOFPMF_FIXTURES[sscofpmf_case]
@@ -414,6 +506,14 @@ def run(args: argparse.Namespace) -> dict:
         fixture_rel = f"experiments/ssnpm/heliodor/{ssnpm_case}.hex"
         arch_target = "test_arch_rv64ui_ssnpm"
         arch_label = f"ssnpm {ssnpm_case}"
+    elif ld_suite:
+        fixture_rel = LD_ARCH_FIXTURE
+        arch_target = "test_arch_rv64ui_ld"
+        arch_label = "v4 rv64ui-ld"
+    elif ld_probe:
+        fixture_rel = getattr(args, "ld_probe_fixture", LD_PROBE_FIXTURE)
+        arch_target = "test_arch_rv64ui_ld"
+        arch_label = "v4 rv64ui-ld"
     started_at = time.time()
     run_base = time.strftime("heliodor-core-%Y%m%dT%H%M%SZ", time.gmtime()) + f"-{os.getpid()}"
     run_id = run_base
@@ -434,8 +534,15 @@ def run(args: argparse.Namespace) -> dict:
     out = bytearray(); err = bytearray(); exit_code = 1; cpu_started = False
     assertion_failed = False; expected_observed = False; infrastructure_blocked = False
     first_stage = "locked-source-preflight"; blocker = ""
-    snapshot_sha = LOCKED_SHA; input_path = ((ROOT / "experiments/rva23s64-zifencei" / f"{zifencei_case}.hex") if zifencei_case else (ROOT / "experiments/sstc/heliodor" / f"{sstc_case}.hex") if sstc_case else (ROOT / fixture_rel) if ssnpm or sscofpmf else SOURCE / fixture_rel)
-    archived_arch_fixture = archive / (f"zifencei-{zifencei_case}.hex" if zifencei_case else f"sstc-{sstc_case}.hex" if sstc_case else f"sscofpmf-{sscofpmf_case}.hex" if sscofpmf else f"ssnpm-{ssnpm_case}.hex" if ssnpm else "rv64ui-add.hex")
+    snapshot_sha = LOCKED_SHA; input_path = ((ROOT / "experiments/rva23s64-zifencei" / f"{zifencei_case}.hex") if zifencei_case else (ROOT / "experiments/sstc/heliodor" / f"{sstc_case}.hex") if sstc_case else (ROOT / fixture_rel) if ssnpm or sscofpmf or ld_probe else SOURCE / fixture_rel)
+    archived_arch_fixture = archive / ("ld-probe.hex" if ld_probe else f"zifencei-{zifencei_case}.hex" if zifencei_case else f"sstc-{sstc_case}.hex" if sstc_case else f"sscofpmf-{sscofpmf_case}.hex" if sscofpmf else f"ssnpm-{ssnpm_case}.hex" if ssnpm else "rv64ui-ld.hex" if ld_suite else "rv64ui-add.hex")
+    ld_build_record: dict = {}
+    ld_probe_pc = None
+    retirement: dict[str, int] | None = None
+    cache_probe: dict[str, bool] | None = None
+    if ld_probe:
+        ld_build_record = load_ld_probe_build(ROOT, fixture_rel)
+        ld_probe_pc = int(ld_build_record["target_pc"], 16)
     ssnpm_build_record: dict = {}
     # Snapshot the exact arch input before source preflight so even blocked runs
     # retain a stable, hash-verifiable input artifact.
@@ -477,6 +584,9 @@ def run(args: argparse.Namespace) -> dict:
         # and its fixture. Omitting test_arch_common.veryl also excludes its
         # uninstantiated 64K-word debug harness that fails Veryl 0.22.0 check.
         shutil.copytree(SOURCE / "src", work / "src")
+        if ld_probe:
+            core_path = work / "src/core/heliodor_core.veryl"
+            core_path.write_text(transform_ld_probe_core(core_path.read_text(encoding="utf-8")), encoding="utf-8")
         for name in ("Veryl.toml", "Veryl.lock"):
             shutil.copy2(SOURCE / name, work / name)
         (work / "tb").mkdir(); (work / "test").mkdir(parents=True)
@@ -485,7 +595,7 @@ def run(args: argparse.Namespace) -> dict:
         transformed = transform_testbench(original)
         (work / "tb/test_smoke.veryl").write_text(transformed, encoding="utf-8")
         arch_source = SOURCE / "tb/test_arch_common.veryl"
-        transformed_arch = transform_arch_harness(arch_source.read_text(encoding="utf-8"), target=arch_target, fixture=fixture_rel, label=arch_label, mtime_enable=bool(sstc_case), arch_cycles=arch_cycles)
+        transformed_arch = transform_arch_harness(arch_source.read_text(encoding="utf-8"), target=arch_target, fixture=fixture_rel, label=arch_label, mtime_enable=bool(sstc_case), arch_cycles=arch_cycles, ld_probe_pc=ld_probe_pc)
         (work / "tb/test_arch_common.veryl").write_text(transformed_arch, encoding="utf-8")
         shutil.copy2(smoke_input_path, work / "test/v4_smoke.hex")
         arch_fixture = work / fixture_rel
@@ -513,6 +623,12 @@ def run(args: argparse.Namespace) -> dict:
             ssnpm_build_record = json.loads(build_record_path.read_text(encoding="utf-8"))
             shutil.copy2(build_record_path, archive / f"{ssnpm_case}.build.json")
             shutil.copy2(SSNPM_LINKER, archive / "fixture.ld")
+        if ld_probe:
+            probe_source = pathlib.Path(ld_build_record["source"])
+            shutil.copy2(ROOT / probe_source, archive / probe_source.name)
+            shutil.copy2((ROOT / fixture_rel).with_suffix(".build.json"), archive / f"{pathlib.Path(fixture_rel).stem}.build.json")
+            shutil.copy2(ROOT / ld_build_record["linker"], archive / "fixture.ld")
+            shutil.copy2(work / "src/core/heliodor_core.veryl", archive / "heliodor_core.veryl")
         for test_name in ("test_smoke", arch_target):
             first_stage = test_name
             command = [binary, "test", "--include-ignored", "--test", test_name]
@@ -524,6 +640,12 @@ def run(args: argparse.Namespace) -> dict:
                 break
         combined = (out + err).decode("utf-8", "replace")
         cpu_started, values, expected_observed, assertion_failed = observe(combined, exit_code, arch_label)
+        retirement = ld_retirement(combined, ld_probe_pc) if ld_probe and ld_probe_pc is not None else None
+        cache_probe = ld_cache_probe(combined) if ld_probe else None
+        if ld_probe:
+            probe_passed = ld_probe_passes(expected_observed, retirement, cache_probe)
+            expected_observed = probe_passed
+            assertion_failed = assertion_failed or (cpu_started and not probe_passed)
         if not blocker and not cpu_started:
             blocker = "Veryl completed without the test execution marker; CPU start was not observed"
         if cpu_started and not expected_observed and exit_code == 0:
@@ -632,7 +754,14 @@ def run(args: argparse.Namespace) -> dict:
                    {"path": str(archived_arch_fixture.relative_to(ROOT)) if archived_arch_fixture.is_file() else str(input_path.relative_to(ROOT)), "sha256": input_hash},
                    *([{"path": sscofpmf_source, "sha256": sha256(ROOT / sscofpmf_source)},
                       {"path": SSCOFPMF_LINKER, "sha256": sha256(ROOT / SSCOFPMF_LINKER)}] if sscofpmf else [])],
-        "configuration": (f"Heliodor test_smoke plus isolated test_arch_rv64ui_ssnpm ({ssnpm_case}); one harness/DUT; U-mode senvcfg.PMM PMLEN/tagged-pointer probe." if ssnpm else
+        **({"topic": "rv64ui-ld-probe", "evidence_scope": "one fixture LD retirement plus target-PC DCache safe-hit/fill-start observations in the isolated core"} if ld_probe else
+           {"topic": "rv64ui-ld-suite", "evidence_scope": "suite-level tohost/pass only; no per-instruction retirement PC or rd value is exposed"} if ld_suite else {}),
+        **({"observed_retirement": retirement, "observed_cache_probe": cache_probe,
+            **({"expected_retirement": {"count": 1, "pc": ld_probe_pc, "rd_valid": 1, "rd": 6, "data": "0x123456789abcdef0"}} if retirement is not None else {}),
+            "fixture_build": ld_build_record, "evidence_method": "self-checking LD fixture plus target-PC DCache safe-hit/fill-start capture; retirement port fields are recorded when available"} if ld_probe else {}),
+        "configuration": (f"Heliodor test_smoke plus isolated test_arch_rv64ui_ld; one harness/DUT; one-LD fixture and retirement-port capture." if ld_probe else
+                          f"Heliodor test_smoke plus isolated test_arch_rv64ui_ssnpm ({ssnpm_case}); one harness/DUT; U-mode senvcfg.PMM PMLEN/tagged-pointer probe." if ssnpm else
+                          "Heliodor test_smoke plus isolated test_arch_rv64ui_ld and the locked rv64ui/ld.hex; one harness/DUT; suite-level tohost/pass evidence only." if ld_suite else
                           f"Heliodor test_smoke plus {arch_target}; one harness/DUT; 5000 smoke cycles and 300000 arch cycles; expected Zifencei old/new return 1/42 and tohost=1." if zifencei_case else
                           f"Heliodor test_smoke plus {arch_target}; one harness/DUT; 5000 smoke cycles and {arch_cycles} Sscofpmf arch cycles; event5 mem-port-busy, counter3; expected tohost=1 after {sscofpmf_case} assertions." if sscofpmf else
                           f"Heliodor test_smoke plus {arch_target}; one harness/DUT; 5000 smoke cycles and 300000 arch cycles; mtime counter increments each cycle and CSR time is mtime_ctr >> 8; controls={SSTC_CONTROLS.get(sstc_case, {})}; expected tohost=1." if sstc_case else
@@ -643,7 +772,9 @@ def run(args: argparse.Namespace) -> dict:
         "result": "run-pass" if expected_observed else ("run-fail" if cpu_started and assertion_failed else "blocked"),
         "assertion_failed": assertion_failed, "expected_observed": expected_observed,
         "infrastructure_blocked": infrastructure_blocked,
-        "expected": (f"U-mode Ssnpm fixture {ssnpm_case} verifies senvcfg.PMM readback and expected explicit access behavior before tohost=1/pass=1." if ssnpm else
+        "expected": ("Fixture self-check passes, and target-PC cache observation sees a safe hit or a validated target retirement." if ld_probe else
+                     f"U-mode Ssnpm fixture {ssnpm_case} verifies senvcfg.PMM readback and expected explicit access behavior before tohost=1/pass=1." if ssnpm else
+                     "test_smoke passes; the RV64UI LD suite reports tohost=1/pass=1 and its PASS marker. This is suite-level evidence, not a per-LD retirement/value trace." if ld_suite else
                      "test_smoke registers pass; Zifencei fixture checks old return 1 then new return 42 and reports tohost=1/pass=1." if zifencei_case else
                      "Heliodor Sscofpmf fixture checks MINH filtering, hardware event5 counter3 wrap, cause 13, OF, and scountovf[3] before tohost=1." if sscofpmf else
                      f"Heliodor fixture {sstc_case} asserts its named Sstc condition and reports tohost=1." if sstc_case else
@@ -678,6 +809,9 @@ def run(args: argparse.Namespace) -> dict:
     runner_snapshot = archive / "run.py"
     shutil.copy2(pathlib.Path(__file__).resolve(), runner_snapshot)
     artifact_names = ["run.py", "test_smoke.veryl", "v4_smoke.hex", "test_arch_common.veryl", archived_arch_fixture.name]
+    if ld_probe:
+        artifact_names.extend([pathlib.Path(ld_build_record["source"]).name,
+                               f"{pathlib.Path(fixture_rel).stem}.build.json", "fixture.ld", "heliodor_core.veryl"])
     if ssnpm:
         artifact_names.extend(["build_heliodor_fixtures.py", f"{ssnpm_case}.S", f"{ssnpm_case}.build.json", "fixture.ld"])
     record["artifact_sha256"] = {str((archive / n).relative_to(ROOT)): sha256(archive / n)
@@ -723,12 +857,26 @@ def main() -> int:
     parser.add_argument("--archive-dir", type=pathlib.Path, default=ROOT / "notes/units/evidence/smoke/heliodor-core-smoke-inputs")
     parser.add_argument("--work-dir", type=pathlib.Path)
     parser.add_argument("--timeout", type=float, default=180.0)
-    parser.add_argument("--topic", choices=("smoke", "zifencei", "sstc", "sscofpmf", "ssnpm"), default="smoke")
+    parser.add_argument("--topic", choices=("smoke", "ld", "ld-probe", "zifencei", "sstc", "sscofpmf", "ssnpm"), default="smoke")
     parser.add_argument("--case", choices=("standard", "funct12", "rs1", "rd"))
     parser.add_argument("--sstc-case", choices=SSTC_CASES)
     parser.add_argument("--ssnpm-case", choices=SSNPM_CASES)
     parser.add_argument("--sscofpmf-case", choices=SSCOFPMF_CASES)
+    parser.add_argument("--ld-probe-source", type=pathlib.Path,
+                        help="alternate project-relative assembly fixture for --topic ld-probe")
     args = parser.parse_args()
+    if args.topic == "ld-probe":
+        source = (ROOT / (args.ld_probe_source or pathlib.Path("experiments/rv64-ld-probe/ld.S"))).resolve()
+        if not source.is_relative_to(ROOT) or not source.is_file():
+            parser.error("--ld-probe-source must name an existing source inside the project")
+        fixture = pathlib.Path(LD_PROBE_FIXTURE) if args.ld_probe_source is None else pathlib.Path("experiments/heliodor-smoke") / f"{source.stem}.hex"
+        args.ld_probe_fixture = fixture.as_posix()
+        build = subprocess.run([sys.executable, str(ROOT / "experiments/heliodor-smoke/build_ld_probe.py"),
+                                "--source", str(source), "--output", str(ROOT / fixture)], cwd=ROOT, check=False)
+        if build.returncode:
+            return build.returncode
+    elif args.ld_probe_source is not None:
+        parser.error("--ld-probe-source requires --topic ld-probe")
     if args.timeout <= 0 or not (args.timeout < float("inf")):
         parser.error("--timeout must be finite and positive")
     if args.sstc_case and args.topic != "sstc":
