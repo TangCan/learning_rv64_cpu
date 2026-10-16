@@ -28,9 +28,20 @@ The same assembly source and linker produce the byte-identical raw image used
 by Heliodor's `--topic ld-probe` (4104 bytes; SHA-256
 `f19127caaf66f2101b299459c2c10355a15f9b12a26490e4a3ff2d1f9701f50f`); the two
 runners execute it independently under different simulators. The runner does
-not expose whether the target
-access hit in DCache, so cache-hit status remains unverified. This is not an
-RVA23 profile result.
+not expose a target-PC DCache response, so cache-hit status remains unverified.
+For an alternate prewarmed fixture, `--ld-source` selects another project-local
+assembly file:
+
+```sh
+python3 experiments/kunminghu-smoke/run.py --topic ld \
+  --ld-source experiments/rv64-ld-probe/ld-hit-settled.S --timeout 180
+```
+
+The run record preserves aggregate L1 DCache/load-unit counters, but they are
+not tagged with a PC. This two-load settled fixture reported two first-issue
+real misses and zero load hits; that aggregate result does not identify which
+request missed and does not establish a target hit. This is not an RVA23
+profile result.
 
 The runner requires the locked `sources/xiangshan` checkout and direct
 gitlinks, the existing single-hart `KunminghuV2Config` emulator, its NEMU

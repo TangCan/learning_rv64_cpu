@@ -44,7 +44,7 @@ source_snapshots:
 | --- | --- | --- |
 | `LD`, XLEN=64，EA[2:0]=0 | covered | 64 位加载语义由 LD2-E1 支持；实现数据路径见 LD2-E2–LD2-E11。 |
 | Heliodor 目标 PC DCache safe hit | covered | 预热 fixture 在目标 PC 观察到 hit=1、miss=0（LD2-E21）；这是 DCache safe-hit 信号，不是原始 tag 比较。 |
-| Kunminghu DCache hit、两边 M-mode Bare、无异常、无更老重叠 store | unconfirmed | Kunminghu 未暴露目标 cache 状态；权限/模式配置和旧 store 条件也未由运行记录完整确认。 |
+| Kunminghu 目标 DCache hit、两边 M-mode Bare、无异常、无更老重叠 store | unconfirmed | Kunminghu 预热 fixture 的汇总计数没有 hit 事件，且无 PC 标签；权限/模式配置和旧 store 条件也未由运行记录完整确认。 |
 | DCache miss/refill 与 replay | partially observed | Heliodor 冷加载目标 PC 观察到 fill-start 和 safe-hit（LD2-E20）；没有追踪 fill 完成、两者时序或 replay 延迟。 |
 | 更老 store 重叠、forwarding、store-load 次序 | excluded | 无相关旧 store 是前提；不覆盖 forwarding 或内存顺序验证。 |
 | 未对齐、地址转换、权限拒绝及异常 | excluded | 不从本案例推及这些子案例。 |
@@ -53,7 +53,7 @@ source_snapshots:
 
 - **阶段与状态变化：** 整数 load issue 用 `src(0) + SignExt(imm(11,0), VAddrBits)` 形成地址，并为 TLB 保留完整虚拟地址；请求标为读和 load queue index。DTLB 返回物理地址后，DCache 请求使用 `M_XRD`、地址、mask 与 LQ index。DCache load pipe 用物理 tag/权限判断 hit，读取 banked data；本例假定 hit，因此返回数据而不进入 miss/refill。load pipe 将 DCache 响应数据送入 `LoadUnit`，与本例不适用的转发通道合并后按地址偏移选取自然 dword，再由 `rdataHelper` 按操作宽度整理；`LD` 结果送到 `ldout.data`，随目的物理寄存器和 ROB 元数据进入后续写回。LoadQueue 连接接收 load 单元的 load 状态/数据记录（LD2-E6）。`Rob.scala` 由可提交头项形成 `commitValid`，在 `isCommit` 时退休；`RenameTableWrapper` 仅在 `isCommit && commitValid && rfWen` 时更新整数 architectural map（LD2-E14）。这些是固定源码描述的结构条件，未动态观察本例到达 ROB 头部或发生提交。
 - **源码位置：** 有效地址、TLB 与 DCache 请求、DTLB 物理地址响应和 kill 条件 LD2-E2–LD2-E3；hit 判定、bank read 与响应数据 LD2-E4；load pipe 数据选择和 `ldout` LD2-E5；load queue 接线 LD2-E6。
-- **相关验证：** LD2-E16、E19 通过锁定 Kunminghu runner 构建并运行独立 fixture；manifest 记录 commit trace、自检 marker、工具与二进制哈希。动态观察覆盖目标 `LD` 的提交 PC、机器码、有效地址、目的寄存器和数据；DCache hit 状态未暴露。
+- **相关验证：** LD2-E16、E19 通过锁定 Kunminghu runner 构建并运行独立 fixture；manifest 记录 commit trace、自检 marker、工具与二进制哈希。动态观察覆盖目标 `LD` 的提交 PC、机器码、有效地址、目的寄存器和数据。预热变体的汇总 DCache 计数报告 2 次 first-issue real miss、0 次 load hit，但计数没有 PC 标签（LD2-E22），因此目标 hit 仍未观察。
 
 ## Heliodor 路径
 
@@ -95,18 +95,19 @@ source_snapshots:
 | LD2-E19 | 同一镜像的 Kunminghu/Heliodor 单条 LD 对照 | test-run | run-pass | Kunminghu `c098f996bf4d301b88693b20315486d31e93bc9d`; Heliodor `94e9c5821c24a8941c3ddc3b76daddc7124a855a` | `experiments/rv64-ld-probe/ld.S` + `fixture.ld`; 两侧 manifest run records | `python3 experiments/kunminghu-smoke/run.py --topic ld --timeout 120`；`PATH="/nvme_data1/richard/.local/share/veryl/toolchains/latest:$PATH" python3 experiments/heliodor-smoke/run.py --topic ld-probe --timeout 180` | 两个固定快照的单 DUT runner；输出镜像归一后逐字节相同 | 4104-byte binary SHA-256=`f19127caaf66f2101b299459c2c10355a15f9b12a26490e4a3ff2d1f9701f50f`；目标 PC=`0x80000008`，EA/data=`0x80000050` | Kunminghu commit 与 Heliodor retirement 均匹配 `rd=x6`, `0x123456789abcdef0`，各自终止自检通过 | 两侧 run-pass；Kunminghu 还观察 EA，Heliodor 观察 count=1/PC/rd/data；两侧 cache hit 未观察 | Kunminghu `notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261016T101307Z-3e81181d1d02/`；Heliodor `notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261016T102111Z-1965619/` |
 | LD2-E20 | Heliodor 冷加载目标 PC 的 DCache 事件观察 | test-run | run-pass | Heliodor / `heliodor-master-20261012`; `94e9c5821c24a8941c3ddc3b76daddc7124a855a` | archived `heliodor_core.veryl`; manifest run record | `PATH="/nvme_data1/richard/.local/share/veryl/toolchains/latest:$PATH" python3 experiments/heliodor-smoke/run.py --topic ld-probe --timeout 300` | 隔离 core，探针以 `lsr_pc_q == 0x80000008` 限定 | 共享冷加载 fixture，目标 `LD` PC=`0x80000008` | fixture pass；目标 retirement x6/data 匹配；记录 target PC 的 cache hit/miss 信号 | `req=1 hit=1 miss=1`；retirement count=1 且 data=`0x123456789abcdef0`。锁存信号只证明两类事件都出现，不编码先后顺序 | `notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261016T104511Z-2457187/` |
 | LD2-E21 | Heliodor 预热目标 PC safe-hit 观察 | test-run | run-pass | Heliodor / `heliodor-master-20261012`; `94e9c5821c24a8941c3ddc3b76daddc7124a855a` | `experiments/rv64-ld-probe/ld-hit-settled.S`; archived transformed core and manifest run record | `PATH="/nvme_data1/richard/.local/share/veryl/toolchains/latest:$PATH" python3 experiments/heliodor-smoke/run.py --topic ld-probe --ld-probe-source experiments/rv64-ld-probe/ld-hit-settled.S --timeout 300` | 隔离 core，探针以 `lsr_pc_q == 0x80000030` 限定 | 先完成同地址预热读取，再执行被测 `LD` | 目标 PC request safe hit，未观察 fill-start；fixture 对加载值自检并通过 tohost/pass | `req=1 hit=1 miss=0`；target-PC retirement capture count=0，因此退休字段不作为此项结论依据 | `notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261016T104750Z-2510169/` |
+| LD2-E22 | Kunminghu settled 预热 fixture 的聚合 cache 计数 | test-run | run-pass | Kunminghu / `xiangshan-kunminghu-v2-20261012`; `c098f996bf4d301b88693b20315486d31e93bc9d` | `experiments/kunminghu-smoke/run.py --ld-source`; manifest run record | `python3 experiments/kunminghu-smoke/run.py --topic ld --ld-source experiments/rv64-ld-probe/ld-hit-settled.S --timeout 180` | KunminghuV2Config 单 hart；两个同地址 LD，第二个为被测 target PC=`0x80000030` | settled 预热源，EA/data=`0x80000080`/`0x123456789abcdef0` | 目标 commit 与 fixture 自检通过；归档 L1 DCache/load-unit counters 供边界分析 | aggregate `real_miss_first_issue=2`, `load_hit=0`, `load_miss=4`, `load_replay=2`；无 PC 标签，不能据此标记目标请求 hit/miss | `notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261016T105705Z-3e81181d1d02/` |
 
-- `inspected` 表示源码/规范已检查，`unverified` 表示对应行为仍未验证。LD2-E19 是同一原始二进制分别在两侧运行的对照；LD2-E20/E21 是 Heliodor 独立冷加载/预热探针。Heliodor safe hit 已观察；Kunminghu 的 cache hit、跨实现的同状态 hit 对照仍未验证。
+- `inspected` 表示源码/规范已检查，`unverified` 表示对应行为仍未验证。LD2-E19 是同一冷加载原始二进制分别在两侧运行的对照；LD2-E20/E21 是 Heliodor 独立冷加载/预热探针；LD2-E22 是 Kunminghu 预热变体。Heliodor safe hit 已按目标 PC 观察；Kunminghu 的聚合计数没有目标 PC，不能确定其目标请求状态，也没有跨实现的同状态 hit 对照。
 - M-mode Bare、DCache hit、对齐和无旧重叠 store 是本案例边界，不是实验观察。源码局部证据不证明两边对 miss/refill、forwarding、未对齐访问、异常、地址转换配置或 RVA23 整体符合性。
 
 ## 学习者总结
 
-`LD` 的架构结果是 EA 指向的完整 64 位值。两侧现已分别运行并通过同一 4104-byte binary（哈希见 LD2-E19），且目标 PC、rd=x6 与数据一致；Kunminghu trace 还观察到 EA。Heliodor 预热 fixture 的目标-PC 请求观察到 safe hit，冷加载则观察到 hit 与 fill-start；Kunminghu 对应 cache 状态仍未知。两侧是在各自锁定环境中独立运行，不能替代同步或同一微架构配置下的等价证明。
+`LD` 的架构结果是 EA 指向的完整 64 位值。两侧现已分别运行并通过同一 4104-byte 冷加载 binary（哈希见 LD2-E19），且目标 PC、rd=x6 与数据一致；Kunminghu trace 还观察到 EA。Heliodor 预热 fixture 的目标-PC 请求观察到 safe hit，冷加载则观察到 hit 与 fill-start。Kunminghu settled 变体的全局计数未记录 hit，且不带 PC，目标请求仍不能分类。两侧是在各自锁定环境中独立运行，不能替代同步或同一微架构配置下的等价证明。
 
 ## 未解问题
 
 - Kunminghu 本例 EA、x6 值和目标提交已观察；DCache hit 与访问是否无异常仍不能从独立记录直接断言。
-- Kunminghu DCache hit/miss 状态尚未观察，也没有和 Heliodor 做同一预热/冷启动条件的 cache 对照。
+- Kunminghu DCache 计数目前是全局汇总；需要能按目标 PC 关联的运行时观察，才能确定 target LD 的 hit/miss，并与 Heliodor 对照。
 - Heliodor 冷加载目标 retirement PC/rd/value 已观察；预热版本的 cache hit 已观察但其 retirement 端口未捕获目标事件。Heliodor 的动态有效地址仍未直接观测。
 - 两边具体 M-mode/Bare、PMP/PMA 与 DCache 配置未由 sources.lock 固定；本文只将它们作为选定场景假设。
 - 两侧同一镜像已独立运行通过；尚无同步双核执行或微架构等价性结论。

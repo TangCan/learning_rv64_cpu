@@ -55,6 +55,30 @@ def test_ld_commit_requires_exact_instruction_address_register_and_value():
     assert runner.parse_ld_commit(output, 0x80000008, 0x80001000) is None
 
 
+def test_parse_ld_cache_counters_reports_aggregate_without_claiming_pc() -> None:
+    output = "\n".join([
+        "SimTop.cpu.core.memBlock.inner.dcache.dcache.ldu_0: load_hit, 1",
+        "SimTop.cpu.core.memBlock.inner.dcache.dcache.ldu_1: load_hit, 0",
+        "SimTop.cpu.core.memBlock.inner.dcache.dcache.ldu_2: load_hit, 2",
+        "SimTop.cpu.core.memBlock.inner.dcache.dcache.ldu_0: load_miss, 1",
+        "SimTop.cpu.core.memBlock.inner.dcache.dcache.ldu_1: load_miss, 0",
+        "SimTop.cpu.core.memBlock.inner.dcache.dcache.ldu_2: load_miss, 0",
+        "SimTop.cpu.core.memBlock.inner.dcache.dcache.ldu_0: load_replay, 1",
+        "SimTop.cpu.core.memBlock.inner.dcache.dcache.ldu_1: load_replay, 0",
+        "SimTop.cpu.core.memBlock.inner.dcache.dcache.ldu_2: load_replay, 0",
+        "SimTop.cpu.core.memBlock.inner.dcache.dcache.ldu_0: load_succeed, 0",
+        "SimTop.cpu.core.memBlock.inner.dcache.dcache.ldu_1: load_succeed, 0",
+        "SimTop.cpu.core.memBlock.inner.dcache.dcache.ldu_2: load_succeed, 2",
+        "SimTop.cpu.core.memBlock.inner.LoadUnit_0: s2_dcache_real_miss_first_issue, 1",
+        "SimTop.cpu.core.memBlock.inner.LoadUnit_1: s2_dcache_real_miss_first_issue, 0",
+        "SimTop.cpu.core.memBlock.inner.LoadUnit_2: s2_dcache_real_miss_first_issue, 0",
+    ])
+    assert runner.parse_ld_cache_counters(output) == {
+        "load_hit": 3, "load_miss": 1, "load_replay": 1,
+        "load_succeed": 2, "real_miss_first_issue": 1}
+    assert runner.parse_ld_cache_counters("no counters") is None
+
+
 def test_ld_fixture_prewarm_target_and_has_no_older_store():
     source = (ROOT / "experiments/rv64-ld-probe/ld.S").read_text(encoding="utf-8")
     assert source.count("\n    ld ") == 1

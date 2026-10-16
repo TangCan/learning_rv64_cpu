@@ -149,6 +149,18 @@ def parse_ld_commit(output: str, target_pc: int, data_address: int) -> dict[str,
             "cache_hit": "unobserved", "matched_expected_ld_commit": valid}
 
 
+def parse_ld_cache_counters(output: str) -> dict[str, int] | None:
+    counters = {
+        "load_hit": r"\.dcache\.ldu_\d+: load_hit,\s*(\d+)",
+        "load_miss": r"\.dcache\.ldu_\d+: load_miss,\s*(\d+)",
+        "load_replay": r"\.dcache\.ldu_\d+: load_replay,\s*(\d+)",
+        "load_succeed": r"\.dcache\.ldu_\d+: load_succeed,\s*(\d+)",
+        "real_miss_first_issue": r"\.LoadUnit_\d+: s2_dcache_real_miss_first_issue,\s*(\d+)",
+    }
+    parsed = {name: sum(map(int, re.findall(pattern, output))) for name, pattern in counters.items()}
+    return parsed if all(re.search(pattern, output) for pattern in counters.values()) else None
+
+
 def parse_sstc_trace(output: str, case: str) -> dict[str, object]:
     """Recover timer sample and comparator operands from architectural commits."""
     sampled_time = None
@@ -770,6 +782,8 @@ def main() -> int:
                         default=None)
     parser.add_argument("--ssnpm-case", choices=("pmlen0-canonical", "pmlen0-tagged", "pmlen7-canonical", "pmlen7-tagged", "pmlen7-bit56"))
     parser.add_argument("--ssstateen-case", choices=("m-hs-gates-diff", "m-hs-selfcheck", "hs-vs-valid", "hs-vs-gates", "hs-vu-fcsr", "m-s-gates"))
+    parser.add_argument("--ld-source", type=pathlib.Path,
+                        help="alternate project-relative LD assembly fixture")
     parser.add_argument("--no-diff", "--ssstateen-no-diff", dest="ssstateen_no_diff", action="store_true",
                         help="disable NEMU differential checking for the ssstateen probe")
     parser.add_argument("--timeout", type=float, default=120.0,
@@ -780,6 +794,8 @@ def main() -> int:
     args = parser.parse_args()
     if args.max_instr <= 0:
         parser.error("--max-instr must be positive")
+    if args.ld_source is not None and args.topic != "ld":
+        parser.error("--ld-source requires --topic ld")
     if args.case and args.topic != "zifencei":
         parser.error("--case requires --topic zifencei")
     if args.sstc_case and args.topic != "sstc":
@@ -810,7 +826,9 @@ def main() -> int:
         global SOURCE, LINKER
         SOURCE = SSTC_SOURCE
     elif args.topic == "ld":
-        SOURCE = LD_SOURCE
+        SOURCE = (ROOT / args.ld_source).resolve() if args.ld_source else LD_SOURCE
+        if (not SOURCE.is_relative_to(ROOT) or not SOURCE.is_file() or SOURCE.suffix != ".S"):
+            parser.error("--ld-source must name an existing .S source inside the project")
         LINKER = LD_LINKER
     elif args.topic == "sscofpmf":
         SOURCE = SSCOFPMF_ACCESS_SOURCE if args.sscofpmf_case == "access-route" else SSCOFPMF_SOURCE
@@ -1069,6 +1087,7 @@ def main() -> int:
                                expected_image=str(raw))
     ld_commit = (parse_ld_commit(stdout_text + "\n" + stderr_text, expected_ld_pc, expected_ld_data)
                  if args.topic == "ld" and expected_ld_pc is not None and expected_ld_data is not None else None)
+    ld_cache_counters = parse_ld_cache_counters(stderr_text) if args.topic == "ld" else None
     if args.topic == "ld" and observed["expected_observed"] and not (
             ld_commit and ld_commit["matched_expected_ld_commit"]):
         observed.update(result="run-fail", assertion_failed=True, expected_observed=False,
@@ -1141,7 +1160,7 @@ def main() -> int:
                            if args.topic == "sscofpmf" and args.sscofpmf_case == "access-route" else
                            "KunminghuV2Config; NUM_CORES=1; RV64IMA_Zicsr M-mode Sscofpmf fixture at 0x80000000; event selector 2 (Frontend ifu_req), counter 3, 64-bit hardware event wrap; NEMU difftest."
                            if args.topic == "sscofpmf" else
-                           "KunminghuV2Config; NUM_CORES=1; one naturally aligned M-mode Bare LD at 0x80000000; NEMU difftest; cache-hit state not observed."
+                           "KunminghuV2Config; NUM_CORES=1; naturally aligned M-mode Bare LD fixture at 0x80000000; NEMU difftest; cache state is not PC-correlated."
                            if args.topic == "ld" else
                            "KunminghuV2Config; NUM_CORES=1; Zifencei self-modifying fixture at 0x80000000; NEMU difftest."
                            if args.topic == "zifencei" else
@@ -1169,7 +1188,8 @@ def main() -> int:
                                   "natural_alignment": True, "older_overlapping_store": False,
                                   "privilege": "M-mode Bare (SATP reset state)", "cache_hit": "unobserved"},
             "observed_values": ld_commit,
-            "evidence_method": "linked target symbol matched one native commit trace record; instruction, effective address from committed x5, x6 writeback value, and GOODTRAP self-check were required"}
+            "observed_dcache_counters": ld_cache_counters,
+            "evidence_method": "linked target symbol matched one native commit trace record; aggregate L1 DCache/load-unit performance counters are archived separately and are not PC-correlated"}
            if args.topic == "ld" else
            {"topic": "ssnpm", "case": args.ssnpm_case,
             "expected_controls": {"effective_privilege": "U", "instruction_families": (["ld"] if args.ssnpm_case == "pmlen0-tagged" else ["ld", "sd", "lr.d", "sc.d", "amoadd.d"]),
