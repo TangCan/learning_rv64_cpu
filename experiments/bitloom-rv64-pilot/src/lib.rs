@@ -125,6 +125,12 @@ pub fn rhdl_elaborate() -> Result<bitloom_prelude::FrozenHir, bitloom_prelude::D
     s.add_output("wb_rd", u5.clone(), p);
     s.add_output("wb_data", u64.clone(), p);
     s.add_output("unsupported_instruction", u1.clone(), p);
+    s.add_output("retire_valid", u1.clone(), p);
+    s.add_output("retire_pc", u64.clone(), p);
+    s.add_output("store_valid", u1.clone(), p);
+    s.add_output("store_pc", u64.clone(), p);
+    s.add_output("store_addr", u64.clone(), p);
+    s.add_output("store_data", u64.clone(), p);
 
     // IF/ID, ID/EX, and EX/WB registers make each instruction's order explicit.
     for (name, ty) in [
@@ -133,6 +139,7 @@ pub fn rhdl_elaborate() -> Result<bitloom_prelude::FrozenHir, bitloom_prelude::D
         ("if_id_pc", u64),
         ("if_id_instruction", u32),
         ("id_ex_valid", u1),
+        ("id_ex_supported", u1),
         ("id_ex_pc", u64),
         ("id_ex_rs1", u64),
         ("id_ex_rs2", u64),
@@ -150,20 +157,52 @@ pub fn rhdl_elaborate() -> Result<bitloom_prelude::FrozenHir, bitloom_prelude::D
         ("id_ex_beq", u1),
         ("id_ex_bne", u1),
         ("id_ex_jal", u1),
+        ("id_ex_ld", u1),
+        ("id_ex_sd", u1),
+        ("ld_meta1_valid", u1),
+        ("ld_meta1_pc", u64),
+        ("ld_meta1_rd", u5),
+        ("ld_meta2_valid", u1),
+        ("ld_meta2_pc", u64),
+        ("ld_meta2_rd", u5),
+        ("store_valid_reg", u1),
+        ("store_pc_reg", u64),
+        ("store_addr_reg", u64),
+        ("store_data_reg", u64),
+        ("load_data", u64),
         ("ex_wb_valid", u1),
         ("ex_wb_pc", u64),
         ("ex_wb_rd", u5),
         ("ex_wb_data", u64),
         ("ex_wb_we", u1),
+        ("ex_retire_valid", u1),
+        ("ex_retire_pc", u64),
     ] {
         reg(&mut s, name, ty, p);
     }
+    s.declare_sync_read_mem_with_init(
+        "data_mem",
+        8,
+        64,
+        vec![
+            0x1122_3344_5566_7788,
+            0x8877_6655_4433_2211,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+        ],
+        p,
+    );
     for i in 1..32 {
         reg(&mut s, format!("x{i}"), u64, p);
     }
     s.begin_combinational(p);
 
     constant(&mut s, "zero1", 1, 0, p);
+    constant(&mut s, "zero3", 3, 0, p);
     constant(&mut s, "one1", 1, 1, p);
     constant(&mut s, "zero5", 5, 0, p);
     constant(&mut s, "zero64", 64, 0, p);
@@ -206,6 +245,12 @@ pub fn rhdl_elaborate() -> Result<bitloom_prelude::FrozenHir, bitloom_prelude::D
     wire(&mut s, "imm_b", u64, p);
     s.assign_sign_extend("imm_b", "imm_b_bits", 64, p);
 
+    slice(&mut s, "s_imm_hi", "if_id_instruction", 25, 7, p);
+    slice(&mut s, "s_imm_lo", "if_id_instruction", 7, 5, p);
+    concat(&mut s, "s_imm_bits", "s_imm_hi", 7, "s_imm_lo", 5, p);
+    wire(&mut s, "imm_s", u64, p);
+    s.assign_sign_extend("imm_s", "s_imm_bits", 64, p);
+
     slice(&mut s, "j20", "if_id_instruction", 31, 1, p);
     slice(&mut s, "j10_1", "if_id_instruction", 21, 10, p);
     slice(&mut s, "j11", "if_id_instruction", 20, 1, p);
@@ -218,8 +263,16 @@ pub fn rhdl_elaborate() -> Result<bitloom_prelude::FrozenHir, bitloom_prelude::D
     wire(&mut s, "imm_j", u64, p);
     s.assign_sign_extend("imm_j", "imm_j_bits", 64, p);
 
-    let (op_i, op_r, op_lui, op_auipc, op_branch, op_jal) =
-        ("op_i", "op_r", "op_lui", "op_auipc", "op_branch", "op_jal");
+    let (op_i, op_r, op_lui, op_auipc, op_branch, op_jal, op_load, op_store) = (
+        "op_i",
+        "op_r",
+        "op_lui",
+        "op_auipc",
+        "op_branch",
+        "op_jal",
+        "op_load",
+        "op_store",
+    );
     for (name, value) in [
         (op_i, 0x13),
         (op_r, 0x33),
@@ -227,6 +280,8 @@ pub fn rhdl_elaborate() -> Result<bitloom_prelude::FrozenHir, bitloom_prelude::D
         (op_auipc, 0x17),
         (op_branch, 0x63),
         (op_jal, 0x6f),
+        (op_load, 0x03),
+        (op_store, 0x23),
     ] {
         eq_const(&mut s, &format!("{name}_eq"), "opcode", 7, value, p);
     }
@@ -236,6 +291,7 @@ pub fn rhdl_elaborate() -> Result<bitloom_prelude::FrozenHir, bitloom_prelude::D
         ("f3_4", 4),
         ("f3_6", 6),
         ("f3_7", 7),
+        ("f3_3", 3),
     ] {
         eq_const(&mut s, name, "funct3", 3, value, p);
     }
@@ -265,21 +321,32 @@ pub fn rhdl_elaborate() -> Result<bitloom_prelude::FrozenHir, bitloom_prelude::D
         wire(&mut s, format!("ctrl_{op}"), &GroundType::Bool, p);
         s.assign_net(format!("ctrl_{op}"), format!("{opcode}_eq"), p);
     }
+    for (op, opcode) in [("ld", op_load), ("sd", op_store)] {
+        let flag = and_all(
+            &mut s,
+            &format!("is_{op}"),
+            &[format!("{opcode}_eq"), "f3_3".into()],
+            p,
+        );
+        wire(&mut s, format!("ctrl_{op}"), &GroundType::Bool, p);
+        s.assign_net(format!("ctrl_{op}"), flag, p);
+    }
 
     let supported_terms: Vec<String> = [
-        "addi", "add", "sub", "and", "or", "xor", "lui", "auipc", "beq", "bne", "jal",
+        "addi", "add", "sub", "and", "or", "xor", "lui", "auipc", "beq", "bne", "jal", "ld", "sd",
     ]
     .iter()
     .map(|name| format!("ctrl_{name}"))
     .collect();
     let supported = or_all(&mut s, "supported", &supported_terms, p);
+    wire(&mut s, "is_supported", &GroundType::Bool, p);
+    s.assign_net("is_supported", supported.clone(), p);
     wire(&mut s, "unsupported", &GroundType::Bool, p);
-    s.assign_eq("unsupported", supported, "false_bool", p);
+    s.assign_eq("unsupported", "is_supported", "false_bool", p);
     bool_and(&mut s, "illegal_raw", "if_id_valid", "unsupported", p);
-    s.assign_net("unsupported_instruction", "illegal_raw", p);
 
     let write_terms: Vec<String> = [
-        "addi", "add", "sub", "and", "or", "xor", "lui", "auipc", "jal",
+        "addi", "add", "sub", "and", "or", "xor", "lui", "auipc", "jal", "ld",
     ]
     .iter()
     .map(|name| format!("ctrl_{name}"))
@@ -295,6 +362,8 @@ pub fn rhdl_elaborate() -> Result<bitloom_prelude::FrozenHir, bitloom_prelude::D
         (3, "jal", "imm_j"),
         (4, "lui", "imm_u"),
         (5, "auipc", "imm_u"),
+        (6, "ld", "imm_i"),
+        (7, "sd", "imm_s"),
     ] {
         let next = format!("decode_imm_{index}");
         mux(&mut s, &next, &format!("ctrl_{op}"), imm, &imm_value, 64, p);
@@ -349,6 +418,58 @@ pub fn rhdl_elaborate() -> Result<bitloom_prelude::FrozenHir, bitloom_prelude::D
             _ => unreachable!(),
         }
     }
+    wire(&mut s, "mem_addr", u64, p);
+    s.assign_add("mem_addr", "id_ex_rs1", "id_ex_imm", p);
+    slice(&mut s, "mem_offset", "mem_addr", 0, 3, p);
+    slice(&mut s, "mem_word_index", "mem_addr", 3, 3, p);
+    slice(&mut s, "mem_upper", "mem_addr", 6, 58, p);
+    eq_const(&mut s, "mem_aligned", "mem_offset", 3, 0, p);
+    eq_const(&mut s, "mem_in_range", "mem_upper", 58, 0, p);
+    bool_and(&mut s, "mem_addr_valid", "mem_aligned", "mem_in_range", p);
+    bool_and(&mut s, "load_request", "id_ex_valid", "id_ex_ld", p);
+    bool_and(
+        &mut s,
+        "load_request_valid",
+        "load_request",
+        "mem_addr_valid",
+        p,
+    );
+    bool_and(&mut s, "store_request", "id_ex_valid", "id_ex_sd", p);
+    bool_and(
+        &mut s,
+        "store_request_valid",
+        "store_request",
+        "mem_addr_valid",
+        p,
+    );
+    bool_or(&mut s, "mem_kind", "id_ex_ld", "id_ex_sd", p);
+    wire(&mut s, "bad_mem_address", &GroundType::Bool, p);
+    s.assign_eq("bad_mem_address", "mem_addr_valid", "false_bool", p);
+    bool_and(&mut s, "bad_mem_kind", "id_ex_valid", "mem_kind", p);
+    bool_and(
+        &mut s,
+        "bad_mem_access",
+        "bad_mem_kind",
+        "bad_mem_address",
+        p,
+    );
+    bool_or(
+        &mut s,
+        "unsupported_all",
+        "illegal_raw",
+        "bad_mem_access",
+        p,
+    );
+    s.assign_net("unsupported_instruction", "unsupported_all", p);
+    mux(
+        &mut s,
+        "safe_mem_index",
+        "mem_addr_valid",
+        "mem_word_index",
+        "zero3",
+        3,
+        p,
+    );
     mux(&mut s, "op2", "id_ex_addi", "id_ex_imm", "id_ex_rs2", 64, p);
     wire(&mut s, "addi_result", u64, p);
     s.assign_add("addi_result", "id_ex_rs1", "op2", p);
@@ -394,40 +515,107 @@ pub fn rhdl_elaborate() -> Result<bitloom_prelude::FrozenHir, bitloom_prelude::D
         64,
         p,
     );
-    bool_and(&mut s, "wb_we_next", "id_ex_valid", "id_ex_we", p);
+    bool_and(&mut s, "normal_wb_we", "id_ex_valid", "id_ex_we", p);
+    wire(&mut s, "not_load", &GroundType::Bool, p);
+    s.assign_eq("not_load", "id_ex_ld", "false_bool", p);
+    bool_and(&mut s, "wb_we_next", "normal_wb_we", "not_load", p);
+    bool_and(&mut s, "retire_known", "id_ex_valid", "id_ex_supported", p);
+    bool_and(&mut s, "retire_nonmem", "retire_known", "not_load", p);
+    wire(&mut s, "not_store", &GroundType::Bool, p);
+    s.assign_eq("not_store", "id_ex_sd", "false_bool", p);
+    bool_and(&mut s, "retire_ex_next", "retire_nonmem", "not_store", p);
+    bool_or(&mut s, "ld_pending", "ld_meta1_valid", "ld_meta2_valid", p);
+    bool_or(&mut s, "ld_busy", "ld_pending", "load_request_valid", p);
     mux(
         &mut s,
-        "pc_next",
+        "pc_advance",
         "redirect",
         "branch_target",
         "pc_plus4",
         64,
         p,
     );
+    mux(&mut s, "pc_next", "ld_busy", "pc", "pc_advance", 64, p);
     s.assign_net("fetch_pc", "pc", p);
-    s.assign_net("wb_valid", "ex_wb_valid", p);
-    s.assign_net("wb_pc", "ex_wb_pc", p);
-    s.assign_net("wb_rd", "ex_wb_rd", p);
-    s.assign_net("wb_data", "ex_wb_data", p);
+    bool_or(
+        &mut s,
+        "retire_nonstore",
+        "ex_retire_valid",
+        "ld_meta2_valid",
+        p,
+    );
+    bool_or(
+        &mut s,
+        "retire_all",
+        "retire_nonstore",
+        "store_valid_reg",
+        p,
+    );
+    s.assign_net("retire_valid", "retire_all", p);
+    mux(
+        &mut s,
+        "retire_pc_load",
+        "ld_meta2_valid",
+        "ld_meta2_pc",
+        "ex_retire_pc",
+        64,
+        p,
+    );
+    s.assign_mux(
+        "retire_pc",
+        "store_valid_reg",
+        "store_pc_reg",
+        "retire_pc_load",
+        p,
+    );
+    s.assign_net("store_valid", "store_valid_reg", p);
+    s.assign_net("store_pc", "store_pc_reg", p);
+    s.assign_net("store_addr", "store_addr_reg", p);
+    s.assign_net("store_data", "store_data_reg", p);
+    s.assign_or("wb_valid", "ex_wb_valid", "ld_meta2_valid", p);
+    s.assign_mux("wb_pc", "ld_meta2_valid", "ld_meta2_pc", "ex_wb_pc", p);
+    s.assign_mux("wb_rd", "ld_meta2_valid", "ld_meta2_rd", "ex_wb_rd", p);
+    s.assign_mux("wb_data", "ld_meta2_valid", "load_data", "ex_wb_data", p);
 
-    // shortcut: no forwarding or stalls; add them when tests require gapless dependent instructions.
     // Clock IF/ID -> ID/EX -> EX/WB; redirect flushes both younger instructions.
     let id_flush = "id_ex_invalid_after_redirect".to_owned();
     let if_flush = "if_id_invalid_after_redirect".to_owned();
     wire(&mut s, &id_flush, u1, p);
     wire(&mut s, &if_flush, u1, p);
     s.assign_mux(&id_flush, "redirect", "zero1", "if_id_valid", p);
+    wire(&mut s, "id_ex_valid_next", u1, p);
+    s.assign_mux("id_ex_valid_next", "ld_busy", "zero1", &id_flush, p);
     s.assign_mux(&if_flush, "redirect", "zero1", "one1", p);
+    wire(&mut s, "if_id_valid_next", u1, p);
+    s.assign_mux("if_id_valid_next", "ld_busy", "if_id_valid", &if_flush, p);
+    wire(&mut s, "if_id_pc_next", u64, p);
+    s.assign_mux("if_id_pc_next", "ld_busy", "if_id_pc", "pc", p);
+    wire(&mut s, "if_id_instruction_next", u32, p);
+    s.assign_mux(
+        "if_id_instruction_next",
+        "ld_busy",
+        "if_id_instruction",
+        "instruction_in",
+        p,
+    );
     for i in 1..32 {
         let compare = format!("wb_is_x{i}");
         eq_const(&mut s, &compare, "ex_wb_rd", 5, i, p);
+        let load_compare = format!("ld_is_x{i}");
+        eq_const(&mut s, &load_compare, "ld_meta2_rd", 5, i, p);
+        let normal_write = format!("normal_write_x{i}");
+        bool_and(&mut s, &normal_write, "ex_wb_we", &compare, p);
+        let load_write = format!("load_write_x{i}");
+        bool_and(&mut s, &load_write, "ld_meta2_valid", &load_compare, p);
         let write = format!("write_x{i}");
-        bool_and(&mut s, &write, "ex_wb_we", &compare, p);
+        bool_or(&mut s, &write, &normal_write, &load_write, p);
+        let data = format!("write_data_x{i}");
+        mux(&mut s, &data, &load_write, "load_data", "ex_wb_data", 64, p);
         mux(
             &mut s,
             &format!("x{i}_next"),
             &write,
-            "ex_wb_data",
+            &data,
             &format!("x{i}"),
             64,
             p,
@@ -435,11 +623,20 @@ pub fn rhdl_elaborate() -> Result<bitloom_prelude::FrozenHir, bitloom_prelude::D
     }
     s.end_process();
     s.begin_sequential(p);
+    s.assign_mem_write_en(
+        "data_mem",
+        "safe_mem_index",
+        "id_ex_rs2",
+        "store_request_valid",
+        p,
+    );
+    s.assign_reg_d_mem_read("load_data", "data_mem", "safe_mem_index", p);
     s.assign_reg_d_from("pc", "pc_next", p);
-    s.assign_reg_d_from("if_id_valid", if_flush, p);
-    s.assign_reg_d_from("if_id_pc", "pc", p);
-    s.assign_reg_d_from("if_id_instruction", "instruction_in", p);
-    s.assign_reg_d_from("id_ex_valid", id_flush, p);
+    s.assign_reg_d_from("if_id_valid", "if_id_valid_next", p);
+    s.assign_reg_d_from("if_id_pc", "if_id_pc_next", p);
+    s.assign_reg_d_from("if_id_instruction", "if_id_instruction_next", p);
+    s.assign_reg_d_from("id_ex_valid", "id_ex_valid_next", p);
+    s.assign_reg_d_from("id_ex_supported", "is_supported", p);
     s.assign_reg_d_from("id_ex_pc", "if_id_pc", p);
     s.assign_reg_d_from("id_ex_rs1", "rs1_data", p);
     s.assign_reg_d_from("id_ex_rs2", "rs2_data", p);
@@ -447,15 +644,27 @@ pub fn rhdl_elaborate() -> Result<bitloom_prelude::FrozenHir, bitloom_prelude::D
     s.assign_reg_d_from("id_ex_rd", "rd", p);
     s.assign_reg_d_from("id_ex_we", "write_valid", p);
     for op in [
-        "addi", "add", "sub", "and", "or", "xor", "lui", "auipc", "beq", "bne", "jal",
+        "addi", "add", "sub", "and", "or", "xor", "lui", "auipc", "beq", "bne", "jal", "ld", "sd",
     ] {
         s.assign_reg_d_from(format!("id_ex_{op}"), format!("ctrl_{op}"), p);
     }
+    s.assign_reg_d_from("ld_meta1_valid", "load_request_valid", p);
+    s.assign_reg_d_from("ld_meta1_pc", "id_ex_pc", p);
+    s.assign_reg_d_from("ld_meta1_rd", "id_ex_rd", p);
+    s.assign_reg_d_from("ld_meta2_valid", "ld_meta1_valid", p);
+    s.assign_reg_d_from("ld_meta2_pc", "ld_meta1_pc", p);
+    s.assign_reg_d_from("ld_meta2_rd", "ld_meta1_rd", p);
+    s.assign_reg_d_from("store_valid_reg", "store_request_valid", p);
+    s.assign_reg_d_from("store_pc_reg", "id_ex_pc", p);
+    s.assign_reg_d_from("store_addr_reg", "mem_addr", p);
+    s.assign_reg_d_from("store_data_reg", "id_ex_rs2", p);
     s.assign_reg_d_from("ex_wb_valid", "wb_we_next", p);
     s.assign_reg_d_from("ex_wb_pc", "id_ex_pc", p);
     s.assign_reg_d_from("ex_wb_rd", "id_ex_rd", p);
     s.assign_reg_d_from("ex_wb_data", "wb_data_next", p);
     s.assign_reg_d_from("ex_wb_we", "wb_we_next", p);
+    s.assign_reg_d_from("ex_retire_valid", "retire_ex_next", p);
+    s.assign_reg_d_from("ex_retire_pc", "id_ex_pc", p);
     for i in 1..32 {
         s.assign_reg_d_from(format!("x{i}"), format!("x{i}_next"), p);
     }

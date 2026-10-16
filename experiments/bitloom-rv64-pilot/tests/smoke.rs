@@ -54,6 +54,23 @@ fn jal(rd: u32, offset: i32) -> u32 {
         | 0x6f
 }
 
+fn ld(rd: u32, rs1: u32, immediate: i32) -> u32 {
+    (((immediate as u32) & 0xfff) << 20) | (rs1 << 15) | (3 << 12) | (rd << 7) | 0x03
+}
+
+fn ld_kind(rd: u32, rs1: u32, immediate: i32, funct3: u32) -> u32 {
+    (ld(rd, rs1, immediate) & !(7 << 12)) | ((funct3 & 7) << 12)
+}
+
+fn sd(rs2: u32, rs1: u32, immediate: i32) -> u32 {
+    let imm = (immediate as u32) & 0xfff;
+    (((imm >> 5) & 0x7f) << 25) | (rs2 << 20) | (rs1 << 15) | (3 << 12) | ((imm & 0x1f) << 7) | 0x23
+}
+
+fn sd_kind(rs2: u32, rs1: u32, immediate: i32, funct3: u32) -> u32 {
+    (sd(rs2, rs1, immediate) & !(7 << 12)) | ((funct3 & 7) << 12)
+}
+
 fn reset() -> Sim {
     let mut sim = Sim::new(rhdl_elaborate().expect("design elaborates"));
     let mut inputs = PortValues::default();
@@ -235,4 +252,200 @@ fn unsupported_instruction_is_reported_without_writeback() {
         }
         assert_eq!(sim.ports().get("wb_valid"), Some(0));
     }
+}
+
+#[test]
+fn synchronous_ld_sd_round_trip_keeps_read_metadata_aligned() {
+    let mut program = BTreeMap::new();
+    program.insert(0, addi(1, 0, 0));
+    program.insert(4, ld(2, 1, 0));
+    program.insert(8, 0x13);
+    program.insert(12, 0x13);
+    program.insert(16, 0x13);
+    program.insert(20, 0x13);
+    program.insert(24, sd(2, 1, 8));
+    program.insert(28, 0x13);
+    program.insert(32, 0x13);
+    program.insert(36, 0x13);
+    program.insert(40, ld(3, 1, 8));
+    program.insert(44, 0x13);
+    program.insert(48, 0x13);
+    let mut sim = reset();
+    let mut store_events = Vec::new();
+    let mut load_writebacks = Vec::new();
+    let mut retired_pcs = Vec::new();
+    let mut pcs = Vec::new();
+    for _ in 0..24 {
+        let pc = sim.ports().get("fetch_pc").unwrap_or(0);
+        pcs.push(pc);
+        let mut inputs = PortValues::default();
+        inputs.set("rst", 0);
+        inputs.set(
+            "instruction_in",
+            u64::from(program.get(&pc).copied().unwrap_or(0x13)),
+        );
+        inputs.set("debug_reg_addr", 0);
+        sim.set_inputs(inputs);
+        sim.tick();
+        if sim.ports().get("store_valid") == Some(1) {
+            store_events.push((
+                sim.ports().get("store_pc"),
+                sim.ports().get("store_addr"),
+                sim.ports().get("store_data"),
+            ));
+        }
+        if sim.ports().get("wb_valid") == Some(1) {
+            load_writebacks.push((
+                sim.ports().get("wb_pc"),
+                sim.ports().get("wb_rd"),
+                sim.ports().get("wb_data"),
+            ));
+        }
+        if sim.ports().get("retire_valid") == Some(1) {
+            retired_pcs.push(sim.ports().get("retire_pc"));
+        }
+    }
+
+    assert_eq!(register(&mut sim, 2), 0x1122_3344_5566_7788);
+    assert_eq!(register(&mut sim, 3), 0x1122_3344_5566_7788);
+    assert!(pcs.contains(&4) && pcs.contains(&24) && pcs.contains(&40));
+    assert!(store_events.contains(&(Some(24), Some(8), Some(0x1122_3344_5566_7788))));
+    assert!(load_writebacks.contains(&(Some(4), Some(2), Some(0x1122_3344_5566_7788))));
+    assert!(load_writebacks.contains(&(Some(40), Some(3), Some(0x1122_3344_5566_7788))));
+    assert!(
+        retired_pcs.contains(&Some(0))
+            && retired_pcs.contains(&Some(4))
+            && retired_pcs.contains(&Some(24))
+            && retired_pcs.contains(&Some(40))
+    );
+}
+
+#[test]
+fn consecutive_load_responses_keep_their_pc_and_destination() {
+    let mut program = BTreeMap::new();
+    program.insert(0, addi(1, 0, 0));
+    program.insert(4, 0x13);
+    program.insert(8, 0x13);
+    program.insert(12, 0x13);
+    program.insert(16, ld(2, 1, 0));
+    program.insert(20, ld(3, 1, 8));
+    program.insert(24, addi(4, 0, 9));
+    let mut sim = reset();
+    let mut writebacks = Vec::new();
+    let mut retired_pcs = Vec::new();
+    for _ in 0..22 {
+        let pc = sim.ports().get("fetch_pc").unwrap_or(0);
+        let mut inputs = PortValues::default();
+        inputs.set("rst", 0);
+        inputs.set(
+            "instruction_in",
+            u64::from(program.get(&pc).copied().unwrap_or(0x13)),
+        );
+        inputs.set("debug_reg_addr", 0);
+        sim.set_inputs(inputs);
+        sim.tick();
+        if sim.ports().get("wb_valid") == Some(1) {
+            writebacks.push((
+                sim.ports().get("wb_pc"),
+                sim.ports().get("wb_rd"),
+                sim.ports().get("wb_data"),
+            ));
+        }
+        if sim.ports().get("retire_valid") == Some(1) {
+            retired_pcs.push(sim.ports().get("retire_pc"));
+        }
+    }
+    assert_eq!(register(&mut sim, 2), 0x1122_3344_5566_7788);
+    assert_eq!(register(&mut sim, 3), 0x8877_6655_4433_2211);
+    assert_eq!(register(&mut sim, 4), 9);
+    assert!(writebacks.contains(&(Some(16), Some(2), Some(0x1122_3344_5566_7788))));
+    assert!(writebacks.contains(&(Some(20), Some(3), Some(0x8877_6655_4433_2211))));
+    assert!(writebacks.contains(&(Some(24), Some(4), Some(9))));
+    assert!(retired_pcs.contains(&Some(20)) && retired_pcs.contains(&Some(24)));
+}
+
+#[test]
+fn unaligned_and_out_of_range_memory_operations_are_unsupported() {
+    for instruction in [
+        ld(2, 0, 1),
+        ld(2, 0, 64),
+        sd(2, 0, 64),
+        ld_kind(2, 0, 0, 2),
+        sd_kind(2, 0, 0, 2),
+    ] {
+        let mut sim = reset();
+        let mut inputs = PortValues::default();
+        inputs.set("rst", 0);
+        inputs.set("instruction_in", u64::from(instruction));
+        inputs.set("debug_reg_addr", 0);
+        sim.set_inputs(inputs.clone());
+        let mut saw_unsupported = false;
+        let mut wrote_invalid_load = false;
+        let mut saw_store = false;
+        for _ in 0..5 {
+            sim.tick();
+            saw_unsupported |= sim.ports().get("unsupported_instruction") == Some(1);
+            saw_store |= sim.ports().get("store_valid") == Some(1);
+            wrote_invalid_load |=
+                sim.ports().get("wb_valid") == Some(1) && sim.ports().get("wb_pc") == Some(0);
+            inputs.set("instruction_in", 0x13);
+            sim.set_inputs(inputs.clone());
+        }
+        assert!(saw_unsupported);
+        assert!(!saw_store);
+        if instruction == ld(2, 0, 1) {
+            assert!(!wrote_invalid_load);
+        }
+        assert_eq!(register(&mut sim, 2), 0);
+        assert_eq!(sim.ports().get("store_valid"), Some(0));
+    }
+}
+
+#[test]
+fn signed_store_offset_accepts_last_word_and_rejects_first_word_past_memory() {
+    let mut program = BTreeMap::new();
+    program.insert(0, addi(1, 0, 64));
+    program.insert(4, addi(2, 0, 77));
+    program.insert(8, 0x13);
+    program.insert(12, 0x13);
+    program.insert(16, sd(2, 1, -8)); // address 0x38, final valid word
+    program.insert(20, 0x13);
+    program.insert(24, 0x13);
+    program.insert(28, ld(3, 1, -8));
+    program.insert(32, 0x13);
+    program.insert(36, 0x13);
+    program.insert(40, sd(2, 1, 0)); // address 0x40, outside memory
+    program.insert(44, 0x13);
+    program.insert(48, 0x13);
+    program.insert(52, ld(4, 0, 0)); // invalid SD must not alter mem[0]
+    program.insert(56, 0x13);
+    program.insert(60, 0x13);
+    program.insert(64, ld(5, 1, 0)); // first out-of-range LD
+    let mut sim = reset();
+    let mut saw_last_word_store = false;
+    let mut saw_invalid_store = false;
+    let mut fetched_invalid_load = false;
+    for _ in 0..48 {
+        let pc = sim.ports().get("fetch_pc").unwrap_or(0);
+        let mut inputs = PortValues::default();
+        inputs.set("rst", 0);
+        inputs.set(
+            "instruction_in",
+            u64::from(*program.get(&pc).unwrap_or(&0x13)),
+        );
+        inputs.set("debug_reg_addr", 0);
+        sim.set_inputs(inputs);
+        fetched_invalid_load |= pc == 64;
+        sim.tick();
+        saw_last_word_store |= sim.ports().get("store_valid") == Some(1)
+            && sim.ports().get("store_addr") == Some(0x38);
+        saw_invalid_store |= sim.ports().get("unsupported_instruction") == Some(1)
+            && sim.ports().get("store_valid") != Some(1);
+    }
+    assert!(saw_last_word_store);
+    assert!(saw_invalid_store);
+    assert!(fetched_invalid_load);
+    assert_eq!(register(&mut sim, 3), 77);
+    assert_eq!(register(&mut sim, 4), 0x1122_3344_5566_7788);
+    assert_eq!(register(&mut sim, 5), 0);
 }

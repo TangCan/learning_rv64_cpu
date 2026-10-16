@@ -1,0 +1,2 @@
+22f998029280c06e3796d9fcb0908b00832bcd0e658c50b59b597ae67151206d  notes/units/evidence/bitloom-rv64-pilot/story-1-3-2026-10-16/program.S
+c41723f9eaf56c8012746e79343c5c8c83d38d0477023aeeeaae30089aa76615  notes/units/evidence/bitloom-rv64-pilot/story-1-3-2026-10-16/BitloomRv64Pilot.v

@@ -6,7 +6,7 @@ development_status:
   epic-1: in-progress
   1-1-固定工具链并验证-bitloom-最小闭环: done
   1-2-建立-rv64i-顺序流水线与整数子集: done
-  1-3-实现同步访存及-rv64i-ld-sd-对照: backlog
+  1-3-实现同步访存及-rv64i-ld-sd-对照: done
   1-4-实现受限-128-位-vadd-vv-案例: backlog
   1-5-生成-verilog-并完成阶段决策: backlog
   epic-1-retrospective: optional
