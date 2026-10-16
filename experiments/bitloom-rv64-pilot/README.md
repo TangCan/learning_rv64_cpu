@@ -31,5 +31,5 @@ cp target/bitloom-out/BitloomRv64Pilot.v notes/units/evidence/bitloom-rv64-pilot
 - `cargo test`：通过，`counter_ticks_and_wide_ports_elaborate` 1 passed。
 - `cargo bitloom build`：Bitloom CLI 1.2.4 成功生成 `target/bitloom-out/BitloomRv64Pilot.v`。
 - Verilog 保留 `[63:0]` 和 `[127:0]` 端口，并输出 `reg [63:0] memory [0:15] /* SyncReadMem */`。这只证明表达/导出；内存没有读写事务，未验证同步读延迟。
-- 可复核证据（命令输出、工具版本、CLI 哈希、生成 RTL）：[`notes/units/evidence/bitloom-rv64-pilot/minimal-2026-10-15/`](../../notes/units/evidence/bitloom-rv64-pilot/minimal-2026-10-15/)。RTL SHA-256：`91404af9cbeb3271c06d7e00c23ef64682ea22bde426931cb15b4f8f6150205b`。
+- 可复核证据（命令输出、工具版本、CLI 哈希、生成 RTL）：[`notes/units/evidence/bitloom-rv64-pilot/minimal-2026-10-15/`](../../notes/units/evidence/bitloom-rv64-pilot/minimal-2026-10-15/)。RTL SHA-256：`c5d6053d5536183f9ea3f6bff58c77a90412c82726df7c5f5c8d57557eac179f`。
 - 初次 CLI 构建因脚手架包名连字符/下划线映射失败；统一 Cargo 包名为 `bitloom_rv64_pilot` 后成功。没有升级 Bitloom。

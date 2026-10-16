@@ -1,0 +1,2 @@
+$ sha256sum BitloomRv64Pilot.v
+c5d6053d5536183f9ea3f6bff58c77a90412c82726df7c5f5c8d57557eac179f  BitloomRv64Pilot.v
