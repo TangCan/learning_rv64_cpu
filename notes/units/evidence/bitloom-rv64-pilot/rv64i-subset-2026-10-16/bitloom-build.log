@@ -1,0 +1,5 @@
+   Compiling bitloom_rv64_pilot v0.1.0 (/nvme_data1/richard/learning_rv64_cpu/experiments/bitloom-rv64-pilot)
+   Compiling bitloom-host-shim v0.0.0 (/nvme_data1/richard/learning_rv64_cpu/experiments/bitloom-rv64-pilot/target/rhdl-host/bitloom_rv64_pilot)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.41s
+     Running `target/bitloom-rv64-pilot/debug/bitloom-host-shim`
+wrote /nvme_data1/richard/learning_rv64_cpu/target/bitloom-rv64i-out/BitloomRv64Pilot.v

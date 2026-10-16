@@ -1,0 +1,24 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.02s
+     Running unittests src/lib.rs (experiments/bitloom-rv64-pilot/target/debug/deps/bitloom_rv64_pilot-aa6f82eb975f865a)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/smoke.rs (experiments/bitloom-rv64-pilot/target/debug/deps/smoke-3b10a602125ed685)
+
+running 5 tests
+test unsupported_instruction_is_reported_without_writeback ... ok
+test lui_auipc_and_jal_compute_architectural_results ... ok
+test addi_and_add_write_back_64_bit_registers ... ok
+test conditional_branches_redirect_and_flush_wrong_path ... ok
+test negative_branch_and_jal_offsets_redirect_to_previous_pc ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.09s
+
+   Doc-tests bitloom_rv64_pilot
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
