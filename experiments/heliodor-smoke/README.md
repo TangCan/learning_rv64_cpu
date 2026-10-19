@@ -67,6 +67,19 @@ is in the harness's DRAM range, which passes the separate `PMA_FAULT` map check.
 An earlier fixture revision omitted the CSR readback and did not reach its
 pass marker; that blocked run is retained in the run manifest.
 
+To check M-mode bypass of an unlocked matching entry with no permissions:
+
+```sh
+PATH="/nvme_data1/richard/.local/share/veryl/toolchains/latest:$PATH" \
+  python3 experiments/heliodor-smoke/run.py --topic ld-probe \
+  --ld-probe-source experiments/rv64-ld-probe/ld-heliodor-pmp-m-bypass.S \
+  --timeout 300
+```
+
+The fixture warms the DRAM address before programming `pmpcfg0=0x18`, reads
+back the entry, then requires a second M-mode load to return the same value.
+The target request must also be observed as a DCache hit without an access fault.
+
 To run the settled prewarm fixture and check that the target access hits without
 a fill start:
 
