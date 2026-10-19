@@ -821,9 +821,9 @@ def run(args: argparse.Namespace) -> dict:
         **({"topic": "rv64ui-ld-probe", "evidence_scope": ("self-checking load access-fault fixture; handler privilege and checked trap CSRs are fixture-defined" if ld_probe_expect_fault else "one fixture LD retirement plus target-PC DCache safe-hit/fill-start, privilege/SATP, LSU virtual/physical address, and PMP/PMA fault-flag observations in the isolated core")} if ld_probe else
            {"topic": "rv64ui-ld-suite", "evidence_scope": "suite-level tohost/pass only; no per-instruction retirement PC or rd value is exposed"} if ld_suite else {}),
         **({"observed_retirement": retirement, "observed_cache_probe": cache_probe,
-            "observed_load_context": None if ld_probe_expect_fault else ld_context,
-            "observed_load_address": None if ld_probe_expect_fault else ld_address,
-            "observed_load_checks": None if ld_probe_expect_fault else ld_checks,
+            "observed_load_context": None if ld_probe_expect_fault and not (cache_probe and cache_probe.get("request_seen")) else ld_context,
+            "observed_load_address": None if ld_probe_expect_fault and not (cache_probe and cache_probe.get("request_seen")) else ld_address,
+            "observed_load_checks": None if ld_probe_expect_fault and not (cache_probe and cache_probe.get("request_seen")) else ld_checks,
             "expected_load_address": (ld_build_record.get("data_address") if ld_probe else None),
             **({"expected_retirement": {"count": 1, "pc": ld_probe_pc, "rd_valid": 1, "rd": 6, "data": "0x123456789abcdef0"}} if retirement is not None and not ld_probe_expect_fault else {}),
             **({"expected_trap": {"cause": 5, "exception_pc": f"0x{ld_probe_pc:016x}", "fault_address": ld_build_record.get("data_address")}} if ld_probe_expect_fault else {}),
