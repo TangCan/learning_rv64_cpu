@@ -818,17 +818,17 @@ def run(args: argparse.Namespace) -> dict:
                    {"path": str(archived_arch_fixture.relative_to(ROOT)) if archived_arch_fixture.is_file() else str(input_path.relative_to(ROOT)), "sha256": input_hash},
                    *([{"path": sscofpmf_source, "sha256": sha256(ROOT / sscofpmf_source)},
                       {"path": SSCOFPMF_LINKER, "sha256": sha256(ROOT / SSCOFPMF_LINKER)}] if sscofpmf else [])],
-        **({"topic": "rv64ui-ld-probe", "evidence_scope": ("self-checking M-mode load access-fault fixture; fault mechanism is specified by the fixture" if ld_probe_expect_fault else "one fixture LD retirement plus target-PC DCache safe-hit/fill-start, privilege/SATP, LSU virtual/physical address, and PMP/PMA fault-flag observations in the isolated core")} if ld_probe else
+        **({"topic": "rv64ui-ld-probe", "evidence_scope": ("self-checking load access-fault fixture; handler privilege and checked trap CSRs are fixture-defined" if ld_probe_expect_fault else "one fixture LD retirement plus target-PC DCache safe-hit/fill-start, privilege/SATP, LSU virtual/physical address, and PMP/PMA fault-flag observations in the isolated core")} if ld_probe else
            {"topic": "rv64ui-ld-suite", "evidence_scope": "suite-level tohost/pass only; no per-instruction retirement PC or rd value is exposed"} if ld_suite else {}),
         **({"observed_retirement": retirement, "observed_cache_probe": cache_probe,
-            "observed_load_context": None if ld_probe_expect_fault and retirement is None else ld_context,
-            "observed_load_address": None if ld_probe_expect_fault and retirement is None else ld_address,
-            "observed_load_checks": None if ld_probe_expect_fault and retirement is None else ld_checks,
+            "observed_load_context": None if ld_probe_expect_fault else ld_context,
+            "observed_load_address": None if ld_probe_expect_fault else ld_address,
+            "observed_load_checks": None if ld_probe_expect_fault else ld_checks,
             "expected_load_address": (ld_build_record.get("data_address") if ld_probe else None),
             **({"expected_retirement": {"count": 1, "pc": ld_probe_pc, "rd_valid": 1, "rd": 6, "data": "0x123456789abcdef0"}} if retirement is not None and not ld_probe_expect_fault else {}),
-            **({"expected_trap": {"cause": 5, "mepc": f"0x{ld_probe_pc:016x}", "mtval": ld_build_record.get("data_address")}} if ld_probe_expect_fault else {}),
-            "fixture_build": ld_build_record, "evidence_method": ("self-checking trap handler checks load access fault cause, mepc, and mtval before tohost=1/pass=1" if ld_probe_expect_fault else "self-checking LD fixture plus target-PC DCache safe-hit/fill-start, privilege/SATP, LSU virtual/physical address, and registered access/page-fault plus uncached-attribute capture; retirement port fields are recorded when available")} if ld_probe else {}),
-        "configuration": (f"Heliodor test_smoke plus isolated test_arch_rv64ui_ld; one harness/DUT; expected load access-fault fixture with trap-handler checks." if ld_probe and ld_probe_expect_fault else
+            **({"expected_trap": {"cause": 5, "exception_pc": f"0x{ld_probe_pc:016x}", "fault_address": ld_build_record.get("data_address")}} if ld_probe_expect_fault else {}),
+            "fixture_build": ld_build_record, "evidence_method": ("self-checking trap handler checks load access fault cause, target PC, and fault address before tohost=1/pass=1" if ld_probe_expect_fault else "self-checking LD fixture plus target-PC DCache safe-hit/fill-start, privilege/SATP, LSU virtual/physical address, and registered access/page-fault plus uncached-attribute capture; retirement port fields are recorded when available")} if ld_probe else {}),
+        "configuration": (f"Heliodor test_smoke plus isolated test_arch_rv64ui_ld; one harness/DUT; expected load access-fault fixture; trap privilege and checked CSRs are defined by the assembly handler." if ld_probe and ld_probe_expect_fault else
                           f"Heliodor test_smoke plus isolated test_arch_rv64ui_ld; one harness/DUT; one-LD fixture and retirement-port capture." if ld_probe else
                           f"Heliodor test_smoke plus isolated test_arch_rv64ui_ssnpm ({ssnpm_case}); one harness/DUT; U-mode senvcfg.PMM PMLEN/tagged-pointer probe." if ssnpm else
                           "Heliodor test_smoke plus isolated test_arch_rv64ui_ld and the locked rv64ui/ld.hex; one harness/DUT; suite-level tohost/pass evidence only." if ld_suite else
@@ -842,7 +842,7 @@ def run(args: argparse.Namespace) -> dict:
         "result": "run-pass" if expected_observed else ("run-fail" if cpu_started and assertion_failed else "blocked"),
         "assertion_failed": assertion_failed, "expected_observed": expected_observed,
         "infrastructure_blocked": infrastructure_blocked,
-        "expected": ("Trap handler checks cause=5, mepc=target LD, and mtval=load address before tohost=1/pass=1." if ld_probe and ld_probe_expect_fault else
+        "expected": ("Trap handler checks load access-fault cause=5, target LD PC, and fault address before tohost=1/pass=1." if ld_probe and ld_probe_expect_fault else
                      "Fixture self-check passes, and target-PC cache observation sees a safe hit or a validated target retirement." if ld_probe else
                      f"U-mode Ssnpm fixture {ssnpm_case} verifies senvcfg.PMM readback and expected explicit access behavior before tohost=1/pass=1." if ssnpm else
                      "test_smoke passes; the RV64UI LD suite reports tohost=1/pass=1 and its PASS marker. This is suite-level evidence, not a per-LD retirement/value trace." if ld_suite else

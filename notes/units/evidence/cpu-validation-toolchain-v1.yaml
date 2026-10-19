@@ -65834,14 +65834,29 @@
           ],
           "topic": "rv64ui-ld-probe",
           "evidence_scope": "negative S-mode PMP cross-boundary load test; expected fault was not raised and the target LD retired",
-          "observed_retirement": {"count": 1, "pc": 2147483832, "rd_valid": 1, "rd": 6, "data": 0},
+          "observed_retirement": {
+            "count": 1,
+            "pc": 2147483832,
+            "rd_valid": 1,
+            "rd": 6,
+            "data": 0
+          },
           "observed_cache_probe": {
             "request_seen": true,
             "hit_seen": true,
             "miss_seen": true
           },
-          "observed_load_context": {"privilege_encoding": 1, "privilege": "S", "satp": "0x0000000000000000", "satp_mode": 0, "translation": "Bare"},
-          "observed_load_address": {"vaddr": "0x0000000080002000", "paddr": "0x0000000080002000"},
+          "observed_load_context": {
+            "privilege_encoding": 1,
+            "privilege": "S",
+            "satp": "0x0000000000000000",
+            "satp_mode": 0,
+            "translation": "Bare"
+          },
+          "observed_load_address": {
+            "vaddr": "0x0000000080002000",
+            "paddr": "0x0000000080002000"
+          },
           "observed_load_checks": {"access_fault": false, "page_fault": false, "uncached": false},
           "expected_load_address": "0x0000000080002000",
           "expected_trap": {
@@ -65895,6 +65910,8 @@
           "exit_code": 1,
           "cpu_started": true,
           "result": "run-fail",
+          "expected_marker": "v4 rv64ui-ld PASS",
+          "blocker": "Expected S-mode load access fault did not occur; the target LD retired and the expected fault-pass marker was absent.",
           "assertion_failed": true,
           "expected_observed": false,
           "infrastructure_blocked": false,
@@ -66226,6 +66243,263 @@
           "fixture_sha256": "16de343ad3fe60df3cf8745e39bfc81afb887a77da660b43e457f85efda9e890",
           "smoke_fixture_sha256": "2cf451e3cee19059d2dbc19c08cbe4af9b552ec842d6d2881d039f4bc1aaeeb1",
           "run_seconds": 39.427
+        },
+        {
+          "id": "heliodor-core-20261019T063727Z-2665979",
+          "snapshot_sha": "94e9c5821c24a8941c3ddc3b76daddc7124a855a",
+          "input": "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261019T063727Z-2665979/ld-probe.hex",
+          "input_sha256": "5970e2a5c5f4b974a62d2232f1397ad949fcde4f8db82a639a5b40cd25183002",
+          "inputs": [
+            {
+              "path": "sources/heliodor/test/v4_smoke.hex",
+              "sha256": "2cf451e3cee19059d2dbc19c08cbe4af9b552ec842d6d2881d039f4bc1aaeeb1"
+            },
+            {
+              "path": "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261019T063727Z-2665979/ld-probe.hex",
+              "sha256": "5970e2a5c5f4b974a62d2232f1397ad949fcde4f8db82a639a5b40cd25183002"
+            }
+          ],
+          "topic": "rv64ui-ld-probe",
+          "evidence_scope": "self-checking M-mode load access-fault fixture; fault mechanism is specified by the fixture",
+          "observed_retirement": null,
+          "observed_cache_probe": null,
+          "observed_load_context": null,
+          "observed_load_address": null,
+          "observed_load_checks": null,
+          "expected_load_address": "0x0000000040402000",
+          "expected_trap": {
+            "cause": 5,
+            "mepc": "0x00000000800000f8",
+            "mtval": "0x0000000040402000"
+          },
+          "fixture_build": {
+            "source": "experiments/rv64-ld-probe/ld-heliodor-pmp-l1-ptw-fault.S",
+            "source_sha256": "6c5ffa1f0891ff52cb7832152b9da881e6268582fe132610cd7778d0ff2e2d8e",
+            "linker": "experiments/rv64-ld-probe/fixture.ld",
+            "linker_sha256": "4620d7311f3bc2549fd4c866e78f090f83cf3e61be5fa1e520eedeb146228801",
+            "fixture_sha256": "5970e2a5c5f4b974a62d2232f1397ad949fcde4f8db82a639a5b40cd25183002",
+            "target_pc": "0x00000000800000f8",
+            "data_address": "0x0000000040402000",
+            "gcc_argv": [
+              "/home/richard/richard_opt/riscv/bin/riscv64-unknown-elf-gcc",
+              "-march=rv64imac_zicsr",
+              "-mabi=lp64",
+              "-nostdlib",
+              "-nostartfiles",
+              "-ffreestanding",
+              "-Wl,-T,/nvme_data1/richard/learning_rv64_cpu/experiments/rv64-ld-probe/fixture.ld",
+              "-Wl,--build-id=none",
+              "-o",
+              "/tmp/heliodor-ld-probe-s7_7h4c2/ld-probe.elf",
+              "/nvme_data1/richard/learning_rv64_cpu/experiments/rv64-ld-probe/ld-heliodor-pmp-l1-ptw-fault.S"
+            ],
+            "objcopy_argv": [
+              "/home/richard/richard_opt/riscv/bin/riscv64-unknown-elf-objcopy",
+              "-O",
+              "binary",
+              "/tmp/heliodor-ld-probe-s7_7h4c2/ld-probe.elf",
+              "/tmp/heliodor-ld-probe-s7_7h4c2/ld-probe.bin"
+            ],
+            "tool_sha256": {
+              "riscv64-unknown-elf-gcc": "3b2b5d5ad7f9c7821c8ca1b11c6c512f30e3d63dcbdc726836c1c7bc0bceed32",
+              "riscv64-unknown-elf-objcopy": "0ed4d26870589f4ba1e5678b62305d66c2df6ee8906da706c830a6f42950c858",
+              "riscv64-unknown-elf-nm": "efcf80cb84207546bba2dde494b1e6505ed5cc94b11d530a3fc44ea435f1c0d9"
+            }
+          },
+          "evidence_method": "self-checking trap handler checks load access fault cause, mepc, and mtval before tohost=1/pass=1",
+          "configuration": "Heliodor test_smoke plus isolated test_arch_rv64ui_ld; one harness/DUT; expected load access-fault fixture with trap-handler checks.",
+          "command": "preflight not reached",
+          "working_directory": "/nvme_data1/richard/learning_rv64_cpu",
+          "tools": {
+            "veryl": "unavailable",
+            "verilator": "unavailable",
+            "cxx": "unavailable"
+          },
+          "exit_code": 1,
+          "cpu_started": false,
+          "result": "blocked",
+          "assertion_failed": false,
+          "expected_observed": false,
+          "infrastructure_blocked": false,
+          "expected": "Trap handler checks cause=5, mepc=target LD, and mtval=load address before tohost=1/pass=1.",
+          "observed": "CPU-start=False; results={}; smoke_marker=False; arch_marker=False",
+          "output": "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261019T063727Z-2665979/output.log",
+          "output_sha256": "169f24774e13a79b6341d6c41c58f159e180701e87e9028aa70afdf8712b6fbb",
+          "stdout": "notes/units/evidence/smoke/heliodor-core-20261019T063727Z-2665979.stdout.log",
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderr": "notes/units/evidence/smoke/heliodor-core-20261019T063727Z-2665979.stderr.log",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "artifacts": [
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261019T063727Z-2665979/run.py",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261019T063727Z-2665979/ld-probe.hex"
+          ],
+          "artifact_sha256": {
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261019T063727Z-2665979/run.py": "468edd2f5984b061c135b0761f0206453e48b46e2e648b04002d95594e7c00db",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261019T063727Z-2665979/ld-probe.hex": "5970e2a5c5f4b974a62d2232f1397ad949fcde4f8db82a639a5b40cd25183002"
+          },
+          "expected_marker": "v4 rv64ui-ld PASS",
+          "blocker": "manifest/source validation failed: heliodor/heliodor-core-20261019T061259Z-2116846: missing required fields: blocker, expected_marker",
+          "log_path_warnings": [],
+          "first_failed_stage": "locked-source-preflight",
+          "resources": {
+            "disk_free_bytes": 932976934912,
+            "memory_available_bytes": 145114279936,
+            "logical_cpu_count": 64,
+            "test_timeout_seconds": 300.0
+          },
+          "next_environment_change": "Restore the sources.lock revision, clean Heliodor checkout, gitlinks, and valid toolchain manifest before retrying.",
+          "source_tree_sha256": "",
+          "source_commit": "94e9c5821c24a8941c3ddc3b76daddc7124a855a",
+          "isolated_tree_sha256": "",
+          "isolated_inputs_sha256": "",
+          "expected_markers": [
+            "[test_smoke] PASS",
+            "v4 rv64ui-ld PASS"
+          ],
+          "transformed_test_sha256": "",
+          "transformed_arch_harness_sha256": "",
+          "fixture_sha256": "",
+          "smoke_fixture_sha256": "",
+          "run_seconds": 8.715
+        },
+        {
+          "id": "heliodor-core-20261019T063848Z-2712005",
+          "snapshot_sha": "94e9c5821c24a8941c3ddc3b76daddc7124a855a",
+          "input": "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261019T063848Z-2712005/ld-probe.hex",
+          "input_sha256": "5970e2a5c5f4b974a62d2232f1397ad949fcde4f8db82a639a5b40cd25183002",
+          "inputs": [
+            {
+              "path": "sources/heliodor/test/v4_smoke.hex",
+              "sha256": "2cf451e3cee19059d2dbc19c08cbe4af9b552ec842d6d2881d039f4bc1aaeeb1"
+            },
+            {
+              "path": "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261019T063848Z-2712005/ld-probe.hex",
+              "sha256": "5970e2a5c5f4b974a62d2232f1397ad949fcde4f8db82a639a5b40cd25183002"
+            }
+          ],
+          "topic": "rv64ui-ld-probe",
+          "evidence_scope": "self-checking S-mode Sv39 L1 PTE PMP-denial fixture; handler checks delegated load access-fault cause, target PC, and fault address",
+          "observed_retirement": {
+            "count": 1,
+            "pc": 2147483896,
+            "rd_valid": 0,
+            "rd": 6,
+            "data": 0
+          },
+          "observed_cache_probe": null,
+          "observed_load_context": null,
+          "observed_load_address": null,
+          "observed_load_checks": null,
+          "expected_load_address": "0x0000000040402000",
+          "expected_trap": {
+            "cause": 5,
+            "exception_pc": "0x00000000800000f8",
+            "fault_address": "0x0000000040402000"
+          },
+          "fixture_build": {
+            "source": "experiments/rv64-ld-probe/ld-heliodor-pmp-l1-ptw-fault.S",
+            "source_sha256": "6c5ffa1f0891ff52cb7832152b9da881e6268582fe132610cd7778d0ff2e2d8e",
+            "linker": "experiments/rv64-ld-probe/fixture.ld",
+            "linker_sha256": "4620d7311f3bc2549fd4c866e78f090f83cf3e61be5fa1e520eedeb146228801",
+            "fixture_sha256": "5970e2a5c5f4b974a62d2232f1397ad949fcde4f8db82a639a5b40cd25183002",
+            "target_pc": "0x00000000800000f8",
+            "data_address": "0x0000000040402000",
+            "gcc_argv": [
+              "/home/richard/richard_opt/riscv/bin/riscv64-unknown-elf-gcc",
+              "-march=rv64imac_zicsr",
+              "-mabi=lp64",
+              "-nostdlib",
+              "-nostartfiles",
+              "-ffreestanding",
+              "-Wl,-T,/nvme_data1/richard/learning_rv64_cpu/experiments/rv64-ld-probe/fixture.ld",
+              "-Wl,--build-id=none",
+              "-o",
+              "/tmp/heliodor-ld-probe-2l9q68uf/ld-probe.elf",
+              "/nvme_data1/richard/learning_rv64_cpu/experiments/rv64-ld-probe/ld-heliodor-pmp-l1-ptw-fault.S"
+            ],
+            "objcopy_argv": [
+              "/home/richard/richard_opt/riscv/bin/riscv64-unknown-elf-objcopy",
+              "-O",
+              "binary",
+              "/tmp/heliodor-ld-probe-2l9q68uf/ld-probe.elf",
+              "/tmp/heliodor-ld-probe-2l9q68uf/ld-probe.bin"
+            ],
+            "tool_sha256": {
+              "riscv64-unknown-elf-gcc": "3b2b5d5ad7f9c7821c8ca1b11c6c512f30e3d63dcbdc726836c1c7bc0bceed32",
+              "riscv64-unknown-elf-objcopy": "0ed4d26870589f4ba1e5678b62305d66c2df6ee8906da706c830a6f42950c858",
+              "riscv64-unknown-elf-nm": "efcf80cb84207546bba2dde494b1e6505ed5cc94b11d530a3fc44ea435f1c0d9"
+            }
+          },
+          "evidence_method": "S-mode handler checks scause=5, sepc=target LD, and stval=load VA before tohost=1/pass=1; the denied L1 PTE PA is inferred from the programmed table layout, not captured by DUT instrumentation",
+          "configuration": "Heliodor test_smoke plus isolated test_arch_rv64ui_ld; one harness/DUT; S-mode Sv39 load whose L1 PTE page is PMP-denied; cause 5 delegated to S-mode handler.",
+          "command": "[[\"/nvme_data1/richard/.local/share/veryl/toolchains/latest/veryl\", \"test\", \"--include-ignored\", \"--test\", \"test_smoke\"], [\"/nvme_data1/richard/.local/share/veryl/toolchains/latest/veryl\", \"test\", \"--include-ignored\", \"--test\", \"test_arch_rv64ui_ld\"]]",
+          "working_directory": "/tmp/heliodor-core-smoke-8kdftrzt",
+          "tools": {
+            "veryl": "veryl 0.22.0 (967e477 2026-10-02); binary sha256 aa57dd31488410769ee61c367f03de6cbf11101be47b510b99bde4ac9155b4c1",
+            "verilator": "Verilator 5.020 2024-01-01 rev (Debian 5.020-1)",
+            "cxx": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0"
+          },
+          "exit_code": 0,
+          "cpu_started": true,
+          "result": "run-pass",
+          "assertion_failed": false,
+          "expected_observed": true,
+          "infrastructure_blocked": false,
+          "expected": "S-mode handler checks load access-fault cause=5, target LD PC, and fault address before tohost=1/pass=1.",
+          "observed": "CPU-start=True; results={'x10': 7, 'x11': 11, 'x12': 77, 'x13': 11, 'arch_tohost': 1, 'arch_pass': 1}; smoke_marker=True; arch_marker=True",
+          "output": "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261019T063848Z-2712005/output.log",
+          "output_sha256": "cc9386c74a20da2dd166527cadbef6bcccf81cd852089c5a23c0adb9a36f5a2d",
+          "stdout": "notes/units/evidence/smoke/heliodor-core-20261019T063848Z-2712005.stdout.log",
+          "stdout_sha256": "1c89784b35d685e6a17d70faf30a836cd41b6ca6301c227eda02895a309af9a9",
+          "stderr": "notes/units/evidence/smoke/heliodor-core-20261019T063848Z-2712005.stderr.log",
+          "stderr_sha256": "34a0ef28745ee7af469251db1692353ad295a6094cd0e25dcb04f16ca91595a2",
+          "artifacts": [
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261019T063848Z-2712005/run.py",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261019T063848Z-2712005/test_smoke.veryl",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261019T063848Z-2712005/v4_smoke.hex",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261019T063848Z-2712005/test_arch_common.veryl",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261019T063848Z-2712005/ld-probe.hex",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261019T063848Z-2712005/ld-heliodor-pmp-l1-ptw-fault.S",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261019T063848Z-2712005/ld-heliodor-pmp-l1-ptw-fault.build.json",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261019T063848Z-2712005/fixture.ld",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261019T063848Z-2712005/heliodor_core.veryl"
+          ],
+          "artifact_sha256": {
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261019T063848Z-2712005/run.py": "468edd2f5984b061c135b0761f0206453e48b46e2e648b04002d95594e7c00db",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261019T063848Z-2712005/test_smoke.veryl": "15bd6b192c2569d078e8d10e872c095a649a1f6848f54f030c7e4123d7d1daf3",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261019T063848Z-2712005/v4_smoke.hex": "2cf451e3cee19059d2dbc19c08cbe4af9b552ec842d6d2881d039f4bc1aaeeb1",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261019T063848Z-2712005/test_arch_common.veryl": "b86fabac42aebb19f011545ae5591ba13922dfd6aa55a535d34bb01ebf89366a",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261019T063848Z-2712005/ld-probe.hex": "5970e2a5c5f4b974a62d2232f1397ad949fcde4f8db82a639a5b40cd25183002",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261019T063848Z-2712005/ld-heliodor-pmp-l1-ptw-fault.S": "6c5ffa1f0891ff52cb7832152b9da881e6268582fe132610cd7778d0ff2e2d8e",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261019T063848Z-2712005/ld-heliodor-pmp-l1-ptw-fault.build.json": "dedaba5b922684cfc7d996e3688a848b11af7902b4b4e95fbf50153b2a0bd7b8",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261019T063848Z-2712005/fixture.ld": "4620d7311f3bc2549fd4c866e78f090f83cf3e61be5fa1e520eedeb146228801",
+            "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261019T063848Z-2712005/heliodor_core.veryl": "b49ca62674a0b70ee929bce7d262cf83363c939159db8fe07e4c13d17fbe594f"
+          },
+          "expected_marker": "v4 rv64ui-ld PASS",
+          "blocker": "",
+          "log_path_warnings": [],
+          "first_failed_stage": "",
+          "resources": {
+            "disk_free_bytes": 931973169152,
+            "memory_available_bytes": 146397892608,
+            "logical_cpu_count": 64,
+            "test_timeout_seconds": 300.0
+          },
+          "next_environment_change": "No environment change required; this smoke completed successfully.",
+          "source_tree_sha256": "4553612bb7ea7ac02259977213b5f8089c889bf2a65d07d23aa0634b9de0c4b9",
+          "source_commit": "94e9c5821c24a8941c3ddc3b76daddc7124a855a",
+          "isolated_tree_sha256": "467a1f5ca417a451a8c926e115e4d7a364e2ad9a785470c90ddfab063940cd0a",
+          "isolated_inputs_sha256": "467a1f5ca417a451a8c926e115e4d7a364e2ad9a785470c90ddfab063940cd0a",
+          "expected_markers": [
+            "[test_smoke] PASS",
+            "v4 rv64ui-ld PASS"
+          ],
+          "transformed_test_sha256": "15bd6b192c2569d078e8d10e872c095a649a1f6848f54f030c7e4123d7d1daf3",
+          "transformed_arch_harness_sha256": "b86fabac42aebb19f011545ae5591ba13922dfd6aa55a535d34bb01ebf89366a",
+          "fixture_sha256": "5970e2a5c5f4b974a62d2232f1397ad949fcde4f8db82a639a5b40cd25183002",
+          "smoke_fixture_sha256": "2cf451e3cee19059d2dbc19c08cbe4af9b552ec842d6d2881d039f4bc1aaeeb1",
+          "run_seconds": 53.857,
+          "post_run_correction": "The generic expected-fault metadata assumed M-mode CSR names and exposed zero-valued LSU probes even though the faulting access made no DCache request. Corrected against the fixture handler (scause/sepc/stval) and ld-cache-probe req=0."
         }
       ]
     }
