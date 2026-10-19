@@ -1,0 +1,7 @@
+464699a5eb96138250337c6a4aa5712d6dafbc4d7f78b53b70ffd5f5701cafb9  notes/units/evidence/smoke/kunminghu-ld-cpp-pma-20261019/README.md
+cf60e1d80accefd00d3854eb77f931f5503a22faaa2b6db8bd87fccaa94ac4d7  notes/units/evidence/smoke/kunminghu-ld-cpp-pma-20261019/input.S
+a546bc98ff62ca3a7b6b37292c9891ea35cc4135452aca27ed0d777fba670b7a  notes/units/evidence/smoke/kunminghu-ld-cpp-pma-20261019/fixture.bin
+d2500d286bb9d0953960f3d94cf10d9f209a953c139e53d7ce6aca9aa5776831  notes/units/evidence/smoke/kunminghu-ld-cpp-pma-20261019/fixture.map
+379cda295a64bc181790fbd8975b4e14acea5cdceefd111ca143e2916e3e703d  notes/units/evidence/smoke/kunminghu-ld-cpp-pma-20261019/observer.patch
+3e2fce75b7e5631158f8f5dfd49617d9249d1e863fcd44b9b83cfb3ec452e62c  notes/units/evidence/smoke/kunminghu-ld-cpp-pma-20261019/run.stdout
+3ded1f1ca84a6f5a18b0486f487428dc95a2e29090b5d92ad1a8578fdac2c1c7  notes/units/evidence/smoke/kunminghu-ld-cpp-pma-20261019/run.stderr
