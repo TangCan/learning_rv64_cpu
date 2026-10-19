@@ -816,7 +816,7 @@ def run(args: argparse.Namespace) -> dict:
                    {"path": str(archived_arch_fixture.relative_to(ROOT)) if archived_arch_fixture.is_file() else str(input_path.relative_to(ROOT)), "sha256": input_hash},
                    *([{"path": sscofpmf_source, "sha256": sha256(ROOT / sscofpmf_source)},
                       {"path": SSCOFPMF_LINKER, "sha256": sha256(ROOT / SSCOFPMF_LINKER)}] if sscofpmf else [])],
-        **({"topic": "rv64ui-ld-probe", "evidence_scope": ("self-checking M-mode load access-fault fixture using the arch harness PMA_FAULT path" if ld_probe_expect_fault else "one fixture LD retirement plus target-PC DCache safe-hit/fill-start, privilege/SATP, LSU virtual/physical address, and PMP/PMA fault-flag observations in the isolated core")} if ld_probe else
+        **({"topic": "rv64ui-ld-probe", "evidence_scope": ("self-checking M-mode load access-fault fixture; fault mechanism is specified by the fixture" if ld_probe_expect_fault else "one fixture LD retirement plus target-PC DCache safe-hit/fill-start, privilege/SATP, LSU virtual/physical address, and PMP/PMA fault-flag observations in the isolated core")} if ld_probe else
            {"topic": "rv64ui-ld-suite", "evidence_scope": "suite-level tohost/pass only; no per-instruction retirement PC or rd value is exposed"} if ld_suite else {}),
         **({"observed_retirement": retirement, "observed_cache_probe": cache_probe,
             "observed_load_context": None if ld_probe_expect_fault else ld_context,

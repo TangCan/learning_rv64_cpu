@@ -52,6 +52,21 @@ The run manifest retains the first pre-mode attempt as `run-fail`: that run
 reached the fixture's pass marker, but the success-only probe criteria rejected
 the expected exception. Later runs with `--ld-probe-expect-fault` passed.
 
+To validate Heliodor's locked PMP read-denial path on a DRAM address, run:
+
+```sh
+PATH="/nvme_data1/richard/.local/share/veryl/toolchains/latest:$PATH" \
+  python3 experiments/heliodor-smoke/run.py --topic ld-probe \
+  --ld-probe-source experiments/rv64-ld-probe/ld-heliodor-pmp-fault.S \
+  --ld-probe-expect-fault --timeout 300
+```
+
+The fixture reads back `pmpaddr0=0x200009ff` and `pmpcfg0=0x98` before the
+target load. Its locked NAPOT entry denies reads from `0x80002000`; that page
+is in the harness's DRAM range, which passes the separate `PMA_FAULT` map check.
+An earlier fixture revision omitted the CSR readback and did not reach its
+pass marker; that blocked run is retained in the run manifest.
+
 To run the settled prewarm fixture and check that the target access hits without
 a fill start:
 
