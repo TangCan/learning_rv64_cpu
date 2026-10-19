@@ -14,7 +14,7 @@ spec_refs:
     edition: "v20260120; RV32I version 2.1"
     section: "§2.6 Load and Store Instructions"
 version: 2
-evidence_namespace: "LD2-E1–LD2-E27"
+evidence_namespace: "LD2-E1–LD2-E28"
 source_snapshots:
   - project: "Kunminghu V2"
     snapshot_id: "xiangshan-kunminghu-v2-20261012"
@@ -33,7 +33,7 @@ source_snapshots:
 - **问题：** 这条 `LD` 如何从 `rs1 + imm` 得到 `rd` 并退休？源码检查和现有测试能证明哪些内容，哪些边界仍未验证？
 - **学习者答案：** 架构上，`LD` 访问地址 `EA = x[rs1] + sign_extend(imm[11:0])`，把该地址的 64 位值写入 `rd`。自然对齐意味着 `EA[2:0]=0`。两侧已分别运行通过字节相同的冷加载 fixture（LD2-E19）：Kunminghu native commit trace 在 PC `0x80000008` 记录 `ld t1,0(t0)`，由已提交 x5 恢复 EA=`0x80000050`，观察到 x6=`0x123456789abcdef0`；Heliodor retirement port 在同一 PC 观察到一次 x6 写回及相同数据。后续 Heliodor 隔离探针还确认目标 PC safe hit（LD2-E20、E21）；Kunminghu 原 settled 变体目标请求为 miss（LD2-E24），等待变体分别观察到 replay hit 与首次 issue hit（LD2-E25、E26）。两侧源码分别显示其 load、cache、ROB 和 architectural map 路径（LD2-E2–E15），`rat_arch` 由 `rob_commit_ack` 经 `rat_commit_en` 门控更新，`arch_regs` 调试镜像由 `rob_commit_valid` 门控更新，二者门控不同。同输入独立运行通过不证明同步或微架构等价。
 - **检查类型：** explanation + source-location
-- **证据 ID：** LD2-E1–LD2-E21；两侧共享镜像运行证据为 LD2-E19
+- **证据 ID：** LD2-E1–LD2-E21、LD2-E27–LD2-E28；两侧共享镜像运行证据为 LD2-E19
 
 ## 架构行为与子案例
 
@@ -46,7 +46,8 @@ source_snapshots:
 | Heliodor 目标 PC DCache safe hit | covered | 预热 fixture 在目标 PC 观察到 hit=1、miss=0（LD2-E21）；这是 DCache safe-hit 信号，不是原始 tag 比较。 |
 | Kunminghu 目标 PC DCache hit | covered on first issue and replay | 首次 issue hit 由加入 256 个 NOP 等待的变体在 stage 1 `miss=0, tag=1, perm=1`、stage 2 `hit=1, first=1` 观察确认（LD2-E26）；另有 LD2-E25 的 replay hit。原 settled fixture 的首次与 replay 仍都是 miss（LD2-E24）。 |
 | Kunminghu 目标请求为 M-mode Bare 且 stage-2 exception summary 为 0 | covered | 同周期观察 `priv_imode=3`、`satp_mode=0`、`exception=0`；本快照 `CSRConst.ModeM=3`，见 LD2-E27。 |
-| Heliodor M-mode Bare、两侧 PMP/PMA 配置 | unconfirmed | 当前动态记录没有直接观察这些配置。 |
+| 两侧目标 load 为 M-mode Bare | covered | Kunminghu 与 Heliodor 分别观察 `priv_imode=3, satp_mode=0`（LD2-E27）及 `priv=3, satp=0`（LD2-E28）。 |
+| 两侧 PMP/PMA 配置与拒绝行为 | unconfirmed | 当前探针未观测 PMP/PMA 条目，也未执行权限拒绝子案例。 |
 | 没有更老的重叠 store | covered for the fixture | `ld-first-hit.S` 在目标 load 前没有 store 指令；此结论只适用于该 fixture。 |
 | DCache miss/refill 与 replay | partially observed | Heliodor 冷加载目标 PC 观察到 fill-start 和 safe-hit（LD2-E20）；没有追踪 fill 完成、两者时序或 replay 延迟。 |
 | 更老 store 重叠、forwarding、store-load 次序 | excluded | 无相关旧 store 是前提；不覆盖 forwarding 或内存顺序验证。 |
@@ -104,9 +105,10 @@ source_snapshots:
 | LD2-E25 | Kunminghu target load replay 的 DCache hit | instrumented test-run | run-pass | Kunminghu / `xiangshan-kunminghu-v2-20261012`; `c098f996bf4d301b88693b20315486d31e93bc9d` | `experiments/rv64-ld-probe/ld-hit-wait.S`; archived map/image; observer patch; `LoadPipe.scala:304-308,415` | fixture runner + matching-version temporary C++ probe; see archived README | 单次预热、值比较后等待 64 NOP；S1 在 falling edge 采样，S2 在 rising edge 采样；Verilator v5.050 头文件及原生成模型/runtime objects | target PC=`0x80000130`, PADDR=`0x80000180` | 冷 miss 后 replay 的目标 stage-2 hit，且架构值自检通过 | cycle 4184 target first issue `miss=1`; cycle 4192 replay S1 `miss=0,tag=1,perm=1`; cycle 4193 S2 `hit=1,first=0`; target retires x6=`0x123456789abcdef0`; NEMU GOOD TRAP, exit 0 | `notes/units/evidence/smoke/kunminghu-ld-cpp-hit-probe-20261019/` |
 | LD2-E26 | Kunminghu target load 首次 issue 的 DCache hit | instrumented test-run | run-pass | Kunminghu / `xiangshan-kunminghu-v2-20261012`; `c098f996bf4d301b88693b20315486d31e93bc9d` | `experiments/rv64-ld-probe/ld-first-hit.S`; archived map/image; observer patch; `LoadPipe.scala:304-308,415` | fixture runner + matching-version temporary C++ probe; see archived README | 单次预热、值比较后等待 256 NOP；stage 1 在 falling edge 采样、stage 2 在 rising edge 采样；Verilator v5.050 headers，原模型与 runtime objects 保持不变 | target PC=`0x80000430`, PADDR=`0x80000480` | 目标首次 issue 的 stage-2 hit 且架构值自检通过 | cycle 4235 stage 1 `miss=0,tag=1,perm=1`; cycle 4236 stage 2 `hit=1,first=1`; commit trace 记录 x6=`0x123456789abcdef0`; NEMU GOOD TRAP, exit 0 | `notes/units/evidence/smoke/kunminghu-ld-cpp-first-issue-hit-20261019/` |
 | LD2-E27 | Kunminghu 目标 load 的 privilege、SATP 与异常状态 | instrumented test-run | run-pass | Kunminghu / `xiangshan-kunminghu-v2-20261012`; `c098f996bf4d301b88693b20315486d31e93bc9d` | `observer.patch.gz`; `CSR.scala:733,1140`; `CSRConst.scala:48`; `LoadUnit.scala:1203-1245`; generated-model fields | 复用 E26 fixture，以匹配 v5.050 头文件/runtime 重编临时 observer；见归档 README | rising-edge stage-2 sample，以 lane 2 target PC 限定，并同周期读取注册的 `priv_imode`、SATP mode 和 `s2_exception` | target PC=`0x80000430`, PADDR=`0x80000480` | 目标首次 issue hit 时观察 M-mode Bare 和无 stage-2 exception summary | cycle 4236: `hit=1`, `first=1`, `satp_mode=0` (Bare), `priv_imode=3` (ModeM), `exception=0`; target commit/value、自检与 GOOD TRAP 均通过 | `notes/units/evidence/smoke/kunminghu-ld-cpp-context-20261019/` |
+| LD2-E28 | Heliodor 目标 load 的 privilege 与 SATP | instrumented test-run | run-pass | Heliodor / `heliodor-master-20261012`; `94e9c5821c24a8941c3ddc3b76daddc7124a855a` | `experiments/rv64-ld-probe/ld.S`; runner 生成的目标-PC DCache/context capture；归档 run manifest | `PATH="/nvme_data1/richard/.local/share/veryl/toolchains/latest:$PATH" python3 experiments/heliodor-smoke/run.py --topic ld-probe --timeout 300` | isolated core；在目标 PC=`0x80000008` 的 DCache 请求周期锁存 `o_dbg_priv` 与 `o_dbg_satp` | fixture target load，预期 retirement rd=x6/value=`0x123456789abcdef0` | 目标请求发生于 M-mode、SATP Bare，并成功退休；本证据不覆盖 PMP/PMA 权限配置 | `ld-context priv=3 satp=0000000000000000`; `req=1 hit=1 miss=1`; retirement count=1, rd=x6, data=`0x123456789abcdef0`; `tohost=1`, run-pass | `notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261019T033833Z-3989298/` |
 
-- `inspected` 表示源码/规范已检查，`unverified` 表示对应行为仍未验证。LD2-E19 是同一冷加载原始二进制分别在两侧运行的对照；LD2-E20/E21 是 Heliodor 独立冷加载/预热探针；LD2-E22 是 Kunminghu 预热变体；LD2-E23 确认当前 Kunminghu 构建的 ChiselDB writer 是空实现；LD2-E24 记录 settled 变体的目标 miss；LD2-E25/E26 分别确认 Kunminghu 等待变体的 replay hit 和首次 issue hit；LD2-E27 同周期观察 Kunminghu 目标请求的 M-mode、Bare 与 stage-2 exception summary。Kunminghu 与 Heliodor 均有目标 PC hit 观察，但 hit 发生于各自独立 fixture/配置，不构成同条件跨实现对照。
-- Kunminghu 目标请求的 M-mode Bare、DCache hit、对齐和无 stage-2 exception summary 已观察；fixture 在目标 load 前没有 store 指令。Heliodor 特权配置、PMP/PMA，以及 miss/refill、forwarding、未对齐访问或 RVA23 整体符合性仍未由本案例验证。
+- `inspected` 表示源码/规范已检查，`unverified` 表示对应行为仍未验证。LD2-E19 是同一冷加载原始二进制分别在两侧运行的对照；LD2-E20/E21 是 Heliodor 独立冷加载/预热探针；LD2-E22 是 Kunminghu 预热变体；LD2-E23 确认当前 Kunminghu 构建的 ChiselDB writer 是空实现；LD2-E24 记录 settled 变体的目标 miss；LD2-E25/E26 分别确认 Kunminghu 等待变体的 replay hit 和首次 issue hit；LD2-E27 同周期观察 Kunminghu 目标请求的 M-mode、Bare 与 stage-2 exception summary；LD2-E28 观察 Heliodor 目标请求的 M-mode Bare。Kunminghu 与 Heliodor 均有目标 PC hit 观察，但 hit 发生于各自独立 fixture/配置，不构成同条件跨实现对照。
+- Kunminghu 目标请求的 M-mode Bare、DCache hit、对齐和无 stage-2 exception summary 已观察；fixture 在目标 load 前没有 store 指令。Heliodor 目标 load 的 M-mode Bare 已由 LD2-E28 观察；两侧具体 PMP/PMA，以及 miss/refill、forwarding、未对齐访问或 RVA23 整体符合性仍未由这些案例完整验证。
 
 ## 学习者总结
 
@@ -116,7 +118,7 @@ source_snapshots:
 
 - Kunminghu 本例 EA、x6 值和目标提交已观察；settled fixture 的目标 DCache 请求观察为 miss。LD2-E27 已确认首次 issue hit 变体为 M-mode Bare 且 stage-2 exception summary 为 0；目标前无 store 指令由 fixture 内容支持。
 - Kunminghu 目标 PC replay hit 与首次 issue hit 已分别由 LD2-E25/E26 观察；当前 ChiselDB writer 仍为空实现。
-- LD2-E27 在目标 stage-2 周期采到 `satp_mode=0`、`priv_imode=3` 与 `s2_exception=0`；源码将 `priv_imode` 连接到 CSR `privilegeMode`，且 `ModeM=3`。因此 Kunminghu 本例的 M-mode Bare 与无 stage-2 exception summary 已从运行证据确认；PMP/PMA 与 Heliodor 对应状态仍未确认。
+- LD2-E27 在目标 stage-2 周期采到 `satp_mode=0`、`priv_imode=3` 与 `s2_exception=0`；源码将 `priv_imode` 连接到 CSR `privilegeMode`，且 `ModeM=3`。因此 Kunminghu 本例的 M-mode Bare 与无 stage-2 exception summary 已从运行证据确认；PMP/PMA 仍未确认；Heliodor 的 M-mode Bare 已由 LD2-E28 单独观察。
 - Heliodor 冷加载目标 retirement PC/rd/value 已观察；预热版本的 cache hit 已观察但其 retirement 端口未捕获目标事件。Heliodor 的动态有效地址仍未直接观测。
-- Heliodor 的 M-mode/Bare，以及两边具体 PMP/PMA 与 DCache 配置未由 sources.lock 固定；Kunminghu 目标运行态由 LD2-E27 单独观测。
+- Heliodor 与 Kunminghu 的 M-mode Bare 目标请求状态分别由 LD2-E28/E27 观察；两边具体 PMP/PMA 与 DCache 配置未由 sources.lock 固定。
 - 两侧同一镜像已独立运行通过；尚无同步双核执行或微架构等价性结论。
