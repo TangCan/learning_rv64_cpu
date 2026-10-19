@@ -1,0 +1,4 @@
+957655c07efd1f35b219bac1f2f10b668a8bdaa753397523e99f67c332c49236  notes/units/evidence/smoke/kunminghu-pmp-tor-cross-20261019/input.S
+4620d7311f3bc2549fd4c866e78f090f83cf3e61be5fa1e520eedeb146228801  notes/units/evidence/smoke/kunminghu-pmp-tor-cross-20261019/fixture.ld
+57b126dc12beeb76193f855de4e8776d31839d3c3f57246460704c552a33470a  notes/units/evidence/smoke/kunminghu-pmp-tor-cross-20261019/run.stdout
+4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865  notes/units/evidence/smoke/kunminghu-pmp-tor-cross-20261019/exit-code.txt
