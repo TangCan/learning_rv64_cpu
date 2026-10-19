@@ -159,6 +159,8 @@ source_snapshots:
 
 ## 未解问题
 
+- **Heliodor PMP checker 静态影响面：** 锁定源码共有 14 个 `pmp_check` 实例：`dmem_mmu.veryl` 3 个、`imem_mmu.veryl` 1 个、`mmu.veryl` 2 个、`heliodor_core.veryl` 8 个，覆盖最终数据访问、取指、PTW 读/A-D 写回及 store/atomic/CBO 路径。当前动态跨界证据只覆盖 LD 与 PTE 读取；其他调用点行为未由这些 fixture 验证。此为只读源码盘点，未改锁定 RTL。
+
 - Kunminghu 本例 EA、x6 值和目标提交已观察；settled fixture 的目标 DCache 请求观察为 miss。LD2-E27 已确认首次 issue hit 变体为 M-mode Bare 且 stage-2 exception summary 为 0；目标前无 store 指令由 fixture 内容支持。
 - Kunminghu 目标 PC replay hit 与首次 issue hit 已分别由 LD2-E25/E26 观察；当前 ChiselDB writer 仍为空实现。
 - LD2-E27 在目标 stage-2 周期采到 `satp_mode=0`、`priv_imode=3` 与 `s2_exception=0`；LD2-E31 静态解析默认 PMA 分类，LD2-E32 直接观察目标首次 issue hit 时 `mmio=0`、`actually_uncache=0`、`uncache=0`；LD2-E33 验证 `0x39002000` 默认 PMA 窗口触发 M-mode load access fault，LD2-E34 验证 Kunminghu locked PMP entry 对 `0x80002000` 的读拒绝，LD2-E35 验证 Heliodor arch harness PMA_FAULT 注入路径对 `0x39002000` 的 load fault，LD2-E36 验证 Heliodor locked PMP entry 对 DRAM 地址 `0x80002000` 的读拒绝，LD2-E37 验证 Heliodor M-mode 对配置为 R/W/X=0 的 unlocked PMP match 仍可加载该地址，LD2-E38/E39 验证相同匹配条件下 S-mode 和 U-mode 均被拒绝且委派 trap 状态正确，LD2-E40/E51、E46/E47 分别验证 Heliodor 的 L0/L1、L2、LD2-E43/E44/E45 验证 Kunminghu 的 L0/L1/L2 PTE PMP-denied read 均被报告为 load access fault，LD2-E41 则观察到 S-mode aligned LD 跨入较高编号 TOR deny entry仍退休且 fault summary 为 0。静态检查显示 Heliodor 最终数据访问及 MMU walker 均向 `pmp_check` 传入单一地址；该 checker 按地址 word 选择最低编号匹配项，没有访问宽度/末地址输入。E41 与 E48–E50 分别复现显式 LD 以及 root/L1/L0 隐式 PTE 读取的 span 缺陷，E51 则确认起始地址落在拒绝 entry 时仍会 fault，E52 则确认相同 R 权限的相邻 TOR entry 也未触发跨界 fault；E48 从 D-side PTW 端口直接观察到完整的 root/L1/L0 PTE PA 序列 `0x80003010 → 0x80004008 → 0x80005010`；RISC-V PMP 全字节匹配要求见 privileged architecture §2.1.7.1.3。Kunminghu 各 walk 层的单一拒绝路径均已有案例，但实现 PMA map仍未确认。
