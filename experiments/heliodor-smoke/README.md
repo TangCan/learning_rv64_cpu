@@ -123,6 +123,24 @@ separate L0 table page denied by PMP, while its final DRAM address is allowed.
 The delegated S-mode handler checks cause 5, the target `sepc`, and
 `stval=0x80202000`. The archived run confirms this L0 PTE-read case only.
 
+To reproduce the aligned LD that spans adjacent TOR entries:
+
+```sh
+PATH="/nvme_data1/richard/.local/share/veryl/toolchains/latest:$PATH" \
+  python3 experiments/heliodor-smoke/run.py --topic ld-probe \
+  --ld-probe-source experiments/rv64-ld-probe/ld-heliodor-pmp-cross-boundary.S \
+  --ld-probe-expect-fault --timeout 300
+```
+
+This fixture expects cause 5: entry 0 permits bytes through `0x80002003`,
+entry 1 denies `0x80002004..0x80002007`, and the aligned 8-byte LD begins at
+`0x80002000`. On the locked snapshot, the LD instead retires in S-mode Bare,
+hits the DCache, and reports no access fault; the run is recorded as
+`run-fail`. The fixture is a defect reproducer, not a passing conformance test.
+The [RISC-V Privileged Architecture, §2.1.7.1.3](https://docs.riscv.org/reference/isa/v20260120/priv/machine.html#priority-and-matching-logic)
+requires the lowest-numbered entry that matches any byte of an access to match
+all bytes, otherwise the access fails.
+
 To run the settled prewarm fixture and check that the target access hits without
 a fill start:
 
@@ -142,4 +160,4 @@ Heliodor `ld-probe.hex` decode to the same 4104-byte image (SHA-256
 
 Each run gets a unique subdirectory under `notes/units/evidence/smoke/heliodor-core-smoke-inputs/` with the exact runner, transformed test/harness, input images, combined output, and `run-metadata.json`; separate stdout/stderr logs are kept beside it. The run record is appended under a lock using atomic replacement to the Heliodor `runs` list in `notes/units/evidence/cpu-validation-toolchain-v1.yaml`. It records commands, versions, working directory, CPU observations, result registers/tohost, resource context, failure stage, and artifact/log SHA-256 values. Preflight and timeout failures before CPU output are `blocked`; failures after CPU output are `run-fail`.
 
-A passing run requires `test_smoke` to report x10=7, x11=11, x12=77, x13=11 and `[test_smoke] PASS`, plus the selected architecture target's `tohost=1`, `pass=1`, and PASS marker. For `--topic ld`, this establishes only that the locked RV64UI LD suite completed its self-check on one Heliodor DUT. The suite result does not expose an individual LD retirement PC or `rd` value, and does not establish Kunminghu equivalence or RVA23 compliance. For Zifencei and LD runs, startup is established from the arch target's own result marker; a generic smoke marker from the separate invocation does not establish that target's startup. If the target emits no result marker, the runner leaves startup unobserved and records the run as blocked.
+A passing run requires `test_smoke` to report x10=7, x11=11, x12=77, x13=11 and `[test_smoke] PASS`, plus the selected architecture target's `tohost=1`, `pass=1`, and PASS marker. For `--topic ld`, this establishes only that the locked RV64UI LD suite completed its self-check on one Heliodor DUT. The suite result does not expose an individual LD retirement PC or `rd` value, and does not establish Kunminghu equivalence or RVA23 compliance. For `ld-probe`, a target-PC retirement or DCache request also establishes CPU execution when a fixture fails before its pass marker; such a run is `run-fail`, not `blocked`. For other arch-only topics, the target's result marker establishes startup; if neither the result marker nor a topic-specific execution probe is present, startup remains unobserved and the run is `blocked`.
