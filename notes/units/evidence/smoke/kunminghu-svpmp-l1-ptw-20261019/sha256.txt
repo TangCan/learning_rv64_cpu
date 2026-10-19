@@ -1,0 +1,5 @@
+aef39adf1e7b875f483da513a6a26d35bc531cd8b6d8d6008f9177d2e5a83330  notes/units/evidence/smoke/kunminghu-svpmp-l1-ptw-20261019/input.S
+4620d7311f3bc2549fd4c866e78f090f83cf3e61be5fa1e520eedeb146228801  notes/units/evidence/smoke/kunminghu-svpmp-l1-ptw-20261019/fixture.ld
+83d4366e34c3767518d370c4e870432f733599be20513f4bc74441bfa38de80c  notes/units/evidence/smoke/kunminghu-svpmp-l1-ptw-20261019/fixture.map
+acd803c0d6f988cb022b9e10270404011eaab47c8dd9236642fd1dbe8dd06ec4  notes/units/evidence/smoke/kunminghu-svpmp-l1-ptw-20261019/run.stdout
+9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa  notes/units/evidence/smoke/kunminghu-svpmp-l1-ptw-20261019/exit-code.txt
