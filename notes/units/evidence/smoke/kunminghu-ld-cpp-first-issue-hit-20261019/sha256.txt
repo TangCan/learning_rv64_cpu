@@ -1,0 +1,8 @@
+cf60e1d80accefd00d3854eb77f931f5503a22faaa2b6db8bd87fccaa94ac4d7  experiments/rv64-ld-probe/ld-first-hit.S
+cf60e1d80accefd00d3854eb77f931f5503a22faaa2b6db8bd87fccaa94ac4d7  notes/units/evidence/smoke/kunminghu-ld-cpp-first-issue-hit-20261019/input.S
+a546bc98ff62ca3a7b6b37292c9891ea35cc4135452aca27ed0d777fba670b7a  notes/units/evidence/smoke/kunminghu-ld-cpp-first-issue-hit-20261019/fixture.bin
+d2500d286bb9d0953960f3d94cf10d9f209a953c139e53d7ce6aca9aa5776831  notes/units/evidence/smoke/kunminghu-ld-cpp-first-issue-hit-20261019/fixture.map
+39007ba6fdf8054953729f45a74ecffbd8e171e28d19f4f31e1d448e5259b5ee  notes/units/evidence/smoke/kunminghu-ld-cpp-first-issue-hit-20261019/runner.log
+98be11a082c62e762e632d7981124c96d410096c6540998441d3b70ff0150fb9  notes/units/evidence/smoke/kunminghu-ld-cpp-first-issue-hit-20261019/run.log
+2771ee8b1e258a027b576cbf1438cb51582d78ef9d3fee0b5d2b0edcd1acea88  notes/units/evidence/smoke/kunminghu-ld-cpp-first-issue-hit-20261019/observer.patch.gz
+684c3a1daca57417214d52b34b868e21af88e656e202c4b057c21d711122d967  notes/units/evidence/smoke/kunminghu-ld-cpp-first-issue-hit-20261019/README.md

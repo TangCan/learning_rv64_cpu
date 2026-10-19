@@ -14,7 +14,7 @@ spec_refs:
     edition: "v20260120; RV32I version 2.1"
     section: "§2.6 Load and Store Instructions"
 version: 2
-evidence_namespace: "LD2-E1–LD2-E25"
+evidence_namespace: "LD2-E1–LD2-E26"
 source_snapshots:
   - project: "Kunminghu V2"
     snapshot_id: "xiangshan-kunminghu-v2-20261012"
@@ -31,7 +31,7 @@ source_snapshots:
 ## 单元自检
 
 - **问题：** 这条 `LD` 如何从 `rs1 + imm` 得到 `rd` 并退休？源码检查和现有测试能证明哪些内容，哪些边界仍未验证？
-- **学习者答案：** 架构上，`LD` 访问地址 `EA = x[rs1] + sign_extend(imm[11:0])`，把该地址的 64 位值写入 `rd`。自然对齐意味着 `EA[2:0]=0`。两侧已分别运行通过字节相同的冷加载 fixture（LD2-E19）：Kunminghu native commit trace 在 PC `0x80000008` 记录 `ld t1,0(t0)`，由已提交 x5 恢复 EA=`0x80000050`，观察到 x6=`0x123456789abcdef0`；Heliodor retirement port 在同一 PC 观察到一次 x6 写回及相同数据。后续 Heliodor 隔离探针还确认目标 PC safe hit（LD2-E20、E21）；Kunminghu settled 变体的目标 cache 请求则观察到 miss（LD2-E24）。两侧源码分别显示其 load、cache、ROB 和 architectural map 路径（LD2-E2–E15），`rat_arch` 由 `rob_commit_ack` 经 `rat_commit_en` 门控更新，`arch_regs` 调试镜像由 `rob_commit_valid` 门控更新，二者门控不同。同输入独立运行通过不证明同步或微架构等价。
+- **学习者答案：** 架构上，`LD` 访问地址 `EA = x[rs1] + sign_extend(imm[11:0])`，把该地址的 64 位值写入 `rd`。自然对齐意味着 `EA[2:0]=0`。两侧已分别运行通过字节相同的冷加载 fixture（LD2-E19）：Kunminghu native commit trace 在 PC `0x80000008` 记录 `ld t1,0(t0)`，由已提交 x5 恢复 EA=`0x80000050`，观察到 x6=`0x123456789abcdef0`；Heliodor retirement port 在同一 PC 观察到一次 x6 写回及相同数据。后续 Heliodor 隔离探针还确认目标 PC safe hit（LD2-E20、E21）；Kunminghu 原 settled 变体目标请求为 miss（LD2-E24），等待变体分别观察到 replay hit 与首次 issue hit（LD2-E25、E26）。两侧源码分别显示其 load、cache、ROB 和 architectural map 路径（LD2-E2–E15），`rat_arch` 由 `rob_commit_ack` 经 `rat_commit_en` 门控更新，`arch_regs` 调试镜像由 `rob_commit_valid` 门控更新，二者门控不同。同输入独立运行通过不证明同步或微架构等价。
 - **检查类型：** explanation + source-location
 - **证据 ID：** LD2-E1–LD2-E21；两侧共享镜像运行证据为 LD2-E19
 
@@ -44,7 +44,7 @@ source_snapshots:
 | --- | --- | --- |
 | `LD`, XLEN=64，EA[2:0]=0 | covered | 64 位加载语义由 LD2-E1 支持；实现数据路径见 LD2-E2–LD2-E11。 |
 | Heliodor 目标 PC DCache safe hit | covered | 预热 fixture 在目标 PC 观察到 hit=1、miss=0（LD2-E21）；这是 DCache safe-hit 信号，不是原始 tag 比较。 |
-| Kunminghu 目标 PC DCache hit | covered on replay | 首次 issue miss 后，加入 64 个 NOP 等待的变体在目标 PC/PADDR 观察到 stage-1 replay lookup `miss=0, tag=1, perm=1` 与 stage-2 `hit=1`，随后 fixture 退出码 0（LD2-E25）。不声称首次 issue hit；原 settled fixture 的首次与 replay 仍都是 miss（LD2-E24）。 |
+| Kunminghu 目标 PC DCache hit | covered on first issue and replay | 首次 issue hit 由加入 256 个 NOP 等待的变体在 stage 1 `miss=0, tag=1, perm=1`、stage 2 `hit=1, first=1` 观察确认（LD2-E26）；另有 LD2-E25 的 replay hit。原 settled fixture 的首次与 replay 仍都是 miss（LD2-E24）。 |
 | 两侧 M-mode Bare、Kunminghu 访问无异常、无更老重叠 store | unconfirmed | DCache 探针只观察 cache stage-2 请求和 hit 条件，不直接证明特权/转换配置、异常状态或旧 store 条件。 |
 | DCache miss/refill 与 replay | partially observed | Heliodor 冷加载目标 PC 观察到 fill-start 和 safe-hit（LD2-E20）；没有追踪 fill 完成、两者时序或 replay 延迟。 |
 | 更老 store 重叠、forwarding、store-load 次序 | excluded | 无相关旧 store 是前提；不覆盖 forwarding 或内存顺序验证。 |
@@ -68,7 +68,7 @@ source_snapshots:
 | --- | --- | --- | --- |
 | C1 | 两边都从整数源与立即数形成 load 地址。Kunminghu fixture 动态观察到 `EA=0x80000040`；Heliodor suite 结果不暴露目标 `EA`。 | LD2-E2、LD2-E16 | LD2-E7、LD2-E17 |
 | C2 | 在本案例的 Bare 假设下，地址到物理访存地址的路径分别经过 DTLB 响应和 Heliodor MMU 直通；两者最终都由 DCache 接收读请求。Bare 配置本身未运行验证。 | LD2-E3 | LD2-E8–LD2-E9 |
-| C3 | Kunminghu 的目标 `LD` 动态写回 x6=`0x123456789abcdef0`；原 settled fixture 目标 miss，带等待变体在 replay 上观察到目标 hit。Heliodor 冷加载退休值匹配，预热 fixture 自检通过且目标 PC safe hit 被观察到。 | LD2-E16、LD2-E19、LD2-E24、LD2-E25 | LD2-E18–LD2-E21 |
+| C3 | Kunminghu 的目标 `LD` 动态写回 x6=`0x123456789abcdef0`；原 settled fixture 目标 miss，等待变体分别观察到 replay hit 与首次 issue hit。Heliodor 冷加载退休值匹配，预热 fixture 自检通过且目标 PC safe hit 被观察到。 | LD2-E16、LD2-E19、LD2-E24–LD2-E26 | LD2-E18–LD2-E21 |
 | C4 | Kunminghu native commit trace 在目标 PC 观察到该 `LD` 提交；Heliodor 冷加载 retirement 端口捕获目标指令；预热 fixture 只捕获到 PC 限定 cache 请求，未捕获退休记录。RAT 更新门控仍是静态源码证据。 | LD2-E14、LD2-E16 | LD2-E15、LD2-E18、LD2-E20–E21 |
 
 ## 证据表
@@ -100,18 +100,19 @@ source_snapshots:
 | LD2-E23 | Kunminghu 锁定模拟器 ChiselDB 能否记录目标 load | test-run + source | run-fail | Kunminghu / `xiangshan-kunminghu-v2-20261012`; `c098f996bf4d301b88693b20315486d31e93bc9d` | archived fixture; `difftest/src/test/csrc/emu/emu.cpp`; `build/chisel_db.cpp`; `utility/ChiselDB.scala`; `DCacheWrapper.scala` | `emu -i fixture.bin --diff ... --dump-select-db='LoadMissDB0 LoadAccessDB0' --db-path=... --cst-file=constantin.cst` | 打开三个 Constantin 记录开关；SQLite dump 启用并只选 LoadMiss/LoadAccess 表 | settled fixture，目标 PC=`0x80000030` | 数据库应包含带 ROB index、地址及 miss 状态的记录 | 模拟器 run-pass 且报告 saving memdb；归档 SQLite 无表。两张表以 `basicDB=false` 创建，当前 elaboration 生成空 writer/init；运行时开关不能改变该结果 | `notes/units/evidence/smoke/kunminghu-chisel-db-probe-20261016/` |
 | LD2-E24 | Kunminghu settled fixture 目标 load 的 stage-2 hit/miss | instrumented test-run | run-pass | Kunminghu / `xiangshan-kunminghu-v2-20261012`; `c098f996bf4d301b88693b20315486d31e93bc9d` | observer patch; generated `VSimTop___024root.h`; `LoadPipe.scala:415` | archived README command | PC/PADDR/hit/firstIssue 采样；驱动对象以 Verilator v5.050 头文件编译，匹配原生成模型和 runtime objects | settled fixture，target PC=`0x80000030`, PADDR=`0x80000080` | PC/PADDR 对应请求的 stage-2 hit 条件 | cycle 4178 lane 2 first issue 与 cycle 4188 lane 1 replay 均 `hit=0`；模拟器 exit 0 且 NEMU GOOD TRAP。证实该 fixture 的目标请求 miss，不证明 settled cache hit | `notes/units/evidence/smoke/kunminghu-ld-cpp-probe-20261019/` |
 | LD2-E25 | Kunminghu target load replay 的 DCache hit | instrumented test-run | run-pass | Kunminghu / `xiangshan-kunminghu-v2-20261012`; `c098f996bf4d301b88693b20315486d31e93bc9d` | `experiments/rv64-ld-probe/ld-hit-wait.S`; archived map/image; observer patch; `LoadPipe.scala:304-308,415` | fixture runner + matching-version temporary C++ probe; see archived README | 单次预热、值比较后等待 64 NOP；S1 在 falling edge 采样，S2 在 rising edge 采样；Verilator v5.050 头文件及原生成模型/runtime objects | target PC=`0x80000130`, PADDR=`0x80000180` | 冷 miss 后 replay 的目标 stage-2 hit，且架构值自检通过 | cycle 4184 target first issue `miss=1`; cycle 4192 replay S1 `miss=0,tag=1,perm=1`; cycle 4193 S2 `hit=1,first=0`; target retires x6=`0x123456789abcdef0`; NEMU GOOD TRAP, exit 0 | `notes/units/evidence/smoke/kunminghu-ld-cpp-hit-probe-20261019/` |
+| LD2-E26 | Kunminghu target load 首次 issue 的 DCache hit | instrumented test-run | run-pass | Kunminghu / `xiangshan-kunminghu-v2-20261012`; `c098f996bf4d301b88693b20315486d31e93bc9d` | `experiments/rv64-ld-probe/ld-first-hit.S`; archived map/image; observer patch; `LoadPipe.scala:304-308,415` | fixture runner + matching-version temporary C++ probe; see archived README | 单次预热、值比较后等待 256 NOP；stage 1 在 falling edge 采样、stage 2 在 rising edge 采样；Verilator v5.050 headers，原模型与 runtime objects 保持不变 | target PC=`0x80000430`, PADDR=`0x80000480` | 目标首次 issue 的 stage-2 hit 且架构值自检通过 | cycle 4235 stage 1 `miss=0,tag=1,perm=1`; cycle 4236 stage 2 `hit=1,first=1`; commit trace 记录 x6=`0x123456789abcdef0`; NEMU GOOD TRAP, exit 0 | `notes/units/evidence/smoke/kunminghu-ld-cpp-first-issue-hit-20261019/` |
 
-- `inspected` 表示源码/规范已检查，`unverified` 表示对应行为仍未验证。LD2-E19 是同一冷加载原始二进制分别在两侧运行的对照；LD2-E20/E21 是 Heliodor 独立冷加载/预热探针；LD2-E22 是 Kunminghu 预热变体；LD2-E23 确认当前 Kunminghu 构建的 ChiselDB writer 是空实现；LD2-E24 记录 settled 变体的目标 miss，LD2-E25 以匹配版本的隔离 C++ 探针确认等待变体的 replay hit。Kunminghu 与 Heliodor 均有目标 PC hit 观察，但 hit 发生于各自独立 fixture/配置，不构成同条件跨实现对照。
+- `inspected` 表示源码/规范已检查，`unverified` 表示对应行为仍未验证。LD2-E19 是同一冷加载原始二进制分别在两侧运行的对照；LD2-E20/E21 是 Heliodor 独立冷加载/预热探针；LD2-E22 是 Kunminghu 预热变体；LD2-E23 确认当前 Kunminghu 构建的 ChiselDB writer 是空实现；LD2-E24 记录 settled 变体的目标 miss；LD2-E25、E26 分别确认 Kunminghu 等待变体的 replay hit 和首次 issue hit。Kunminghu 与 Heliodor 均有目标 PC hit 观察，但 hit 发生于各自独立 fixture/配置，不构成同条件跨实现对照。
 - M-mode Bare、DCache hit、对齐和无旧重叠 store 是本案例边界，不是实验观察。源码局部证据不证明两边对 miss/refill、forwarding、未对齐访问、异常、地址转换配置或 RVA23 整体符合性。
 
 ## 学习者总结
 
-`LD` 的架构结果是 EA 指向的完整 64 位值。两侧现已分别运行并通过同一 4104-byte 冷加载 binary（哈希见 LD2-E19），且目标 PC、rd=x6 与数据一致；Kunminghu trace 还观察到 EA。Heliodor 预热 fixture 的目标-PC 请求观察到 safe hit，冷加载则观察到 hit 与 fill-start。Kunminghu 原 settled 变体目标 PC/PADDR 首次请求与 replay 均为 miss；在 LD2-E25 中加入 refill 等待后，目标首次 issue miss，replay hit，架构自检通过。两侧是在各自锁定环境中独立运行，不能替代同步或同一微架构配置下的等价证明。
+`LD` 的架构结果是 EA 指向的完整 64 位值。两侧现已分别运行并通过同一 4104-byte 冷加载 binary（哈希见 LD2-E19），且目标 PC、rd=x6 与数据一致；Kunminghu trace 还观察到 EA。Heliodor 预热 fixture 的目标-PC 请求观察到 safe hit，冷加载则观察到 hit 与 fill-start。Kunminghu 原 settled 变体目标 PC/PADDR 首次请求与 replay 均为 miss；LD2-E25 在 64 个 NOP 后观察到首次 miss、replay hit；LD2-E26 在 256 个 NOP 后观察到目标首次 issue hit，且 commit trace、自检与 NEMU GOOD TRAP 均通过。两侧是在各自锁定环境中独立运行，不能替代同步或同一微架构配置下的等价证明。
 
 ## 未解问题
 
 - Kunminghu 本例 EA、x6 值和目标提交已观察；settled fixture 的目标 DCache 请求观察为 miss。M-mode/Bare 与访问无异常、无更老重叠 store 条件仍未由运行记录充分证明。
-- Kunminghu 目标 PC replay hit 已由 LD2-E25 观察；若要验证首次 issue hit，还需另行设计确实已驻留的输入状态。当前 ChiselDB writer 仍为空实现。
+- Kunminghu 目标 PC replay hit 与首次 issue hit 已分别由 LD2-E25/E26 观察；当前 ChiselDB writer 仍为空实现。
 - Heliodor 冷加载目标 retirement PC/rd/value 已观察；预热版本的 cache hit 已观察但其 retirement 端口未捕获目标事件。Heliodor 的动态有效地址仍未直接观测。
 - 两边具体 M-mode/Bare、PMP/PMA 与 DCache 配置未由 sources.lock 固定；本文只将它们作为选定场景假设。
 - 两侧同一镜像已独立运行通过；尚无同步双核执行或微架构等价性结论。

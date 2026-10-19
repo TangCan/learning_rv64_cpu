@@ -1,0 +1,13 @@
+Kunminghu fixture runner
+snapshot_sha=c098f996bf4d301b88693b20315486d31e93bc9d
+configuration=KunminghuV2Config NUM_CORES=1
+working_directory=/nvme_data1/richard/learning_rv64_cpu
+linked_start=0x80000000
+expected_good_trap_pc=0x80000468
+$ /home/richard/richard_opt/riscv/bin/riscv64-unknown-elf-gcc -march=rv64imac -mabi=lp64 -nostdlib -nostartfiles -Wl,--build-id=none -Wl,-T,/nvme_data1/richard/learning_rv64_cpu/experiments/rv64-ld-probe/fixture.ld -Wl,-Map,/nvme_data1/richard/learning_rv64_cpu/experiments/kunminghu-smoke/.ld-first-hit-final-runs/kunminghu-fixture-20261019T031556Z-0b04a6183011/fixture.map -o /nvme_data1/richard/learning_rv64_cpu/experiments/kunminghu-smoke/.ld-first-hit-final-runs/kunminghu-fixture-20261019T031556Z-0b04a6183011/fixture.elf /nvme_data1/richard/learning_rv64_cpu/experiments/rv64-ld-probe/ld-first-hit.S
+$ /home/richard/richard_opt/riscv/bin/riscv64-unknown-elf-objcopy -O binary /nvme_data1/richard/learning_rv64_cpu/experiments/kunminghu-smoke/.ld-first-hit-final-runs/kunminghu-fixture-20261019T031556Z-0b04a6183011/fixture.elf /nvme_data1/richard/learning_rv64_cpu/experiments/kunminghu-smoke/.ld-first-hit-final-runs/kunminghu-fixture-20261019T031556Z-0b04a6183011/fixture.bin
+$ /nvme_data1/richard/learning_rv64_cpu/sources/xiangshan/build/verilator-compile/emu -i /nvme_data1/richard/learning_rv64_cpu/experiments/kunminghu-smoke/.ld-first-hit-final-runs/kunminghu-fixture-20261019T031556Z-0b04a6183011/fixture.bin --diff /nvme_data1/richard/learning_rv64_cpu/sources/xiangshan/ready-to-run/riscv64-nemu-interpreter-so --max-cycles=10000 --max-instr=1000 --dump-commit-trace
+first_failed_stage=none
+exit_code=0
+cpu_started=true
+result=run-pass
