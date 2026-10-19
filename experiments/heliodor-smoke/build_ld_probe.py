@@ -45,7 +45,7 @@ def main() -> None:
     with tempfile.TemporaryDirectory(prefix="heliodor-ld-probe-") as name:
         temp = pathlib.Path(name)
         elf, raw = temp / "ld-probe.elf", temp / "ld-probe.bin"
-        gcc_argv = [binaries["riscv64-unknown-elf-gcc"], "-march=rv64imac", "-mabi=lp64",
+        gcc_argv = [binaries["riscv64-unknown-elf-gcc"], "-march=rv64imac_zicsr", "-mabi=lp64",
                     "-nostdlib", "-nostartfiles", "-ffreestanding", f"-Wl,-T,{LINKER}",
                     "-Wl,--build-id=none", "-o", str(elf), str(source)]
         objcopy_argv = [binaries["riscv64-unknown-elf-objcopy"], "-O", "binary", str(elf), str(raw)]

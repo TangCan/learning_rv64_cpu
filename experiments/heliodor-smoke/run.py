@@ -267,7 +267,10 @@ def ld_check_probe(output: str) -> dict[str, bool] | None:
 def ld_probe_passes(arch_passed: bool, retirement: dict[str, int] | None,
                     cache_probe: dict[str, bool] | None,
                     address: dict[str, str] | None, expected_address: str,
-                    checks: dict[str, bool] | None) -> bool:
+                    checks: dict[str, bool] | None, expect_fault: bool = False) -> bool:
+    if expect_fault:
+        # Fault fixtures report success only after their trap handler checks cause, PC, and mtval.
+        return arch_passed
     return (arch_passed and cache_probe is not None
             and (retirement is not None or cache_probe["hit_seen"])
             and address is not None
@@ -530,6 +533,7 @@ def run(args: argparse.Namespace) -> dict:
     sstc_case = getattr(args, "sstc_case", None)
     ld_suite = getattr(args, "topic", "smoke") == "ld"
     ld_probe = getattr(args, "topic", "smoke") == "ld-probe"
+    ld_probe_expect_fault = bool(getattr(args, "ld_probe_expect_fault", False))
     sscofpmf = getattr(args, "topic", "smoke") == "sscofpmf"
     sscofpmf_case = getattr(args, "sscofpmf_case", None) or "hardware-overflow"
     sscofpmf_fixture, sscofpmf_source = SSCOFPMF_FIXTURES[sscofpmf_case]
@@ -700,7 +704,8 @@ def run(args: argparse.Namespace) -> dict:
         if ld_probe:
             expected_address = f"0x{int(ld_build_record['data_address'], 16):016x}"
             probe_passed = ld_probe_passes(expected_observed, retirement, cache_probe,
-                                           ld_address, expected_address, ld_checks)
+                                           ld_address, expected_address, ld_checks,
+                                           expect_fault=ld_probe_expect_fault)
             expected_observed = probe_passed
             assertion_failed = assertion_failed or (cpu_started and not probe_passed)
         if not blocker and not cpu_started:
@@ -811,15 +816,18 @@ def run(args: argparse.Namespace) -> dict:
                    {"path": str(archived_arch_fixture.relative_to(ROOT)) if archived_arch_fixture.is_file() else str(input_path.relative_to(ROOT)), "sha256": input_hash},
                    *([{"path": sscofpmf_source, "sha256": sha256(ROOT / sscofpmf_source)},
                       {"path": SSCOFPMF_LINKER, "sha256": sha256(ROOT / SSCOFPMF_LINKER)}] if sscofpmf else [])],
-        **({"topic": "rv64ui-ld-probe", "evidence_scope": "one fixture LD retirement plus target-PC DCache safe-hit/fill-start, privilege/SATP, LSU virtual/physical address, and PMP/PMA fault-flag observations in the isolated core"} if ld_probe else
+        **({"topic": "rv64ui-ld-probe", "evidence_scope": ("self-checking M-mode load access-fault fixture using the arch harness PMA_FAULT path" if ld_probe_expect_fault else "one fixture LD retirement plus target-PC DCache safe-hit/fill-start, privilege/SATP, LSU virtual/physical address, and PMP/PMA fault-flag observations in the isolated core")} if ld_probe else
            {"topic": "rv64ui-ld-suite", "evidence_scope": "suite-level tohost/pass only; no per-instruction retirement PC or rd value is exposed"} if ld_suite else {}),
         **({"observed_retirement": retirement, "observed_cache_probe": cache_probe,
-            "observed_load_context": ld_context, "observed_load_address": ld_address,
-            "observed_load_checks": ld_checks,
+            "observed_load_context": None if ld_probe_expect_fault else ld_context,
+            "observed_load_address": None if ld_probe_expect_fault else ld_address,
+            "observed_load_checks": None if ld_probe_expect_fault else ld_checks,
             "expected_load_address": (ld_build_record.get("data_address") if ld_probe else None),
             **({"expected_retirement": {"count": 1, "pc": ld_probe_pc, "rd_valid": 1, "rd": 6, "data": "0x123456789abcdef0"}} if retirement is not None else {}),
-            "fixture_build": ld_build_record, "evidence_method": "self-checking LD fixture plus target-PC DCache safe-hit/fill-start, privilege/SATP, LSU virtual/physical address, and registered access/page-fault plus uncached-attribute capture; retirement port fields are recorded when available"} if ld_probe else {}),
-        "configuration": (f"Heliodor test_smoke plus isolated test_arch_rv64ui_ld; one harness/DUT; one-LD fixture and retirement-port capture." if ld_probe else
+            **({"expected_trap": {"cause": 5, "mepc": f"0x{ld_probe_pc:016x}", "mtval": ld_build_record.get("data_address")}} if ld_probe_expect_fault else {}),
+            "fixture_build": ld_build_record, "evidence_method": ("self-checking trap handler checks load access fault cause, mepc, and mtval before tohost=1/pass=1" if ld_probe_expect_fault else "self-checking LD fixture plus target-PC DCache safe-hit/fill-start, privilege/SATP, LSU virtual/physical address, and registered access/page-fault plus uncached-attribute capture; retirement port fields are recorded when available")} if ld_probe else {}),
+        "configuration": (f"Heliodor test_smoke plus isolated test_arch_rv64ui_ld; one harness/DUT; expected load access-fault fixture with trap-handler checks." if ld_probe and ld_probe_expect_fault else
+                          f"Heliodor test_smoke plus isolated test_arch_rv64ui_ld; one harness/DUT; one-LD fixture and retirement-port capture." if ld_probe else
                           f"Heliodor test_smoke plus isolated test_arch_rv64ui_ssnpm ({ssnpm_case}); one harness/DUT; U-mode senvcfg.PMM PMLEN/tagged-pointer probe." if ssnpm else
                           "Heliodor test_smoke plus isolated test_arch_rv64ui_ld and the locked rv64ui/ld.hex; one harness/DUT; suite-level tohost/pass evidence only." if ld_suite else
                           f"Heliodor test_smoke plus {arch_target}; one harness/DUT; 5000 smoke cycles and 300000 arch cycles; expected Zifencei old/new return 1/42 and tohost=1." if zifencei_case else
@@ -832,7 +840,8 @@ def run(args: argparse.Namespace) -> dict:
         "result": "run-pass" if expected_observed else ("run-fail" if cpu_started and assertion_failed else "blocked"),
         "assertion_failed": assertion_failed, "expected_observed": expected_observed,
         "infrastructure_blocked": infrastructure_blocked,
-        "expected": ("Fixture self-check passes, and target-PC cache observation sees a safe hit or a validated target retirement." if ld_probe else
+        "expected": ("Trap handler checks cause=5, mepc=target LD, and mtval=load address before tohost=1/pass=1." if ld_probe and ld_probe_expect_fault else
+                     "Fixture self-check passes, and target-PC cache observation sees a safe hit or a validated target retirement." if ld_probe else
                      f"U-mode Ssnpm fixture {ssnpm_case} verifies senvcfg.PMM readback and expected explicit access behavior before tohost=1/pass=1." if ssnpm else
                      "test_smoke passes; the RV64UI LD suite reports tohost=1/pass=1 and its PASS marker. This is suite-level evidence, not a per-LD retirement/value trace." if ld_suite else
                      "test_smoke registers pass; Zifencei fixture checks old return 1 then new return 42 and reports tohost=1/pass=1." if zifencei_case else
@@ -924,6 +933,8 @@ def main() -> int:
     parser.add_argument("--sscofpmf-case", choices=SSCOFPMF_CASES)
     parser.add_argument("--ld-probe-source", type=pathlib.Path,
                         help="alternate project-relative assembly fixture for --topic ld-probe")
+    parser.add_argument("--ld-probe-expect-fault", action="store_true",
+                        help="treat --topic ld-probe as a self-checking load-access-fault fixture")
     args = parser.parse_args()
     if args.topic == "ld-probe":
         source = (ROOT / (args.ld_probe_source or pathlib.Path("experiments/rv64-ld-probe/ld.S"))).resolve()
@@ -937,6 +948,8 @@ def main() -> int:
             return build.returncode
     elif args.ld_probe_source is not None:
         parser.error("--ld-probe-source requires --topic ld-probe")
+    if args.ld_probe_expect_fault and (args.topic != "ld-probe" or args.ld_probe_source is None):
+        parser.error("--ld-probe-expect-fault requires --topic ld-probe and --ld-probe-source")
     if args.timeout <= 0 or not (args.timeout < float("inf")):
         parser.error("--timeout must be finite and positive")
     if args.sstc_case and args.topic != "sstc":

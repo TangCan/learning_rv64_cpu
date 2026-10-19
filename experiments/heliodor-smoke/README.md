@@ -33,6 +33,25 @@ captures its retirement PC, destination, and data. Its current observation is
 one target retirement at `0x80000008` (`rd=x6`, value
 `0x123456789abcdef0`) and both hit and fill-start signals at that PC.
 
+To validate the arch harness's injected PMA-hole load-fault path with a
+self-checking M-mode trap handler:
+
+```sh
+PATH="/nvme_data1/richard/.local/share/veryl/toolchains/latest:$PATH" \
+  python3 experiments/heliodor-smoke/run.py --topic ld-probe \
+  --ld-probe-source experiments/rv64-ld-probe/ld-heliodor-pma-fault.S \
+  --ld-probe-expect-fault --timeout 300
+```
+
+The fixture's handler checks cause 5, the target `mepc`, and the faulting
+address in `mtval` before writing `tohost=1`. The runner treats this marker as
+the expected result only in the explicit fault mode. The isolated arch harness
+sets `PMA_FAULT=1`; this exercises its injected PMA-hole path and does not
+establish hardware PMP enforcement or an implementation PMA register map.
+The run manifest retains the first pre-mode attempt as `run-fail`: that run
+reached the fixture's pass marker, but the success-only probe criteria rejected
+the expected exception. Later runs with `--ld-probe-expect-fault` passed.
+
 To run the settled prewarm fixture and check that the target access hits without
 a fill start:
 
