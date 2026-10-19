@@ -1,0 +1,51 @@
+
+There are no discarded input sections
+
+Memory Configuration
+
+Name             Origin             Length             Attributes
+*default*        0x0000000000000000 0xffffffffffffffff
+
+Linker script and memory map
+
+                0x0000000080000000                . = 0x80000000
+
+.text           0x0000000080000000       0x5c
+ *(.text.init)
+ .text.init     0x0000000080000000       0x5c /tmp/cc2PX78m.o
+                0x0000000080000000                _start
+                0x0000000080000010                ld_target
+                0x0000000080000050                good_trap
+ *(.text .text.*)
+ .text          0x000000008000005c        0x0 /tmp/cc2PX78m.o
+
+.rodata
+ *(.rodata .rodata.*)
+
+.data           0x0000000080000060        0x0
+ *(.data .data.*)
+ .data          0x0000000080000060        0x0 /tmp/cc2PX78m.o
+
+.bss            0x0000000080000060        0x0
+ *(.bss .bss.*)
+ .bss           0x0000000080000060        0x0 /tmp/cc2PX78m.o
+ *(COMMON)
+                0x0000000080001000                . = 0x80001000
+
+.tohost         0x0000000080001000        0x8
+ *(.tohost)
+ .tohost        0x0000000080001000        0x4 /tmp/cc2PX78m.o
+                0x0000000080001000                tohost
+                0x0000000080001008                . = ALIGN (0x8)
+ *fill*         0x0000000080001004        0x4 
+
+/DISCARD/
+ *(.comment)
+ *(.eh_frame*)
+LOAD /tmp/cc2PX78m.o
+OUTPUT(notes/units/evidence/smoke/kunminghu-ld-pma-denial-20261019/fixture.elf elf64-littleriscv)
+
+.riscv.attributes
+                0x0000000000000000       0x59
+ .riscv.attributes
+                0x0000000000000000       0x59 /tmp/cc2PX78m.o

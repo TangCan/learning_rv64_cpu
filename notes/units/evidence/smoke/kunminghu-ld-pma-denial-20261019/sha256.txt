@@ -1,0 +1,7 @@
+8392a480ba9bdf93c77adead94cfa2546e4c7d37b7379b221fd7c3ed19142b75  notes/units/evidence/smoke/kunminghu-ld-pma-denial-20261019/README.md
+1df37ea82c92c03c2aaa3decae94eef10cdcf334b7cd2e80e28ea8578fbbcfaf  notes/units/evidence/smoke/kunminghu-ld-pma-denial-20261019/input.S
+d0379e522d55e6d26cbf273865d387dcc222ee3bf77a6fce2c1ee02896e2a5e0  notes/units/evidence/smoke/kunminghu-ld-pma-denial-20261019/fixture.bin
+a8f9878aeab8e8d86c55797bf233573bd77955a8b2c6f3a8bef312f2e17421ce  notes/units/evidence/smoke/kunminghu-ld-pma-denial-20261019/fixture.elf
+be8248b42905fa91aa48ea7465795f27cee95f830f17fca914c35ba887dd876f  notes/units/evidence/smoke/kunminghu-ld-pma-denial-20261019/fixture.map
+a406a221700ea8c9db8abeb114e381e41738e0cda42af16d39500a3566f9d22f  notes/units/evidence/smoke/kunminghu-ld-pma-denial-20261019/run.stdout
+e032ebd084f13f5e5a8d4f41c3fee50172c8577bec7acd6c6f2a4bfcfa58c39e  notes/units/evidence/smoke/kunminghu-ld-pma-denial-20261019/run.stderr
