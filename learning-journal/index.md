@@ -29,6 +29,7 @@
 | 已完成静态复核 | Sv39 非规范 `LD` fault 双核路径 | [Sv39 非规范地址 LD fault](2026-10-15-sv39-noncanonical-ld-fault.md) | [`sv39-load-fault-v3.md`](../notes/units/sv39-load-fault-v3.md)；历史版 v1/v2 保留；固定案例动态行为未验证 |
 | 已完成本次审计 | `LD`/`SD`/Sv39 fault 证据与固定快照核验 | [三类案例证据审计](2026-10-15-three-case-evidence-audit.md) | 六条路径与活动 ID 已核对；fault C3 测试比较为 partial，动态案例仍未验证 |
 | 已完成静态整理 | 双核访存路径综合比较 | [综合日志](2026-10-15-load-store-fault-synthesis.md) | 三类活动单元与六条路径已综合；运行边界仍未验证 |
+| 持续补充动态证据 | PMP access-span 跨界行为与单 entry 成功对照（LD2-E48–E56） | [10 月 19 日项目进展](../docs/blog/2026-10-19-sumarry.md) | [`load-v2.md`](../notes/units/load-v2.md)；Heliodor/Kunminghu 结论及边界见 E48–E56 |
 
 新日志按 `YYYY-MM-DD-主题.md` 命名，并从本页按时间顺序添加。先写已有证据支持的回顾；如果历史材料不能还原过程，就明确写“基于现有记录回顾”，不虚构当时的探索细节。
 
