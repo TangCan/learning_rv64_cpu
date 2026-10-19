@@ -1,0 +1,51 @@
+
+There are no discarded input sections
+
+Memory Configuration
+
+Name             Origin             Length             Attributes
+*default*        0x0000000000000000 0xffffffffffffffff
+
+Linker script and memory map
+
+                0x0000000080000000                . = 0x80000000
+
+.text           0x0000000080000000       0x8c
+ *(.text.init)
+ .text.init     0x0000000080000000       0x8c /tmp/ccZYzjeN.o
+                0x0000000080000000                _start
+                0x0000000080000038                ld_target
+                0x0000000080000080                good_trap
+ *(.text .text.*)
+ .text          0x000000008000008c        0x0 /tmp/ccZYzjeN.o
+
+.rodata
+ *(.rodata .rodata.*)
+
+.data           0x0000000080000090        0x0
+ *(.data .data.*)
+ .data          0x0000000080000090        0x0 /tmp/ccZYzjeN.o
+
+.bss            0x0000000080000090        0x0
+ *(.bss .bss.*)
+ .bss           0x0000000080000090        0x0 /tmp/ccZYzjeN.o
+ *(COMMON)
+                0x0000000080001000                . = 0x80001000
+
+.tohost         0x0000000080001000        0x8
+ *(.tohost)
+ .tohost        0x0000000080001000        0x4 /tmp/ccZYzjeN.o
+                0x0000000080001000                tohost
+                0x0000000080001008                . = ALIGN (0x8)
+ *fill*         0x0000000080001004        0x4 
+
+/DISCARD/
+ *(.comment)
+ *(.eh_frame*)
+LOAD /tmp/ccZYzjeN.o
+OUTPUT(notes/units/evidence/smoke/kunminghu-ld-pmp-denial-20261019/fixture.elf elf64-littleriscv)
+
+.riscv.attributes
+                0x0000000000000000       0x59
+ .riscv.attributes
+                0x0000000000000000       0x59 /tmp/ccZYzjeN.o

@@ -1,0 +1,48 @@
+emu compiled at Oct 14 2026, 10:53:44
+[INFO] init for constantin: loaded from init.
+Using simulated 1048576B flash
+Core  0's Commit SHA is: c098f996bf, dirty: 0
+Using simulated 8386560MB RAM
+The image is notes/units/evidence/smoke/kunminghu-ld-pmp-denial-20261019/fixture.bin
+The reference model is sources/xiangshan/ready-to-run/riscv64-nemu-interpreter-so
+The first instruction of core 0 has commited. Difftest enabled. 
+[00] commit pc 0000000010000000 inst 74446073 wen 0 dst 00 data 0000000000000000 idx 000
+[01] commit pc 0000000010000004 inst 0010029b wen 1 dst 05 data 0000000000000001 idx 001
+[02] commit pc 0000000010000008 inst 02a29313 wen 1 dst 06 data 0000040000000000 idx 002
+[03] commit pc 000000001000000c inst 30033073 wen 0 dst 00 data 0000040000000000 idx 003
+[04] commit pc 0000000010000010 inst 01f29293 wen 1 dst 05 data 0000000080000000 idx 004
+[05] commit pc 0000000010000014 inst 00028067 wen 0 dst 00 data 0000000080000000 idx 005
+[06] commit pc 0000000080000000 inst 00000297 wen 1 dst 05 data 0000000080000000 idx 006
+[07] commit pc 0000000080000004 inst 04028293 wen 1 dst 05 data 0000000080000040 idx 007
+[08] commit pc 0000000080000008 inst 30529073 wen 0 dst 00 data 0000000080000040 idx 008
+[09] commit pc 000000008000000c inst 000402b7 wen 1 dst 05 data 0000000000040001 idx 009
+[10] commit pc 0000000080000014 inst 00d29293 wen 1 dst 05 data 0000000080002000 idx 00a
+[11] commit pc 0000000080000018 inst 0022d313 wen 1 dst 06 data 0000000020000800 idx 00b
+[12] commit pc 000000008000001c inst 1ff36313 wen 1 dst 06 data 00000000200009ff idx 00c
+[13] commit pc 0000000080000020 inst 3b031073 wen 0 dst 00 data 00000000200009ff idx 00d
+[14] commit pc 0000000080000024 inst 09800313 wen 1 dst 06 data 0000000000000098 idx 00e
+[15] commit pc 0000000080000028 inst 3a031073 wen 0 dst 00 data 0000000000000098 idx 00f
+[16] commit pc 000000008000002c inst 000402b7 wen 1 dst 05 data 0000000000040001 idx 010
+[17] commit pc 0000000080000034 inst 00d29293 wen 1 dst 05 data 0000000080002000 idx 011
+[18] exception pc 0000000080000038 inst 0002b303 cause 0000000000000005
+[1;34m[src/memory/paddr.c:218,check_paddr] isa pmp check failed, vaddr=0x0000000080002000, paddr=0x0000000080002000, len=0x8, type=0x1, mode=0x3[0m
+[19] commit pc 0000000080000040 inst 342022f3 wen 1 dst 05 data 0000000000000005 idx 012
+[20] commit pc 0000000080000044 inst 00500313 wen 1 dst 06 data 0000000000000005 idx 013
+[21] commit pc 0000000080000048 inst 02629e63 wen 0 dst 28 data 0000000000000005 idx 014
+[22] commit pc 000000008000004c inst 00000317 wen 1 dst 06 data 000000008000004c idx 015
+[23] commit pc 0000000080000050 inst fec30313 wen 1 dst 06 data 0000000080000038 idx 016
+[24] commit pc 0000000080000054 inst 341023f3 wen 1 dst 07 data 0000000080000038 idx 017
+[25] commit pc 0000000080000058 inst 02731663 wen 0 dst 12 data 0000000000000005 idx 018
+[26] commit pc 000000008000005c inst 343023f3 wen 1 dst 07 data 0000000080002000 idx 019
+[27] commit pc 0000000080000060 inst 00040e37 wen 1 dst 28 data 0000000000040001 idx 01a
+[28] commit pc 0000000080000068 inst 00de1e13 wen 1 dst 28 data 0000000080002000 idx 01b
+[29] commit pc 000000008000006c inst 01c39c63 wen 0 dst 24 data 0000000000000005 idx 01c
+[30] commit pc 0000000080000070 inst 00001297 wen 1 dst 05 data 0000000080001070 idx 01d
+[31] commit pc 0000000080000074 inst f9028293 wen 1 dst 05 data 0000000080001000 idx 01e
+[32] commit pc 0000000080000078 inst 00100313 wen 1 dst 06 data 0000000000000001 idx 01f
+[33] commit pc 000000008000007c inst 0062a023 wen 0 dst 00 data 0000000000000005 idx 020 (00)
+Core 0: [32mHIT GOOD TRAP at pc = 0x80000080
+[0m[35mCore-0 instrCnt = 36, cycleCnt = 4,277, IPC = 0.008417
+[0m[34mSeed=0 Guest cycle spent: 4,283 (this will be different from cycleCnt if emu loads a snapshot)
+[0m[34mHost time spent: 3,414ms
+[0m
