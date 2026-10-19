@@ -38,7 +38,7 @@ The first instruction of core 0 has commited. Difftest enabled.
 [25] commit pc 0000000080000064 inst 01de2023 wen 0 dst 00 data 00000000002468ad idx 019 (00)
 Core 0: [32mHIT GOOD TRAP at pc = 0x80000068
 [0m[35mCore-0 instrCnt = 32, cycleCnt = 4,199, IPC = 0.007621
-[0msaving memdb to /tmp/ld-cpp-probe.sqlite ...
+[0msaving memdb to /tmp/ld-cpp-probe-5050.sqlite ...
 [34mSeed=0 Guest cycle spent: 4,205 (this will be different from cycleCnt if emu loads a snapshot)
-[0m[34mHost time spent: 3,320ms
+[0m[34mHost time spent: 3,176ms
 [0m

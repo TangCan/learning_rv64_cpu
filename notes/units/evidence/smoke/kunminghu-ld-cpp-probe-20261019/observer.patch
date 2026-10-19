@@ -1,0 +1,34 @@
+diff --git a/src/test/csrc/emu/emu.cpp b/src/test/csrc/emu/emu.cpp
+index 4f57a6124..0d1bd9edc 100644
+--- a/src/test/csrc/emu/emu.cpp
++++ b/src/test/csrc/emu/emu.cpp
+@@ -337,0 +338 @@ inline void Emulator::single_cycle() {
++  static_cast<VerilatorSim *>(dut_ptr)->sample_ld_cache_probe();
+diff --git a/src/test/csrc/verilator/verilator.h b/src/test/csrc/verilator/verilator.h
+index b8d47933e..d9779dc0a 100644
+--- a/src/test/csrc/verilator/verilator.h
++++ b/src/test/csrc/verilator/verilator.h
+@@ -20,0 +21,2 @@
++#include "VSimTop___024root.h"
++#include <cstdio>
+@@ -66,0 +69,20 @@ public:
++  void sample_ld_cache_probe() {
++    const auto *r = dut->rootp;
++    static uint64_t sample_cycle = 0;
++    ++sample_cycle;
++#define SAMPLE_LDU(n) do { \
++    const auto pc = r->SimTop__DOT__cpu__DOT__l_soc__DOT__core_with_l2__DOT__core__DOT__memBlock__DOT__inner_LoadUnit_##n##__DOT__s2_in_r_uop_pc; \
++    const auto valid = r->SimTop__DOT__cpu__DOT__l_soc__DOT__core_with_l2__DOT__core__DOT__memBlock__DOT__inner_dcache__DOT__dcache__DOT__ldu_##n##__DOT__s2_valid; \
++    const auto paddr = r->SimTop__DOT__cpu__DOT__l_soc__DOT__core_with_l2__DOT__core__DOT__memBlock__DOT__inner_dcache__DOT__dcache__DOT__ldu_##n##__DOT__s2_paddr; \
++    const auto hit = r->SimTop__DOT__cpu__DOT__l_soc__DOT__core_with_l2__DOT__core__DOT__memBlock__DOT__inner_dcache__DOT__dcache__DOT__ldu_##n##__DOT___s2_hit_T_2; \
++    const auto first = r->SimTop__DOT__cpu__DOT__l_soc__DOT__core_with_l2__DOT__core__DOT__memBlock__DOT__inner_dcache__DOT__dcache__DOT__ldu_##n##__DOT__s2_req_isFirstIssue; \
++    if (valid && (pc == 0x80000030ULL || paddr == 0x80000080ULL)) \
++      std::fprintf(stderr, "LD_PC_PROBE cycle=%llu lane=%d pc=0x%llx paddr=0x%llx hit=%u first=%u\n", \
++        (unsigned long long)sample_cycle, n, (unsigned long long)pc, (unsigned long long)paddr, (unsigned)hit, (unsigned)first); \
++  } while (0)
++    SAMPLE_LDU(0);
++    SAMPLE_LDU(1);
++    SAMPLE_LDU(2);
++#undef SAMPLE_LDU
++  }
++

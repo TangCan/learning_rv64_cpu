@@ -1,15 +1,24 @@
 # Kunminghu C++ cache probe (LD2-E24)
 
-This is exploratory evidence for the settled fixture's target load at PC `0x80000030`, physical address `0x80000080`. A temporary observer was added only in `/tmp/xiangshan-difftest-cpp` and sampled generated DCache stage-2 `valid`, `paddr`, `_s2_hit_T_2`, `s2_req_isFirstIssue`, alongside the matching LoadUnit stage-2 PC. Source defines `s2_hit` at `LoadPipe.scala:415` as tag match, permission, coherence-state match, and no WPU prediction failure; the generated `_s2_hit_T_2` is the hit condition used in the built model.
+This run observes the settled fixture's target load at PC `0x80000030`, PADDR `0x80000080`. It uses a temporary C++ observer to sample each DCache load lane's stage-2 `valid`, `paddr`, `_s2_hit_T_2`, and `s2_req_isFirstIssue`, alongside the corresponding LoadUnit stage-2 PC. The archived `observer.patch` is the complete temporary source diff; it was applied only in an isolated difftest worktree.
 
-Observed lines:
+## Result
 
-- cycle 4178, lane 2: PC `0x80000030`, PADDR `0x80000080`, `first=1`, `hit=0`.
-- cycle 4188, lane 1: PC `0x80000030`, PADDR `0x80000080`, `first=0`, `hit=0`.
+- cycle 4178, lane 2: target PC/PADDR, `first=1`, `hit=0`.
+- cycle 4188, lane 1: target PC/PADDR, `first=0`, `hit=0` (replayed request).
+- The emulator exited 0 and NEMU reported `HIT GOOD TRAP at pc = 0x80000068`.
 
-The simulator printed NEMU `HIT GOOD TRAP` at PC `0x80000068` and saved its database, but exited with SIGSEGV (139) during shutdown. The isolated C++ objects were compiled with installed Verilator 5.020 headers while the generated model objects came from the original Verilator 5.050 build. This mixed toolchain is a material integrity limitation; the observation suggests the target request missed, but does not close the hit/miss question as verified evidence. Existing Kunminghu and Heliodor fixture results remain as previously recorded.
+`LoadPipe.scala:415` defines `s2_hit` as tag match, permission, coherence-state match, and no WPU prediction failure. The generated model's `_s2_hit_T_2` is this stage-2 hit result. Thus this settled fixture's target request missed on its first issue and replay; it does not provide a target hit example. This agrees with the prior aggregate counters (`real_miss_first_issue=2`, `load_hit=0`) but adds PC/PADDR association.
 
-Run command (from the repository root; outputs shown are archived here):
+## Build integrity
+
+The locked RTL model was not regenerated. The temporary `emu.o` and `verilator.o` were recompiled with GCC 13.3 and Verilator v5.050 headers/configuration, matching the original generated model and runtime objects. Verilator source tag `v5.050` resolves to commit `848d926ebd4addacacd294dc84e35d9d4ae8078c`; the annotated tag object is `0a24d49771fa57c36ff667272bf7b5c6705e4df0`. The model archive and Verilator runtime objects were copied unchanged from the locked checkout build into the temporary build directory. The first run with mixed 5.020/5.050 C++ objects had SIGSEGV at shutdown and was discarded; this matching-version rerun exits cleanly.
+
+`sha256.txt` records hashes of the persistent model, fixture, NEMU reference and archived logs/patch. No tracked source or original build artifact was modified.
+
+## Command
+
+Run from the repository root with the temporary instrumented emulator:
 
 ```sh
 /tmp/xiangshan-cpp-probe/build/verilator-compile/emu \
@@ -18,7 +27,5 @@ Run command (from the repository root; outputs shown are archived here):
   --max-cycles=10000 --max-instr=1000 --dump-commit-trace \
   --cst-file=notes/units/evidence/smoke/kunminghu-chisel-db-probe-20261016/constantin.cst \
   --dump-select-db='LoadMissDB0 LoadAccessDB0' \
-  --db-path=/tmp/ld-cpp-probe.sqlite
+  --db-path=/tmp/ld-cpp-probe-5050.sqlite
 ```
-
-The temporary worktrees are not part of the repository. `sha256.txt` records the original generated model header/archive, reference model, and fixture hashes. The observer patch is not retained in the locked source checkout.
