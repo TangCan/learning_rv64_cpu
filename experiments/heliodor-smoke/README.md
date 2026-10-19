@@ -109,6 +109,20 @@ This fixture sets `MPP=U` before `mret`; the load access fault is delegated to
 the S-mode handler, which checks cause 5, the target PC, and `0x80002000` in
 `stval` before writing `tohost=1`.
 
+To verify PMP denial of an Sv39 page-table read during a load:
+
+```sh
+PATH="/nvme_data1/richard/.local/share/veryl/toolchains/latest:$PATH" \
+  python3 experiments/heliodor-smoke/run.py --topic ld-probe \
+  --ld-probe-source experiments/rv64-ld-probe/ld-heliodor-pmp-ptw-fault.S \
+  --ld-probe-expect-fault --timeout 300
+```
+
+The fixture maps its code with an allowed 2 MiB leaf. The target VA uses a
+separate L0 table page denied by PMP, while its final DRAM address is allowed.
+The delegated S-mode handler checks cause 5, the target `sepc`, and
+`stval=0x80202000`. The archived run confirms this L0 PTE-read case only.
+
 To run the settled prewarm fixture and check that the target access hits without
 a fill start:
 
