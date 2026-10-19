@@ -14,7 +14,7 @@ spec_refs:
     edition: "v20260120; RV32I version 2.1"
     section: "§2.6 Load and Store Instructions"
 version: 2
-evidence_namespace: "LD2-E1–LD2-E23"
+evidence_namespace: "LD2-E1–LD2-E24"
 source_snapshots:
   - project: "Kunminghu V2"
     snapshot_id: "xiangshan-kunminghu-v2-20261012"
@@ -44,7 +44,7 @@ source_snapshots:
 | --- | --- | --- |
 | `LD`, XLEN=64，EA[2:0]=0 | covered | 64 位加载语义由 LD2-E1 支持；实现数据路径见 LD2-E2–LD2-E11。 |
 | Heliodor 目标 PC DCache safe hit | covered | 预热 fixture 在目标 PC 观察到 hit=1、miss=0（LD2-E21）；这是 DCache safe-hit 信号，不是原始 tag 比较。 |
-| Kunminghu 目标 DCache hit、两边 M-mode Bare、无异常、无更老重叠 store | unconfirmed | Kunminghu 预热 fixture 的汇总计数没有 hit 事件，且无 PC 标签；ChiselDB 锁定构建的写表函数为空桩（LD2-E23）；权限/模式配置和旧 store 条件也未由运行记录完整确认。 |
+| Kunminghu 目标 DCache hit、两边 M-mode Bare、无异常、无更老重叠 store | unconfirmed | C++ 临时探针在目标 PC/PADDR 处采到两次 `hit=0`，但观察器与生成模型对象混用 Verilator 版本且进程退出段错误（LD2-E24），只作探索性线索；此前聚合计数无 PC 标签、ChiselDB writer 为空桩（LD2-E22/E23），权限/模式配置和旧 store 条件也未由运行记录完整确认。 |
 | DCache miss/refill 与 replay | partially observed | Heliodor 冷加载目标 PC 观察到 fill-start 和 safe-hit（LD2-E20）；没有追踪 fill 完成、两者时序或 replay 延迟。 |
 | 更老 store 重叠、forwarding、store-load 次序 | excluded | 无相关旧 store 是前提；不覆盖 forwarding 或内存顺序验证。 |
 | 未对齐、地址转换、权限拒绝及异常 | excluded | 不从本案例推及这些子案例。 |
@@ -97,8 +97,9 @@ source_snapshots:
 | LD2-E21 | Heliodor 预热目标 PC safe-hit 观察 | test-run | run-pass | Heliodor / `heliodor-master-20261012`; `94e9c5821c24a8941c3ddc3b76daddc7124a855a` | `experiments/rv64-ld-probe/ld-hit-settled.S`; archived transformed core and manifest run record | `PATH="/nvme_data1/richard/.local/share/veryl/toolchains/latest:$PATH" python3 experiments/heliodor-smoke/run.py --topic ld-probe --ld-probe-source experiments/rv64-ld-probe/ld-hit-settled.S --timeout 300` | 隔离 core，探针以 `lsr_pc_q == 0x80000030` 限定 | 先完成同地址预热读取，再执行被测 `LD` | 目标 PC request safe hit，未观察 fill-start；fixture 对加载值自检并通过 tohost/pass | `req=1 hit=1 miss=0`；target-PC retirement capture count=0，因此退休字段不作为此项结论依据 | `notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261016T104750Z-2510169/` |
 | LD2-E22 | Kunminghu settled 预热 fixture 的聚合 cache 计数 | test-run | run-pass | Kunminghu / `xiangshan-kunminghu-v2-20261012`; `c098f996bf4d301b88693b20315486d31e93bc9d` | `experiments/kunminghu-smoke/run.py --ld-source`; manifest run record | `python3 experiments/kunminghu-smoke/run.py --topic ld --ld-source experiments/rv64-ld-probe/ld-hit-settled.S --timeout 180` | KunminghuV2Config 单 hart；两个同地址 LD，第二个为被测 target PC=`0x80000030` | settled 预热源，EA/data=`0x80000080`/`0x123456789abcdef0` | 目标 commit 与 fixture 自检通过；归档 L1 DCache/load-unit counters 供边界分析 | aggregate `real_miss_first_issue=2`, `load_hit=0`, `load_miss=4`, `load_replay=2`；无 PC 标签，不能据此标记目标请求 hit/miss | `notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261016T105705Z-3e81181d1d02/` |
 | LD2-E23 | Kunminghu 锁定模拟器 ChiselDB 能否记录目标 load | test-run + source | run-fail | Kunminghu / `xiangshan-kunminghu-v2-20261012`; `c098f996bf4d301b88693b20315486d31e93bc9d` | archived fixture; `difftest/src/test/csrc/emu/emu.cpp`; `build/chisel_db.cpp`; `utility/ChiselDB.scala`; `DCacheWrapper.scala` | `emu -i fixture.bin --diff ... --dump-select-db='LoadMissDB0 LoadAccessDB0' --db-path=... --cst-file=constantin.cst` | 打开三个 Constantin 记录开关；SQLite dump 启用并只选 LoadMiss/LoadAccess 表 | settled fixture，目标 PC=`0x80000030` | 数据库应包含带 ROB index、地址及 miss 状态的记录 | 模拟器 run-pass 且报告 saving memdb；归档 SQLite 无表。两张表以 `basicDB=false` 创建，当前 elaboration 生成空 writer/init；运行时开关不能改变该结果 | `notes/units/evidence/smoke/kunminghu-chisel-db-probe-20261016/` |
+| LD2-E24 | Kunminghu settled 目标 load 的隔离 C++ hit 信号探索 | instrumented test-run | inconclusive | Kunminghu / `xiangshan-kunminghu-v2-20261012`; `c098f996bf4d301b88693b20315486d31e93bc9d` | temporary difftest observer; generated `VSimTop___024root.h`; `LoadPipe.scala:415` | archived README command | 临时采样 LDU PC、DCache s2 valid/PADDR/hit/firstIssue；探针 C++ 对象使用 Verilator 5.020 headers，原模型对象来自 5.050 build | settled fixture，target PC=`0x80000030`, PADDR=`0x80000080` | PC/PADDR 对应请求的 stage-2 hit 条件 | cycle 4178 lane 2 first issue 与 cycle 4188 lane 1 replay 均为 `hit=0`；fixture 到达 NEMU GOOD TRAP，但进程 shutdown SIGSEGV (139)。混合 Verilator 对象降低证据可信度，仅提示 miss；目标 hit/miss 仍未确认 | `notes/units/evidence/smoke/kunminghu-ld-cpp-probe-20261019/` |
 
-- `inspected` 表示源码/规范已检查，`unverified` 表示对应行为仍未验证。LD2-E19 是同一冷加载原始二进制分别在两侧运行的对照；LD2-E20/E21 是 Heliodor 独立冷加载/预热探针；LD2-E22 是 Kunminghu 预热变体；LD2-E23 确认当前 Kunminghu 构建的 ChiselDB writer 是空实现。Heliodor safe hit 已按目标 PC 观察；Kunminghu 的聚合计数没有目标 PC，不能确定其目标请求状态，也没有跨实现的同状态 hit 对照。
+- `inspected` 表示源码/规范已检查，`unverified` 表示对应行为仍未验证。LD2-E19 是同一冷加载原始二进制分别在两侧运行的对照；LD2-E20/E21 是 Heliodor 独立冷加载/预热探针；LD2-E22 是 Kunminghu 预热变体；LD2-E23 确认当前 Kunminghu 构建的 ChiselDB writer 是空实现；LD2-E24 是混合 Verilator 对象的隔离 C++ 采样，结果为探索性线索。Heliodor safe hit 已按目标 PC 观察；Kunminghu 目标 hit/miss 仍需匹配版本的干净探针确认，也没有跨实现的同状态 hit 对照。
 - M-mode Bare、DCache hit、对齐和无旧重叠 store 是本案例边界，不是实验观察。源码局部证据不证明两边对 miss/refill、forwarding、未对齐访问、异常、地址转换配置或 RVA23 整体符合性。
 
 ## 学习者总结
