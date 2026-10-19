@@ -113,6 +113,7 @@ source_snapshots:
 
 - Kunminghu 本例 EA、x6 值和目标提交已观察；settled fixture 的目标 DCache 请求观察为 miss。M-mode/Bare 与访问无异常、无更老重叠 store 条件仍未由运行记录充分证明。
 - Kunminghu 目标 PC replay hit 与首次 issue hit 已分别由 LD2-E25/E26 观察；当前 ChiselDB writer 仍为空实现。
+- Kunminghu 生成模型里可直接采样 `inner_tlbcsr_REG_satp_mode`（由 `io_ooo_to_mem_tlbCsr_satp_mode` 锁存）和 LD lane 2 的 `s2_exception`。源码显示后者仅在 `s2_vecActive` 时汇总 load exception/debug-trigger，适合与目标 PC 同周期关联；但目前尚无这些信号的动态样本，因此不能据此把 M-mode Bare 或无异常改记为已验证。下一步应在 E26 observer 中加入这两项并重跑同一 fixture；即使 SATP mode 为 Bare，也仍需独立观测 privilege 才能证明 M-mode。
 - Heliodor 冷加载目标 retirement PC/rd/value 已观察；预热版本的 cache hit 已观察但其 retirement 端口未捕获目标事件。Heliodor 的动态有效地址仍未直接观测。
 - 两边具体 M-mode/Bare、PMP/PMA 与 DCache 配置未由 sources.lock 固定；本文只将它们作为选定场景假设。
 - 两侧同一镜像已独立运行通过；尚无同步双核执行或微架构等价性结论。
