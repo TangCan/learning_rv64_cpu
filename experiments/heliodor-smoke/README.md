@@ -80,6 +80,22 @@ The fixture warms the DRAM address before programming `pmpcfg0=0x18`, reads
 back the entry, then requires a second M-mode load to return the same value.
 The target request must also be observed as a DCache hit without an access fault.
 
+To verify S-mode enforcement for an unlocked PMP match while keeping the code
+and trap handler accessible through a lower-priority DRAM entry:
+
+```sh
+PATH="/nvme_data1/richard/.local/share/veryl/toolchains/latest:$PATH" \
+  python3 experiments/heliodor-smoke/run.py --topic ld-probe \
+  --ld-probe-source experiments/rv64-ld-probe/ld-heliodor-pmp-s-deny.S \
+  --ld-probe-expect-fault --timeout 300
+```
+
+The fixture reads back both PMP addresses and `pmpcfg0`, delegates load access
+fault cause 5 to S-mode, and enters S-mode with `mret`. The handler must observe
+`scause=5`, `sepc=ld_target`, and `stval=0x80002000` before it writes
+`tohost=1`. The target request faults before the DCache probe; this case does
+not cover U-mode or page-table-walk PMP checks.
+
 To run the settled prewarm fixture and check that the target access hits without
 a fill start:
 
