@@ -1,0 +1,146 @@
+{
+  "artifact_sha256": {
+    "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261019T070926Z-3473081/fixture.ld": "4620d7311f3bc2549fd4c866e78f090f83cf3e61be5fa1e520eedeb146228801",
+    "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261019T070926Z-3473081/heliodor_core.veryl": "b49ca62674a0b70ee929bce7d262cf83363c939159db8fe07e4c13d17fbe594f",
+    "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261019T070926Z-3473081/ld-heliodor-pmp-l1-ptw-fault.S": "6c5ffa1f0891ff52cb7832152b9da881e6268582fe132610cd7778d0ff2e2d8e",
+    "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261019T070926Z-3473081/ld-heliodor-pmp-l1-ptw-fault.build.json": "3203ced359bd9b229a1194456e8a4eb227580bd87b8c87d7dc713d2bd3c0f01f",
+    "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261019T070926Z-3473081/ld-probe.hex": "5970e2a5c5f4b974a62d2232f1397ad949fcde4f8db82a639a5b40cd25183002",
+    "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261019T070926Z-3473081/run.py": "1aab2402e0f97827ddada75c55f895a2aaf653105e16db1943b1ce0221ec8f61",
+    "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261019T070926Z-3473081/test_arch_common.veryl": "e020db7efe48d5ba594c303b2b6cd4a5a07fd1d069b9fc0da0e0493fd115d38e",
+    "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261019T070926Z-3473081/test_smoke.veryl": "15bd6b192c2569d078e8d10e872c095a649a1f6848f54f030c7e4123d7d1daf3",
+    "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261019T070926Z-3473081/v4_smoke.hex": "2cf451e3cee19059d2dbc19c08cbe4af9b552ec842d6d2881d039f4bc1aaeeb1"
+  },
+  "artifacts": [
+    "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261019T070926Z-3473081/run.py",
+    "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261019T070926Z-3473081/test_smoke.veryl",
+    "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261019T070926Z-3473081/v4_smoke.hex",
+    "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261019T070926Z-3473081/test_arch_common.veryl",
+    "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261019T070926Z-3473081/ld-probe.hex",
+    "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261019T070926Z-3473081/ld-heliodor-pmp-l1-ptw-fault.S",
+    "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261019T070926Z-3473081/ld-heliodor-pmp-l1-ptw-fault.build.json",
+    "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261019T070926Z-3473081/fixture.ld",
+    "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261019T070926Z-3473081/heliodor_core.veryl"
+  ],
+  "assertion_failed": false,
+  "blocker": "",
+  "command": "[[\"/nvme_data1/richard/.local/share/veryl/toolchains/latest/veryl\", \"test\", \"--include-ignored\", \"--test\", \"test_smoke\"], [\"/nvme_data1/richard/.local/share/veryl/toolchains/latest/veryl\", \"test\", \"--include-ignored\", \"--test\", \"test_arch_rv64ui_ld\"]]",
+  "configuration": "Heliodor test_smoke plus isolated test_arch_rv64ui_ld; one harness/DUT; expected load access-fault fixture; trap privilege and checked CSRs are defined by the assembly handler.",
+  "cpu_started": true,
+  "evidence_method": "self-checking trap handler checks load access fault cause, target PC, and fault address before tohost=1/pass=1; isolated harness records D-side PTW request cycles, address transitions, and the first three PTE physical addresses",
+  "evidence_scope": "self-checking load access-fault fixture; handler privilege and checked trap CSRs are fixture-defined",
+  "exit_code": 0,
+  "expected": "Trap handler checks load access-fault cause=5, target LD PC, and fault address before tohost=1/pass=1.",
+  "expected_load_address": "0x0000000040402000",
+  "expected_marker": "v4 rv64ui-ld PASS",
+  "expected_markers": [
+    "[test_smoke] PASS",
+    "v4 rv64ui-ld PASS"
+  ],
+  "expected_observed": true,
+  "expected_trap": {
+    "cause": 5,
+    "exception_pc": "0x00000000800000f8",
+    "fault_address": "0x0000000040402000"
+  },
+  "first_failed_stage": "",
+  "fixture_build": {
+    "data_address": "0x0000000040402000",
+    "fixture_sha256": "5970e2a5c5f4b974a62d2232f1397ad949fcde4f8db82a639a5b40cd25183002",
+    "gcc_argv": [
+      "/home/richard/richard_opt/riscv/bin/riscv64-unknown-elf-gcc",
+      "-march=rv64imac_zicsr",
+      "-mabi=lp64",
+      "-nostdlib",
+      "-nostartfiles",
+      "-ffreestanding",
+      "-Wl,-T,/nvme_data1/richard/learning_rv64_cpu/experiments/rv64-ld-probe/fixture.ld",
+      "-Wl,--build-id=none",
+      "-o",
+      "/tmp/heliodor-ld-probe-qbxxfisn/ld-probe.elf",
+      "/nvme_data1/richard/learning_rv64_cpu/experiments/rv64-ld-probe/ld-heliodor-pmp-l1-ptw-fault.S"
+    ],
+    "linker": "experiments/rv64-ld-probe/fixture.ld",
+    "linker_sha256": "4620d7311f3bc2549fd4c866e78f090f83cf3e61be5fa1e520eedeb146228801",
+    "objcopy_argv": [
+      "/home/richard/richard_opt/riscv/bin/riscv64-unknown-elf-objcopy",
+      "-O",
+      "binary",
+      "/tmp/heliodor-ld-probe-qbxxfisn/ld-probe.elf",
+      "/tmp/heliodor-ld-probe-qbxxfisn/ld-probe.bin"
+    ],
+    "source": "experiments/rv64-ld-probe/ld-heliodor-pmp-l1-ptw-fault.S",
+    "source_sha256": "6c5ffa1f0891ff52cb7832152b9da881e6268582fe132610cd7778d0ff2e2d8e",
+    "target_pc": "0x00000000800000f8",
+    "tool_sha256": {
+      "riscv64-unknown-elf-gcc": "3b2b5d5ad7f9c7821c8ca1b11c6c512f30e3d63dcbdc726836c1c7bc0bceed32",
+      "riscv64-unknown-elf-nm": "efcf80cb84207546bba2dde494b1e6505ed5cc94b11d530a3fc44ea435f1c0d9",
+      "riscv64-unknown-elf-objcopy": "0ed4d26870589f4ba1e5678b62305d66c2df6ee8906da706c830a6f42950c858"
+    }
+  },
+  "fixture_sha256": "5970e2a5c5f4b974a62d2232f1397ad949fcde4f8db82a639a5b40cd25183002",
+  "id": "heliodor-core-20261019T070926Z-3473081",
+  "infrastructure_blocked": false,
+  "input": "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261019T070926Z-3473081/ld-probe.hex",
+  "input_sha256": "5970e2a5c5f4b974a62d2232f1397ad949fcde4f8db82a639a5b40cd25183002",
+  "inputs": [
+    {
+      "path": "sources/heliodor/test/v4_smoke.hex",
+      "sha256": "2cf451e3cee19059d2dbc19c08cbe4af9b552ec842d6d2881d039f4bc1aaeeb1"
+    },
+    {
+      "path": "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261019T070926Z-3473081/ld-probe.hex",
+      "sha256": "5970e2a5c5f4b974a62d2232f1397ad949fcde4f8db82a639a5b40cd25183002"
+    }
+  ],
+  "isolated_inputs_sha256": "56cb0f7bc78bcd8841b959fa6c743a3d7e4dc3a078fadac939673777b60c94c2",
+  "isolated_tree_sha256": "56cb0f7bc78bcd8841b959fa6c743a3d7e4dc3a078fadac939673777b60c94c2",
+  "log_path_warnings": [],
+  "next_environment_change": "No environment change required; this smoke completed successfully.",
+  "observed": "CPU-start=True; results={'x10': 7, 'x11': 11, 'x12': 77, 'x13': 11, 'arch_tohost': 1, 'arch_pass': 1}; smoke_marker=True; arch_marker=True",
+  "observed_cache_probe": null,
+  "observed_load_address": null,
+  "observed_load_checks": null,
+  "observed_load_context": null,
+  "observed_ptw_walk": {
+    "address_changes": 4,
+    "first_pte_paddr": 2147495944,
+    "last_pte_paddr": 2147500032,
+    "request_cycles": 27,
+    "second_pte_paddr": 2147508240,
+    "third_pte_paddr": 2147495952
+  },
+  "observed_retirement": {
+    "count": 1,
+    "data": 0,
+    "pc": 2147483896,
+    "rd": 6,
+    "rd_valid": 0
+  },
+  "output": "notes/units/evidence/smoke/heliodor-core-smoke-inputs/heliodor-core-20261019T070926Z-3473081/output.log",
+  "output_sha256": "034cd76eb0ff2c204c95ae8fabba2194385aa6f9163bba0d358fb2f45ce87b94",
+  "resources": {
+    "disk_free_bytes": 924786737152,
+    "logical_cpu_count": 64,
+    "memory_available_bytes": 228824559616,
+    "test_timeout_seconds": 300.0
+  },
+  "result": "run-pass",
+  "run_seconds": 41.068,
+  "smoke_fixture_sha256": "2cf451e3cee19059d2dbc19c08cbe4af9b552ec842d6d2881d039f4bc1aaeeb1",
+  "snapshot_sha": "94e9c5821c24a8941c3ddc3b76daddc7124a855a",
+  "source_commit": "94e9c5821c24a8941c3ddc3b76daddc7124a855a",
+  "source_tree_sha256": "4553612bb7ea7ac02259977213b5f8089c889bf2a65d07d23aa0634b9de0c4b9",
+  "stderr": "notes/units/evidence/smoke/heliodor-core-20261019T070926Z-3473081.stderr.log",
+  "stderr_sha256": "cb828624dd30f9cbf5de72ba40794635c1422d70e4104a919c3f743aa0152429",
+  "stdout": "notes/units/evidence/smoke/heliodor-core-20261019T070926Z-3473081.stdout.log",
+  "stdout_sha256": "dbcccef7eb085a01c4051e2d173d4f304cd7a337b6572beed58da1344a76ff3e",
+  "tools": {
+    "cxx": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0",
+    "verilator": "Verilator 5.020 2024-01-01 rev (Debian 5.020-1)",
+    "veryl": "veryl 0.22.0 (967e477 2026-10-02); binary sha256 aa57dd31488410769ee61c367f03de6cbf11101be47b510b99bde4ac9155b4c1"
+  },
+  "topic": "rv64ui-ld-probe",
+  "transformed_arch_harness_sha256": "e020db7efe48d5ba594c303b2b6cd4a5a07fd1d069b9fc0da0e0493fd115d38e",
+  "transformed_test_sha256": "15bd6b192c2569d078e8d10e872c095a649a1f6848f54f030c7e4123d7d1daf3",
+  "working_directory": "/tmp/heliodor-core-smoke-1ok3tcly"
+}
