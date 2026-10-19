@@ -96,6 +96,19 @@ fault cause 5 to S-mode, and enters S-mode with `mret`. The handler must observe
 `tohost=1`. The target request faults before the DCache probe; this case does
 not cover U-mode or page-table-walk PMP checks.
 
+To verify U-mode enforcement for the same PMP setup:
+
+```sh
+PATH="/nvme_data1/richard/.local/share/veryl/toolchains/latest:$PATH" \
+  python3 experiments/heliodor-smoke/run.py --topic ld-probe \
+  --ld-probe-source experiments/rv64-ld-probe/ld-heliodor-pmp-u-deny.S \
+  --ld-probe-expect-fault --timeout 300
+```
+
+This fixture sets `MPP=U` before `mret`; the load access fault is delegated to
+the S-mode handler, which checks cause 5, the target PC, and `0x80002000` in
+`stval` before writing `tohost=1`.
+
 To run the settled prewarm fixture and check that the target access hits without
 a fill start:
 
