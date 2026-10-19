@@ -248,9 +248,22 @@ def ld_context_probe(output: str) -> dict[str, int | str] | None:
             "translation": "Bare" if mode == 0 else f"mode-{mode}"}
 
 
+def ld_address_probe(output: str) -> dict[str, str] | None:
+    matches = re.findall(r"ld-address vaddr=([0-9a-fA-F]{1,16}) paddr=([0-9a-fA-F]{1,16})", output)
+    if len(matches) != 1:
+        return None
+    vaddr, paddr = (int(value, 16) for value in matches[0])
+    return {"vaddr": f"0x{vaddr:016x}", "paddr": f"0x{paddr:016x}"}
+
+
 def ld_probe_passes(arch_passed: bool, retirement: dict[str, int] | None,
-                    cache_probe: dict[str, bool] | None) -> bool:
-    return arch_passed and cache_probe is not None and (retirement is not None or cache_probe["hit_seen"])
+                    cache_probe: dict[str, bool] | None,
+                    address: dict[str, str] | None, expected_address: str) -> bool:
+    return (arch_passed and cache_probe is not None
+            and (retirement is not None or cache_probe["hit_seen"])
+            and address is not None
+            and address["vaddr"] == expected_address
+            and address["paddr"] == expected_address)
 
 
 def load_ld_probe_build(root: pathlib.Path, fixture_rel: str = LD_PROBE_FIXTURE) -> dict:
@@ -320,11 +333,13 @@ def transform_ld_probe_core(original: str) -> str:
     if any(original.count(value) != 1 for value in (param, port, anchor)):
         raise ValueError("pinned core LD probe anchors drifted")
     result = original.replace(param, param + "\n    param LD_PROBE_PC: u64 = 0,", 1)
-    result = result.replace(port, port + "\n    o_dbg_ld_probe_req : output logic,\n    o_dbg_ld_probe_hit : output logic,\n    o_dbg_ld_probe_miss: output logic,", 1)
+    result = result.replace(port, port + "\n    o_dbg_ld_probe_req : output logic,\n    o_dbg_ld_probe_hit : output logic,\n    o_dbg_ld_probe_miss: output logic,\n    o_dbg_ld_probe_vaddr: output logic<64>,\n    o_dbg_ld_probe_paddr: output logic<64>,", 1)
     return result.replace(anchor, anchor + "\n"
         "    assign o_dbg_ld_probe_req = lsr_drive && lsr_pc_q == LD_PROBE_PC;\n"
         "    assign o_dbg_ld_probe_hit = o_dbg_ld_probe_req && dc_hit_safe;\n"
-        "    assign o_dbg_ld_probe_miss = o_dbg_ld_probe_req && dc_miss_valid;", 1)
+        "    assign o_dbg_ld_probe_miss = o_dbg_ld_probe_req && dc_miss_valid;\n"
+        "    assign o_dbg_ld_probe_vaddr = lsr_vaddr_q;\n"
+        "    assign o_dbg_ld_probe_paddr = lsr_paddr_q;", 1)
 
 
 def transform_arch_harness(original: str, *, target: str = "test_arch_rv64ui_add", fixture: str = ARCH_FIXTURE, label: str = "v4 rv64ui-add", mtime_enable: bool = False, arch_cycles: int = 200000, ld_probe_pc: int | None = None) -> str:
@@ -421,25 +436,25 @@ def transform_arch_harness(original: str, *, target: str = "test_arch_rv64ui_add
         if selected_target.count("    var tohost: logic<32>;") != 1:
             raise ValueError("LD target tohost declaration anchor drifted")
         normal_harness = normal_harness.replace("    param MTIME_EN  : bit    = 1'b0,", "    param MTIME_EN  : bit    = 1'b0,\n    param RETIRE_PC: logic<64> = 64'd0,")
-        normal_harness = normal_harness.replace("    o_tohost: output logic<32>,", "    o_tohost: output logic<32>,\n    o_retire_count: output logic<32>,\n    o_retire_pc: output logic<64>,\n    o_retire_rd_valid: output logic,\n    o_retire_rd: output logic<5>,\n    o_retire_data: output logic<64>,\n    o_ld_probe_req: output logic,\n    o_ld_probe_hit: output logic,\n    o_ld_probe_miss: output logic,\n    o_ld_probe_priv: output logic<2>,\n    o_ld_probe_satp: output logic<64>,")
-        normal_harness = normal_harness.replace("    var ret_data         : logic<64>     ;", "    var ret_data         : logic<64>     ;\n    var probe_count: logic<32>;\n    var probe_pc: logic<64>;\n    var probe_rd_valid: logic;\n    var probe_rd: logic<5>;\n    var probe_data: logic<64>;\n    var ld_probe_req: logic;\n    var ld_probe_hit: logic;\n    var ld_probe_miss: logic;\n    var ld_probe_priv: logic<2>;\n    var ld_probe_satp: logic<64>;")
+        normal_harness = normal_harness.replace("    o_tohost: output logic<32>,", "    o_tohost: output logic<32>,\n    o_retire_count: output logic<32>,\n    o_retire_pc: output logic<64>,\n    o_retire_rd_valid: output logic,\n    o_retire_rd: output logic<5>,\n    o_retire_data: output logic<64>,\n    o_ld_probe_req: output logic,\n    o_ld_probe_hit: output logic,\n    o_ld_probe_miss: output logic,\n    o_ld_probe_priv: output logic<2>,\n    o_ld_probe_satp: output logic<64>,\n    o_ld_probe_vaddr: output logic<64>,\n    o_ld_probe_paddr: output logic<64>,")
+        normal_harness = normal_harness.replace("    var ret_data         : logic<64>     ;", "    var ret_data         : logic<64>     ;\n    var probe_count: logic<32>;\n    var probe_pc: logic<64>;\n    var probe_rd_valid: logic;\n    var probe_rd: logic<5>;\n    var probe_data: logic<64>;\n    var ld_probe_req: logic;\n    var ld_probe_hit: logic;\n    var ld_probe_miss: logic;\n    var ld_probe_priv: logic<2>;\n    var ld_probe_satp: logic<64>;\n    var ld_probe_vaddr: logic<64>;\n    var ld_probe_paddr: logic<64>;")
         normal_harness = normal_harness.replace("        PMA_FAULT: 1           ,", "        PMA_FAULT: 1           ,\n        LD_PROBE_PC: RETIRE_PC,")
-        normal_harness = normal_harness.replace("        o_dbg_retire_data_a   : ret_data         ,", "        o_dbg_retire_data_a   : ret_data         ,\n        o_dbg_ld_probe_req: ld_probe_req,\n        o_dbg_ld_probe_hit: ld_probe_hit,\n        o_dbg_ld_probe_miss: ld_probe_miss,")
-        normal_harness = normal_harness.replace("    var _dbg_satp        : logic<64>     ;", "    var _dbg_satp        : logic<64>     ;\n    always_ff (clk, rst) {\n        if_reset { probe_count = 32'd0; probe_pc = 64'd0; probe_rd_valid = 1'b0; probe_rd = 5'd0; probe_data = 64'd0; ld_probe_priv = 2'd0; ld_probe_satp = 64'd0; }\n        else {\n            if ret_v && ret_pc == RETIRE_PC { probe_count = probe_count + 32'd1; probe_pc = ret_pc; probe_rd_valid = ret_rdv; probe_rd = ret_rd; probe_data = ret_data; }\n            if ld_probe_req { ld_probe_priv = _dbg_priv; ld_probe_satp = _dbg_satp; }\n        }\n    }")
-        normal_harness = normal_harness.replace("    assign o_tohost = tohost_lo;", "    assign o_tohost = tohost_lo;\n    assign o_retire_count = probe_count;\n    assign o_retire_pc = probe_pc;\n    assign o_retire_rd_valid = probe_rd_valid;\n    assign o_retire_rd = probe_rd;\n    assign o_retire_data = probe_data;\n    assign o_ld_probe_req = ld_probe_req;\n    assign o_ld_probe_hit = ld_probe_hit;\n    assign o_ld_probe_miss = ld_probe_miss;\n    assign o_ld_probe_priv = ld_probe_priv;\n    assign o_ld_probe_satp = ld_probe_satp;")
+        normal_harness = normal_harness.replace("        o_dbg_retire_data_a   : ret_data         ,", "        o_dbg_retire_data_a   : ret_data         ,\n        o_dbg_ld_probe_req: ld_probe_req,\n        o_dbg_ld_probe_hit: ld_probe_hit,\n        o_dbg_ld_probe_miss: ld_probe_miss,\n        o_dbg_ld_probe_vaddr: _dbg_ld_probe_vaddr,\n        o_dbg_ld_probe_paddr: _dbg_ld_probe_paddr,")
+        normal_harness = normal_harness.replace("    var _dbg_satp        : logic<64>     ;", "    var _dbg_satp        : logic<64>     ;\n    var _dbg_ld_probe_vaddr: logic<64>;\n    var _dbg_ld_probe_paddr: logic<64>;\n    always_ff (clk, rst) {\n        if_reset { probe_count = 32'd0; probe_pc = 64'd0; probe_rd_valid = 1'b0; probe_rd = 5'd0; probe_data = 64'd0; ld_probe_priv = 2'd0; ld_probe_satp = 64'd0; ld_probe_vaddr = 64'd0; ld_probe_paddr = 64'd0; }\n        else {\n            if ret_v && ret_pc == RETIRE_PC { probe_count = probe_count + 32'd1; probe_pc = ret_pc; probe_rd_valid = ret_rdv; probe_rd = ret_rd; probe_data = ret_data; }\n            if ld_probe_req { ld_probe_priv = _dbg_priv; ld_probe_satp = _dbg_satp; ld_probe_vaddr = _dbg_ld_probe_vaddr; ld_probe_paddr = _dbg_ld_probe_paddr; }\n        }\n    }")
+        normal_harness = normal_harness.replace("    assign o_tohost = tohost_lo;", "    assign o_tohost = tohost_lo;\n    assign o_retire_count = probe_count;\n    assign o_retire_pc = probe_pc;\n    assign o_retire_rd_valid = probe_rd_valid;\n    assign o_retire_rd = probe_rd;\n    assign o_retire_data = probe_data;\n    assign o_ld_probe_req = ld_probe_req;\n    assign o_ld_probe_hit = ld_probe_hit;\n    assign o_ld_probe_miss = ld_probe_miss;\n    assign o_ld_probe_priv = ld_probe_priv;\n    assign o_ld_probe_satp = ld_probe_satp;\n    assign o_ld_probe_vaddr = ld_probe_vaddr;\n    assign o_ld_probe_paddr = ld_probe_paddr;")
         if any(anchor not in normal_harness for anchor in ("o_retire_count", "probe_count = probe_count +", "o_retire_data = probe_data")):
             raise ValueError("pinned arch harness retirement capture anchors drifted")
         selected_target, changed = re.subn(r"TOHOST_IDX\s*:\s*1024\s*,", f"TOHOST_IDX: 1024, RETIRE_PC: 64'h{ld_probe_pc:016x},", selected_target, count=1)
         if changed != 1:
             raise ValueError("LD probe target lacks TOHOST_IDX anchor")
-        selected_target = selected_target.replace("    var tohost: logic<32>;", "    var tohost: logic<32>;\n    var retire_count: logic<32>;\n    var retire_pc: logic<64>;\n    var retire_rd_valid: logic;\n    var retire_rd: logic<5>;\n    var retire_data: logic<64>;\n    var ld_probe_req: logic;\n    var ld_probe_hit: logic;\n    var ld_probe_miss: logic;\n    var ld_probe_priv: logic<2>;\n    var ld_probe_satp: logic<64>;\n    var ld_probe_req_seen: logic;\n    var ld_probe_hit_seen: logic;\n    var ld_probe_miss_seen: logic;")
+        selected_target = selected_target.replace("    var tohost: logic<32>;", "    var tohost: logic<32>;\n    var retire_count: logic<32>;\n    var retire_pc: logic<64>;\n    var retire_rd_valid: logic;\n    var retire_rd: logic<5>;\n    var retire_data: logic<64>;\n    var ld_probe_req: logic;\n    var ld_probe_hit: logic;\n    var ld_probe_miss: logic;\n    var ld_probe_priv: logic<2>;\n    var ld_probe_satp: logic<64>;\n    var ld_probe_vaddr: logic<64>;\n    var ld_probe_paddr: logic<64>;\n    var ld_probe_req_seen: logic;\n    var ld_probe_hit_seen: logic;\n    var ld_probe_miss_seen: logic;")
         selected_target = selected_target.replace("    inst h: test_arch_common_harness #(", "    always_ff (clk, rst) {\n        if_reset { ld_probe_req_seen = 1'b0; ld_probe_hit_seen = 1'b0; ld_probe_miss_seen = 1'b0; }\n        else {\n            if ld_probe_req { ld_probe_req_seen = 1'b1; }\n            if ld_probe_hit { ld_probe_hit_seen = 1'b1; }\n            if ld_probe_miss { ld_probe_miss_seen = 1'b1; }\n        }\n    }\n    inst h: test_arch_common_harness #(")
         selected_target, changed = re.subn(r"(o_tohost\s*:\s*tohost\s*,)", r"\1\n        o_retire_count: retire_count, o_retire_pc: retire_pc, o_retire_rd_valid: retire_rd_valid, o_retire_rd: retire_rd, o_retire_data: retire_data,", selected_target, count=1)
         if changed != 1:
             raise ValueError("LD target lacks tohost port connection anchor")
-        selected_target = selected_target.replace("o_retire_data: retire_data,", "o_retire_data: retire_data,\n        o_ld_probe_req: ld_probe_req, o_ld_probe_hit: ld_probe_hit, o_ld_probe_miss: ld_probe_miss,\n        o_ld_probe_priv: ld_probe_priv, o_ld_probe_satp: ld_probe_satp,")
+        selected_target = selected_target.replace("o_retire_data: retire_data,", "o_retire_data: retire_data,\n        o_ld_probe_req: ld_probe_req, o_ld_probe_hit: ld_probe_hit, o_ld_probe_miss: ld_probe_miss,\n        o_ld_probe_priv: ld_probe_priv, o_ld_probe_satp: ld_probe_satp,\n        o_ld_probe_vaddr: ld_probe_vaddr, o_ld_probe_paddr: ld_probe_paddr,")
         selected_target = selected_target.replace("$display  (\"v4 rv64ui-ld tohost=%h pass=%b\", tohost, pass);", "$display  (\"v4 rv64ui-ld tohost=%h pass=%b\", tohost, pass);\n    $display (\"ld-retire count=%h pc=%h rd_valid=%h rd=%h data=%h\", retire_count, retire_pc, retire_rd_valid, retire_rd, retire_data);")
-        selected_target = selected_target.replace("$display (\"ld-retire count=%h pc=%h rd_valid=%h rd=%h data=%h\", retire_count, retire_pc, retire_rd_valid, retire_rd, retire_data);", "$display (\"ld-retire count=%h pc=%h rd_valid=%h rd=%h data=%h\", retire_count, retire_pc, retire_rd_valid, retire_rd, retire_data);\n    $display (\"ld-cache-probe req=%b hit=%b miss=%b\", ld_probe_req_seen, ld_probe_hit_seen, ld_probe_miss_seen);\n    $display (\"ld-context priv=%h satp=%h\", ld_probe_priv, ld_probe_satp);")
+        selected_target = selected_target.replace("$display (\"ld-retire count=%h pc=%h rd_valid=%h rd=%h data=%h\", retire_count, retire_pc, retire_rd_valid, retire_rd, retire_data);", "$display (\"ld-retire count=%h pc=%h rd_valid=%h rd=%h data=%h\", retire_count, retire_pc, retire_rd_valid, retire_rd, retire_data);\n    $display (\"ld-cache-probe req=%b hit=%b miss=%b\", ld_probe_req_seen, ld_probe_hit_seen, ld_probe_miss_seen);\n    $display (\"ld-context priv=%h satp=%h\", ld_probe_priv, ld_probe_satp);\n    $display (\"ld-address vaddr=%h paddr=%h\", ld_probe_vaddr, ld_probe_paddr);")
         if "ld-retire count=" not in selected_target:
             raise ValueError("LD target result display anchor drifted")
     return normal_harness.rstrip() + "\n\n" + selected_target
@@ -554,6 +569,7 @@ def run(args: argparse.Namespace) -> dict:
     retirement: dict[str, int] | None = None
     cache_probe: dict[str, bool] | None = None
     ld_context: dict[str, int | str] | None = None
+    ld_address: dict[str, str] | None = None
     if ld_probe:
         ld_build_record = load_ld_probe_build(ROOT, fixture_rel)
         ld_probe_pc = int(ld_build_record["target_pc"], 16)
@@ -657,8 +673,11 @@ def run(args: argparse.Namespace) -> dict:
         retirement = ld_retirement(combined, ld_probe_pc) if ld_probe and ld_probe_pc is not None else None
         cache_probe = ld_cache_probe(combined) if ld_probe else None
         ld_context = ld_context_probe(combined) if ld_probe else None
+        ld_address = ld_address_probe(combined) if ld_probe else None
         if ld_probe:
-            probe_passed = ld_probe_passes(expected_observed, retirement, cache_probe)
+            expected_address = f"0x{int(ld_build_record['data_address'], 16):016x}"
+            probe_passed = ld_probe_passes(expected_observed, retirement, cache_probe,
+                                           ld_address, expected_address)
             expected_observed = probe_passed
             assertion_failed = assertion_failed or (cpu_started and not probe_passed)
         if not blocker and not cpu_started:
@@ -769,12 +788,13 @@ def run(args: argparse.Namespace) -> dict:
                    {"path": str(archived_arch_fixture.relative_to(ROOT)) if archived_arch_fixture.is_file() else str(input_path.relative_to(ROOT)), "sha256": input_hash},
                    *([{"path": sscofpmf_source, "sha256": sha256(ROOT / sscofpmf_source)},
                       {"path": SSCOFPMF_LINKER, "sha256": sha256(ROOT / SSCOFPMF_LINKER)}] if sscofpmf else [])],
-        **({"topic": "rv64ui-ld-probe", "evidence_scope": "one fixture LD retirement plus target-PC DCache safe-hit/fill-start and sampled privilege/SATP observations in the isolated core"} if ld_probe else
+        **({"topic": "rv64ui-ld-probe", "evidence_scope": "one fixture LD retirement plus target-PC DCache safe-hit/fill-start and sampled privilege/SATP and LSU virtual/physical address observations in the isolated core"} if ld_probe else
            {"topic": "rv64ui-ld-suite", "evidence_scope": "suite-level tohost/pass only; no per-instruction retirement PC or rd value is exposed"} if ld_suite else {}),
         **({"observed_retirement": retirement, "observed_cache_probe": cache_probe,
-            "observed_load_context": ld_context,
+            "observed_load_context": ld_context, "observed_load_address": ld_address,
+            "expected_load_address": (ld_build_record.get("data_address") if ld_probe else None),
             **({"expected_retirement": {"count": 1, "pc": ld_probe_pc, "rd_valid": 1, "rd": 6, "data": "0x123456789abcdef0"}} if retirement is not None else {}),
-            "fixture_build": ld_build_record, "evidence_method": "self-checking LD fixture plus target-PC DCache safe-hit/fill-start and privilege/SATP capture; retirement port fields are recorded when available"} if ld_probe else {}),
+            "fixture_build": ld_build_record, "evidence_method": "self-checking LD fixture plus target-PC DCache safe-hit/fill-start, privilege/SATP, and LSU virtual/physical address capture; retirement port fields are recorded when available"} if ld_probe else {}),
         "configuration": (f"Heliodor test_smoke plus isolated test_arch_rv64ui_ld; one harness/DUT; one-LD fixture and retirement-port capture." if ld_probe else
                           f"Heliodor test_smoke plus isolated test_arch_rv64ui_ssnpm ({ssnpm_case}); one harness/DUT; U-mode senvcfg.PMM PMLEN/tagged-pointer probe." if ssnpm else
                           "Heliodor test_smoke plus isolated test_arch_rv64ui_ld and the locked rv64ui/ld.hex; one harness/DUT; suite-level tohost/pass evidence only." if ld_suite else
