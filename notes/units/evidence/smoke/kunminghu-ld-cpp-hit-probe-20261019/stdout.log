@@ -1,0 +1,2 @@
+[40] commit pc 0000000080000130 inst 0002b303 wen 1 dst 06 data 123456789abcdef0 idx 028 (01)
+Core 0: [32mHIT GOOD TRAP at pc = 0x80000168

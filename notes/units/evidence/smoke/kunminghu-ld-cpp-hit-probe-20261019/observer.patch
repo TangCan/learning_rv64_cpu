@@ -1,0 +1,64 @@
+diff --git a/src/test/csrc/emu/emu.cpp b/src/test/csrc/emu/emu.cpp
+index 4f57a6124..2f09f093e 100644
+--- a/src/test/csrc/emu/emu.cpp
++++ b/src/test/csrc/emu/emu.cpp
+@@ -337,0 +338 @@ inline void Emulator::single_cycle() {
++  static_cast<VerilatorSim *>(dut_ptr)->sample_ld_cache_probe();
+@@ -365,0 +367 @@ inline void Emulator::single_cycle() {
++  static_cast<VerilatorSim *>(dut_ptr)->sample_ld_cache_stage1();
+diff --git a/src/test/csrc/verilator/verilator.h b/src/test/csrc/verilator/verilator.h
+index b8d47933e..1c6e73269 100644
+--- a/src/test/csrc/verilator/verilator.h
++++ b/src/test/csrc/verilator/verilator.h
+@@ -20,0 +21,2 @@
++#include "VSimTop___024root.h"
++#include <cstdio>
+@@ -66,0 +69,48 @@ public:
++  void sample_ld_cache_stage1() {
++    const auto *r = dut->rootp;
++    static uint64_t sample_cycle = 0;
++    ++sample_cycle;
++#define SAMPLE_LDU_S1(n) do { \
++    const auto pc = r->SimTop__DOT__cpu__DOT__l_soc__DOT__core_with_l2__DOT__core__DOT__memBlock__DOT__inner_LoadUnit_##n##__DOT__s1_in_r_uop_pc; \
++    const auto valid = r->SimTop__DOT__cpu__DOT__l_soc__DOT__core_with_l2__DOT__core__DOT__memBlock__DOT__inner_dcache__DOT__dcache__DOT__ldu_##n##__DOT__s1_valid; \
++    const auto addr = r->SimTop__DOT__cpu__DOT__l_soc__DOT__core_with_l2__DOT__core__DOT__memBlock__DOT__inner_dcache__DOT__dcache__DOT__ldu_##n##__DOT__s1_req_vaddr; \
++    const auto miss = r->SimTop__DOT__cpu__DOT__l_soc__DOT__core_with_l2__DOT__core__DOT__memBlock__DOT__inner_dcache__DOT__dcache__DOT__ldu_##n##__DOT__s1_will_send_miss_req; \
++    const auto tag = r->SimTop__DOT__cpu__DOT__l_soc__DOT__core_with_l2__DOT__core__DOT__memBlock__DOT__inner_dcache__DOT__dcache__DOT__ldu_##n##__DOT__s1_tag_match_dup_dc; \
++    const auto perm = r->SimTop__DOT__cpu__DOT__l_soc__DOT__core_with_l2__DOT__core__DOT__memBlock__DOT__inner_dcache__DOT__dcache__DOT__ldu_##n##__DOT__s1_has_permission; \
++    if (valid) std::fprintf(stderr, "LD_S1 cycle=%llu lane=%d pc=0x%llx addr=0x%llx miss=%u tag=%u perm=%u\n", \
++      (unsigned long long)sample_cycle, n, (unsigned long long)pc, (unsigned long long)addr, (unsigned)miss, (unsigned)tag, (unsigned)perm); \
++  } while (0)
++    SAMPLE_LDU_S1(0);
++    SAMPLE_LDU_S1(1);
++    SAMPLE_LDU_S1(2);
++#undef SAMPLE_LDU_S1
++  }
++
++  void sample_ld_cache_probe() {
++    const auto *r = dut->rootp;
++    static uint64_t sample_cycle = 0;
++    ++sample_cycle;
++#define SAMPLE_LDU(n) do { \
++    const auto s1_pc = r->SimTop__DOT__cpu__DOT__l_soc__DOT__core_with_l2__DOT__core__DOT__memBlock__DOT__inner_LoadUnit_##n##__DOT__s1_in_r_uop_pc; \
++    const auto s1_valid = r->SimTop__DOT__cpu__DOT__l_soc__DOT__core_with_l2__DOT__core__DOT__memBlock__DOT__inner_dcache__DOT__dcache__DOT__ldu_##n##__DOT__s1_valid; \
++    const auto s1_addr = r->SimTop__DOT__cpu__DOT__l_soc__DOT__core_with_l2__DOT__core__DOT__memBlock__DOT__inner_dcache__DOT__dcache__DOT__ldu_##n##__DOT__s1_req_vaddr; \
++    const auto s1_miss = r->SimTop__DOT__cpu__DOT__l_soc__DOT__core_with_l2__DOT__core__DOT__memBlock__DOT__inner_dcache__DOT__dcache__DOT__ldu_##n##__DOT__s1_will_send_miss_req; \
++    const auto s1_tag = r->SimTop__DOT__cpu__DOT__l_soc__DOT__core_with_l2__DOT__core__DOT__memBlock__DOT__inner_dcache__DOT__dcache__DOT__ldu_##n##__DOT__s1_tag_match_dup_dc; \
++    const auto s1_perm = r->SimTop__DOT__cpu__DOT__l_soc__DOT__core_with_l2__DOT__core__DOT__memBlock__DOT__inner_dcache__DOT__dcache__DOT__ldu_##n##__DOT__s1_has_permission; \
++    if (s1_valid) std::fprintf(stderr, "LD_S1 cycle=%llu lane=%d pc=0x%llx addr=0x%llx miss=%u tag=%u perm=%u\n", \
++      (unsigned long long)sample_cycle, n, (unsigned long long)s1_pc, (unsigned long long)s1_addr, (unsigned)s1_miss, (unsigned)s1_tag, (unsigned)s1_perm); \
++    const auto pc = r->SimTop__DOT__cpu__DOT__l_soc__DOT__core_with_l2__DOT__core__DOT__memBlock__DOT__inner_LoadUnit_##n##__DOT__s2_in_r_uop_pc; \
++    const auto valid = r->SimTop__DOT__cpu__DOT__l_soc__DOT__core_with_l2__DOT__core__DOT__memBlock__DOT__inner_dcache__DOT__dcache__DOT__ldu_##n##__DOT__s2_valid; \
++    const auto paddr = r->SimTop__DOT__cpu__DOT__l_soc__DOT__core_with_l2__DOT__core__DOT__memBlock__DOT__inner_dcache__DOT__dcache__DOT__ldu_##n##__DOT__s2_paddr; \
++    const auto hit = r->SimTop__DOT__cpu__DOT__l_soc__DOT__core_with_l2__DOT__core__DOT__memBlock__DOT__inner_dcache__DOT__dcache__DOT__ldu_##n##__DOT___s2_hit_T_2; \
++    const auto first = r->SimTop__DOT__cpu__DOT__l_soc__DOT__core_with_l2__DOT__core__DOT__memBlock__DOT__inner_dcache__DOT__dcache__DOT__ldu_##n##__DOT__s2_req_isFirstIssue; \
++    if (valid) \
++      std::fprintf(stderr, "LD_PC_PROBE cycle=%llu lane=%d pc=0x%llx paddr=0x%llx hit=%u first=%u\n", \
++        (unsigned long long)sample_cycle, n, (unsigned long long)pc, (unsigned long long)paddr, (unsigned)hit, (unsigned)first); \
++  } while (0)
++    SAMPLE_LDU(0);
++    SAMPLE_LDU(1);
++    SAMPLE_LDU(2);
++#undef SAMPLE_LDU
++  }
++

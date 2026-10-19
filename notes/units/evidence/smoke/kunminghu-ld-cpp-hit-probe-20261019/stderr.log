@@ -1,0 +1,14 @@
+LD_S1 cycle=4176 lane=2 pc=0x80000008 addr=0x80000180 miss=1 tag=0 perm=0
+LD_PC_PROBE cycle=4177 lane=2 pc=0x80000008 paddr=0x80000180 hit=0 first=1
+LD_S1 cycle=4184 lane=2 pc=0x80000130 addr=0x80000180 miss=1 tag=0 perm=0
+LD_PC_PROBE cycle=4185 lane=2 pc=0x80000130 paddr=0x80000180 hit=0 first=1
+LD_S1 cycle=4187 lane=0 pc=0x80000008 addr=0x80000180 miss=1 tag=0 perm=0
+LD_PC_PROBE cycle=4188 lane=0 pc=0x80000008 paddr=0x80000180 hit=0 first=0
+LD_S1 cycle=4192 lane=1 pc=0x80000130 addr=0x80000180 miss=0 tag=1 perm=1
+LD_PC_PROBE cycle=4193 lane=1 pc=0x80000130 paddr=0x80000180 hit=1 first=0
+[PERF ][time=                4210] SimTop.cpu.l_soc.core_with_l2.core.memBlock.inner.dcache.dcache.ldu_0: load_hit,                    0
+[PERF ][time=                4210] SimTop.cpu.l_soc.core_with_l2.core.memBlock.inner.dcache.dcache.ldu_0: load_miss,                    1
+[PERF ][time=                4210] SimTop.cpu.l_soc.core_with_l2.core.memBlock.inner.dcache.dcache.ldu_1: load_hit,                    1
+[PERF ][time=                4210] SimTop.cpu.l_soc.core_with_l2.core.memBlock.inner.dcache.dcache.ldu_1: load_miss,                    0
+[PERF ][time=                4210] SimTop.cpu.l_soc.core_with_l2.core.memBlock.inner.dcache.dcache.ldu_2: load_hit,                    0
+[PERF ][time=                4210] SimTop.cpu.l_soc.core_with_l2.core.memBlock.inner.dcache.dcache.ldu_2: load_miss,                    2
