@@ -1,4 +1,0 @@
-[compile and link]
-/nvme_data2/richard/riscv/bin/../lib/gcc/riscv64-unknown-elf/15.1.0/../../../../riscv64-unknown-elf/bin/ld: warning: /nvme_data1/richard/learning_rv64_cpu/notes/units/evidence/smoke/kunminghu-ssstateen-runner-20261014/kunminghu-fixture-20261014T120930Z-120ea6a650ed/fixture.elf has a LOAD segment with RWX permissions
-[raw image generation]
-[emulator CPU run]

@@ -1,5 +1,0 @@
-[compile and link]
-/nvme_data2/richard/riscv/bin/../lib/gcc/riscv64-unknown-elf/15.1.0/../../../../riscv64-unknown-elf/bin/ld: warning: /nvme_data1/richard/learning_rv64_cpu/notes/units/evidence/smoke/kunminghu-fixture-runs/kunminghu-fixture-20261014T153052Z-3e81181d1d02/fixture.elf has a LOAD segment with RWX permissions
-/nvme_data2/richard/riscv/bin/../lib/gcc/riscv64-unknown-elf/15.1.0/../../../../riscv64-unknown-elf/bin/ld: /tmp/ccFjU1he.o: in function `_start':
-(.text.init+0x48): undefined reference to `m_trap'
-collect2: error: ld returned 1 exit status

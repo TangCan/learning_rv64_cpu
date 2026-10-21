@@ -1,3 +1,0 @@
-[compile and link]
-/nvme_data1/richard/learning_rv64_cpu/experiments/sscofpmf/kunminghu-sscofpmf-access-route-v5.S: Assembler messages:
-/nvme_data1/richard/learning_rv64_cpu/experiments/sscofpmf/kunminghu-sscofpmf-access-route-v5.S:156: Error: illegal operands `andi t0,t0,0x2000'

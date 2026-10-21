@@ -1,4 +1,0 @@
-   Compiling bitloom-host-shim v0.0.0 (/nvme_data1/richard/learning_rv64_cpu/experiments/bitloom-vector-case/target/rhdl-host/bitloom_vector_case)
-    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.20s
-     Running `target/bitloom-vector-case/debug/bitloom-host-shim`
-wrote /nvme_data1/richard/learning_rv64_cpu/target/bitloom-vector-out/BitloomVectorCase.v

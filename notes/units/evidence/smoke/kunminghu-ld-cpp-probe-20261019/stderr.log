@@ -1,4 +1,0 @@
-LD_PC_PROBE cycle=4177 lane=2 pc=0x80000008 paddr=0x80000080 hit=0 first=1
-LD_PC_PROBE cycle=4178 lane=2 pc=0x80000030 paddr=0x80000080 hit=0 first=1
-LD_PC_PROBE cycle=4188 lane=0 pc=0x80000008 paddr=0x80000080 hit=0 first=0
-LD_PC_PROBE cycle=4188 lane=1 pc=0x80000030 paddr=0x80000080 hit=0 first=0

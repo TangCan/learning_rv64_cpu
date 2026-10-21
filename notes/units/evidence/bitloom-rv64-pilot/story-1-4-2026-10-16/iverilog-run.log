@@ -1,2 +1,0 @@
-PASS: VLEN=128 SEW=32 LMUL=1 VL=4 vadd.vv lanes and rejects
-experiments/bitloom-vector-case/tests/vector_case_tb.sv:83: $finish called at 76000 (1ps)

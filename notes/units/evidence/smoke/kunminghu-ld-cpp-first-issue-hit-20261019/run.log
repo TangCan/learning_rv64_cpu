@@ -1,4 +1,0 @@
-[112] commit pc 0000000080000430 inst 0002b303 wen 1 dst 06 data 123456789abcdef0 idx 070 (01)
-Core 0: HIT GOOD TRAP at pc = 0x80000468
-LD_S1 cycle=4235 lane=2 pc=0x80000430 addr=0x80000480 miss=0 tag=1 perm=1
-LD_PC_PROBE cycle=4236 lane=2 pc=0x80000430 paddr=0x80000480 hit=1 first=1
